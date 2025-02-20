@@ -1,0 +1,21 @@
+# Python-specific
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+tempCodeRunnerFile.py
+
+# Virtual Environments
+ram-env/
+.env/
+
+# Visual Studio Code
+.vscode/
+
+# Logs, Images and Output Files
+*.log
+*.out
+
+# Model Checkpoints
+*.pth
+*.pt
