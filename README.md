@@ -1,1 +1,1 @@
-# open-object-classification-TLS
+# Open Object Classification TLS (Tagging, Location & Segmentation)
