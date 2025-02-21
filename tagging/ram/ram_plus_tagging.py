@@ -2,6 +2,9 @@
  * The Recognize Anything Plus Model (RAM++)
  * Written by Xinyu Huang
 '''
+
+# Execution: python ram_plus_tagging.py --image input_images/input_image.jpg --pretrained models/ram_plus_swin_large_14m.pth
+
 import argparse
 import numpy as np
 import random
@@ -19,11 +22,11 @@ parser = argparse.ArgumentParser(
 parser.add_argument('--image',
                     metavar='DIR',
                     help='path to dataset',
-                    default='2.jpg')
+                    default='input_images/input_image.jpg')
 parser.add_argument('--pretrained',
                     metavar='DIR',
                     help='path to pretrained model',
-                    default='ram_plus_swin_large_14m.pth')
+                    default='models/ram_plus_swin_large_14m.pth')
 parser.add_argument('--image-size',
                     default=384,
                     type=int,
@@ -34,6 +37,7 @@ parser.add_argument('--image-size',
 if __name__ == "__main__":
 
     args = parser.parse_args()
+    print("PRETRAINED: " + args.pretrained)
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
