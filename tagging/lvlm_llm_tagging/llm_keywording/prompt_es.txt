@@ -1,19 +1,26 @@
-Te voy a pasar una lista de descripciones de segmentos de imágenes. Los segmentos han sido extraídos con SAM2 y la descripción de las imágenes ha sido realizada con LLaVA. Te voy a pasar la descripción de cada segmento, y tu tarea es decirme únicamente los segmentos que crees que tienen objetos en ellos. Habrá algunos confusos o difusos, esos descártalos. Tu respuesta será en formato JSON (luego te adjunto un ejemplo), y contendrá únicamente información de los segmentos que tienen, con total seguridad, alguna detección exitosa. Concretamente, en el JSON me dirás la clase a la que pertenece el objeto detectado, imitando al dataset COCO pero para cualquier categoría, no únicamente las de COCO. El ejemplo es el siguiente:
+Te voy a pasar una descripción de una imagen, generada por el LVLM LLaVA. Tu tarea es decirme únicamente los objetos que existen en la imagen según la descripción textual. Tu respuesta será en formato JSON (luego te adjunto un ejemplo), y concretamente me dirás las palabras clave de los objetos de la imagen. El ejemplo es el siguiente:
 
-Imagina que te paso cuatro descripciones como las siguientes:
+Imagina que te paso una descripción como la siguiente:
 
-Segment 0 (automatic_segment_0.png): The image shows a small dog in motion, possibly jumping or running. The dog has short hair and appears to be a breed with a compact build, commonly referred to as a "chug" which is a cross between a Chihuahua and a Pug. Its ears are erect, and the dog is looking directly at the camera with its mouth slightly open, giving an impression of excitement or playfulness. The background is plain and out of focus, emphasizing the dog as the central subject.
-Segment 1 (automatic_segment_1.png): The image you've provided appears to be rotated and upside down, making it difficult to see what is actually depicted. The orientation of the object or subject in relation to gravity seems off, which might suggest a playful manipulation of perspective rather than an accurate representation of the scene. If you have any specific questions about this image or need help with something else related to the content, feel free to ask!
-Segment 2 (automatic_segment_2.png): The image shows a dog that appears to be in motion, with one front paw raised as if it's either walking or running. The dog has distinctive characteristics such as long ears and a thick double coat of fur, which are common features of corgis. Its eyes are open wide, giving the impression of joy or excitement. The background is not visible due to the way the image is cropped, focusing solely on the dog.
-Segment 3 (automatic_segment_3.png): The image you've provided is extremely blurry and lacks clear details, making it difficult to discern any specific elements or provide a detailed description. It appears to be a grayscale photo with areas of varying shades, but due to the lack of clarity, I can't make out any features that might identify what the photo represents. If you have a clearer image or would like to discuss an aspect of this one, feel free to ask!
+"The image shows an indoor scene featuring a small, low wooden table or shelf against a wall with beige tiles. On top of the table, there are several items including a red envelope, some papers, and possibly books or magazines. The bottom shelf of the table appears to contain more items, but they're not clearly visible from this angle.
 
-Los segments 0 y 2 son los únicos con información, puesto que los 1 y 3 dicen que la imagen es confusa, falta claridad, etc. Por ello, tu respuesta debe seguir estrictamente el siguiente formato JSON:
+In front of the table, on the floor, there is a pair of shoes with black soles and white laces, indicating that someone might have recently removed them. The room has curtains that are partially open, allowing light in from outside. There doesn't seem to be any text or distinctive branding visible in this image. The style of the photograph is casual, capturing an everyday setting without any particular artistic intent."
 
-{
-    "segment 0": "dog",
-    "segment 2": "dog",
-}
+Tu respuesta debería detectar los objetos principales de esta escena, y ponerlos estrictamente en formato JSON, sin decir nada más:
 
-Es muy importante que respetes en todo momento este formato, no cambies absolutamente nada, y que no digas absolutamente nada más en tu respuesta. No des una introducción, no hables. Sólo quiero el JSON. También es esencial que, si los objetos son de la misma categoría, uses el mismo término (en este caso, "dog"). No uses sinónimos.
+"{
+	"1" : "wooden table",
+	"2" : "shelf",
+	"3" : "wall",
+	"4" : "beige tiles",
+	"5" : "papers",
+	"6" : "books",
+	"7" : "magazines",
+	"8" : "floor",
+	"9" : "shoes",
+	"10" : "curtains",
+	"11" : "wooden table",
+	
+}"
 
-Hago hincapié en la importancia de estos aspectos porque usaré tu respuesta directamente en un pipeline automatizado. No debes saltarte el formato ni mis indicaciones.
+Es importantísimo que respetes el formato JSON igual al que te he pasado. Escribe cada objeto en minúsculas. No escribas sinónimos, evita repetir objetos. Hago hincapié en la importancia de estos aspectos porque usaré tu respuesta directamente en un pipeline automatizado. No debes saltarte el formato ni mis indicaciones.

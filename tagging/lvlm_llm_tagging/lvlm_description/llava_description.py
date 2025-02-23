@@ -6,8 +6,7 @@ import time
 
 class LlavaDescriptor:
     """
-    A class to scan a folder for segmented images, generate descriptions using Ollama's llava model,
-    and save those descriptions to a text file.
+    A class to describe an image using Ollama's LLaVA model.
     """
 
     def __init__(
@@ -99,7 +98,7 @@ class LlavaDescriptor:
 
 
 def main():
-    descriptor = LlavaDescriptor(input_image_name="desk.jpg")
+    descriptor = LlavaDescriptor(input_image_name="dogs.jpg")
     descriptor.load_image()
     descriptor.describe_image()
 

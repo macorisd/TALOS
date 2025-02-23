@@ -1,0 +1,12 @@
+{
+    "1": "wooden table",
+    "2": "shelf",
+    "3": "wall",
+    "4": "beige tiles",
+    "5": "papers",
+    "6": "books",
+    "7": "magazines",
+    "8": "floor",
+    "9": "shoes",
+    "10": "curtains"
+}

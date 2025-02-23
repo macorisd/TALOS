@@ -13,12 +13,12 @@ model = AutoModelForZeroShotObjectDetection.from_pretrained(model_id).to(device)
 
 # Ruta de la imagen
 script_directory = os.path.dirname(os.path.abspath(__file__))
-image_path = os.path.join(script_directory, "2.jpg")
+image_path = os.path.join(script_directory, "dogs.jpg")
 image = Image.open(image_path)
 
 # Texto de consulta
 # text = "shoes. desk. sunglasses. paper sheets. curtain."
-text = "slipper. curtain. table. electronic. floor. office supply. room. sandal. shoe. stool"
+text = "dog. dirt path. bushes. hills. sky."
 
 
 # Procesamiento y predicción
