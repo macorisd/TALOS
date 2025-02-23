@@ -3,7 +3,7 @@
  * Written by Xinyu Huang
 '''
 
-# Execution: python ram_plus_tagging.py --image input_images/input_image.jpg --pretrained models/ram_plus_swin_large_14m.pth
+# Execution: python ram_plus_tagging.py --image input_images/2.jpg --pretrained models/ram_plus_swin_large_14m.pth
 
 import argparse
 import numpy as np
@@ -22,13 +22,13 @@ parser = argparse.ArgumentParser(
 parser.add_argument('--image',
                     metavar='DIR',
                     help='path to dataset',
-                    default='input_images/input_image.jpg')
+                    default='input_images/2.jpg')
 parser.add_argument('--pretrained',
                     metavar='DIR',
                     help='path to pretrained model',
                     default='models/ram_plus_swin_large_14m.pth')
 parser.add_argument('--image-size',
-                    default=384,
+                    default=640,
                     type=int,
                     metavar='N',
                     help='input image size (default: 448)')

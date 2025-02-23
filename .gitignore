@@ -6,8 +6,7 @@ __pycache__/
 tempCodeRunnerFile.py
 
 # Virtual Environments
-ram-env/
-grounding-dino-env/
+venvs/
 .env/
 
 # Visual Studio Code
@@ -16,7 +15,12 @@ grounding-dino-env/
 # Logs, Images and Output Files
 *.log
 *.out
+.jpg
+.txt
 
 # Model Checkpoints
 *.pth
 *.pt
+
+# External repositories
+external-repositories/

@@ -1,0 +1,25 @@
+I will give you a list of descriptions of image segments. The segments have been extracted using SAM2, and the image descriptions have been generated with LLaVA. I will provide the description of each segment, and your task is to tell me only the segments that you believe contain objects. Some segments may be confusing or blurry—discard those.
+
+Your response should be in JSON format (I will provide an example below) and should contain only the segments that, with absolute certainty, have a successful object detection. Specifically, in the JSON, you should indicate the class to which the detected object belongs, following the COCO dataset format but allowing for any category, not just COCO categories.
+
+Here is an example:
+
+Imagine I provide you with four descriptions like the following:
+
+Segment 0 (automatic_segment_0.png): The image shows a small dog in motion, possibly jumping or running. The dog has short hair and appears to be a breed with a compact build, commonly referred to as a "chug" which is a cross between a Chihuahua and a Pug. Its ears are erect, and the dog is looking directly at the camera with its mouth slightly open, giving an impression of excitement or playfulness. The background is plain and out of focus, emphasizing the dog as the central subject.
+Segment 1 (automatic_segment_1.png): The image you've provided appears to be rotated and upside down, making it difficult to see what is actually depicted. The orientation of the object or subject in relation to gravity seems off, which might suggest a playful manipulation of perspective rather than an accurate representation of the scene. If you have any specific questions about this image or need help with something else related to the content, feel free to ask!
+Segment 2 (automatic_segment_2.png): The image shows a dog that appears to be in motion, with one front paw raised as if it's either walking or running. The dog has distinctive characteristics such as long ears and a thick double coat of fur, which are common features of corgis. Its eyes are open wide, giving the impression of joy or excitement. The background is not visible due to the way the image is cropped, focusing solely on the dog.
+Segment 3 (automatic_segment_3.png): The image you've provided is extremely blurry and lacks clear details, making it difficult to discern any specific elements or provide a detailed description. It appears to be a grayscale photo with areas of varying shades, but due to the lack of clarity, I can't make out any features that might identify what the photo represents. If you have a clearer image or would like to discuss an aspect of this one, feel free to ask!
+
+Segments 0 and 2 are the only ones with useful information since segments 1 and 3 indicate that the image is unclear or lacks detail. Therefore, your response must strictly follow the JSON format below:
+
+{
+    "segment 0": "dog",
+    "segment 2": "dog"
+}
+
+It is crucial that you strictly adhere to this format. Do not change anything and do not include any additional text. No introduction, no extra explanation—just the JSON.
+
+Also, if multiple objects belong to the same category, use the same term (e.g., "dog"). Do not use synonyms.
+
+I emphasize these requirements because I will use your response directly in an automated pipeline. Do not deviate from the format or instructions.

@@ -1,0 +1,4 @@
+# GroundingDINO
+torch
+pillow
+transformers
