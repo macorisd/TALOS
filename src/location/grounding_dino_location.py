@@ -42,20 +42,18 @@ class GroundingDinoLocator:
         if os.path.isfile(input_image_path):
             self.input_image = Image.open(input_image_path)
         else:
-            raise FileNotFoundError(f"\n{self.STR_PREFIX} The image {input_image_name} was not found at {input_image_path}.")
+            raise FileNotFoundError(f"{self.STR_PREFIX} The image {input_image_name} was not found at {input_image_path}.\n")
         
-        # Input keywords directory path
-        self.input_keywords_dir = os.path.join(
+        # Input tags directory path
+        input_tags_dir = os.path.join(
             self.script_dir, 
-            "..",                
+            "..",
             "tagging",
-            "lvlm_llm_tagging",
-            "llm_keywording",
-            "output_keywords"
+            "output_tags"
         )
 
-        # Load keywords from the most recent .txt file in input_keywords_dir
-        self.input_keywords = self.read_keywords_from_file()
+        # Load tags from the most recent .txt file in input_tags_dir
+        self.input_tags = self.read_input_tags(input_tags_dir=input_tags_dir)
 
         # Output location directory path
         output_location_dir = os.path.join(
@@ -74,39 +72,39 @@ class GroundingDinoLocator:
         self.output_file_txt = os.path.join(output_location_dir, output_filename_txt)
         self.output_file_jpg = os.path.join(output_location_dir, output_filename_jpg)
 
-    def read_keywords_from_file(self) -> str: # TODO: cambiar a read_input_tags
+    def read_input_tags(self, input_tags_dir: str) -> str:
         """
-        Reads the keywords from the most recent .txt file in the keywords directory.
+        Reads the tags from the most recent .txt file in the tags directory.
         """
-        # Gather all .txt files in input_keywords_dir
+        # Gather all .txt files in input_tags_dir
         txt_files = [
-            os.path.join(self.input_keywords_dir, f)
-            for f in os.listdir(self.input_keywords_dir)
+            os.path.join(input_tags_dir, f)
+            for f in os.listdir(input_tags_dir)
             if f.endswith(".txt")
         ]
         if not txt_files:
-            raise FileNotFoundError(f"\n{self.STR_PREFIX} No .txt files found in {self.input_keywords_dir}")
+            raise FileNotFoundError(f"{self.STR_PREFIX} No .txt files found in {input_tags_dir}\n")
 
         # Select and read the most recently modified .txt file
         latest_txt_path = max(txt_files, key=os.path.getmtime)
         
         with open(latest_txt_path, "r", encoding="utf-8") as f:
-            keywords_content = f.read()
+            tags_content = f.read()
         
-        return keywords_content
+        return tags_content
     
-    def json_to_gd_prompt(self, keywords: str) -> str:
+    def json_to_gdino_prompt(self, tags: str) -> str:
         """
-        Converts the keywords JSON text to a Grounding Dino prompt.
+        Converts the tags JSON text to a Grounding DINO prompt.
         """
-        # Remove special characters from the keywords
-        keywords = re.sub(r"[^a-zA-Z0-9\s]", "", keywords)
+        # Remove special characters from the tags
+        tags = re.sub(r"[^a-zA-Z0-9\s]", "", tags)
 
-        # Split the keywords into a list
-        keywords_list = keywords.split()
+        # Split the tags into a list
+        tags_list = tags.split()
 
         # Build the Grounding Dino prompt
-        prompt = ". ".join(keywords_list) + "."
+        prompt = ". ".join(tags_list) + "."
 
         return prompt
     
@@ -114,8 +112,8 @@ class GroundingDinoLocator:
         """
         TODO
         """
-        # Convert the keywords JSON text to a Grounding Dino prompt
-        text = self.json_to_gd_prompt(self.input_keywords)
+        # Convert the tags JSON text to a Grounding Dino prompt
+        text = self.json_to_gdino_prompt(self.input_tags)
 
         # Process and predict
         inputs = self.processor(images=self.input_image, text=text, return_tensors="pt").to(self.model.device)
@@ -128,10 +126,12 @@ class GroundingDinoLocator:
             target_sizes=[self.input_image.size[::-1]]
         )[0]
 
+        print(f"{self.STR_PREFIX} Object detection results:\n{results}\n")
+
         # Save the results to a text file
         with open(self.output_file_txt, "w", encoding="utf-8") as f:
             f.write(str(results))
-            print(f"{self.STR_PREFIX} Text results saved to: {self.output_file_txt}")
+            print(f"{self.STR_PREFIX} Text results saved to: {self.output_file_txt}\n")
 
         return results
     
@@ -152,7 +152,7 @@ class GroundingDinoLocator:
         
         # Save the image with bounding boxes
         image.save(self.output_file_jpg)
-        print(f"\n{self.STR_PREFIX} Bounding box location image saved to: {self.output_file_jpg}")
+        print(f"{self.STR_PREFIX} Bounding box location image saved to: {self.output_file_jpg}")
 
         return image
 
