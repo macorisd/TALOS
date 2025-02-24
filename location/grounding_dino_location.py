@@ -13,7 +13,7 @@ class GroundingDinoLocator:
     def __init__(
             self,
             grounding_dino_model_id: str = "IDEA-Research/grounding-dino-base",
-            input_image_name: str = "dogs.jpg",            
+            input_image_name: str = "input_image.jpg",            
     ):
         """
         TODO
@@ -58,8 +58,12 @@ class GroundingDinoLocator:
             "output_location"
         )
 
-        # Create the output location directory
+        # Create the output directory if it does not exist
         os.makedirs(self.output_location_dir, exist_ok=True)
+
+        # Prepare timestamped output file
+        timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
+        self.output_filename = f"location_gdino_{timestamp}"
 
     def read_keywords_from_file(self) -> str:
         """
@@ -115,10 +119,8 @@ class GroundingDinoLocator:
             target_sizes=[self.input_image.size[::-1]]
         )[0]
 
-        # Save the results to a text file 
-        timestamp = time.strftime("%Y_%m_%d_%H_%M_%S")
-        output_filename = f"location_gdino_{timestamp}.txt"
-        output_file = os.path.join(self.output_location_dir, output_filename)
+        # Save the results to a text file         
+        output_file = os.path.join(self.output_location_dir, self.output_filename + ".txt")
 
         with open(output_file, "w", encoding="utf-8") as f:
             f.write(str(results))
@@ -142,9 +144,7 @@ class GroundingDinoLocator:
                 draw.text((box[0], box[1] - 10), f"{label}: {score:.2f}", fill="red", font=font)
         
         # Save the image with bounding boxes
-        timestamp = time.strftime("%Y_%m_%d_%H_%M_%S")
-        output_filename = f"location_gdino_{timestamp}.jpg"
-        output_file = os.path.join(self.output_location_dir, output_filename)
+        output_file = os.path.join(self.output_location_dir, self.output_filename + ".jpg")
 
         image.save(output_file)
         print(f"[LOCATION | GDINO] Result image saved to: {output_file}")

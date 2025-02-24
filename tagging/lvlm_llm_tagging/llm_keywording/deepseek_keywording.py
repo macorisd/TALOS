@@ -111,7 +111,7 @@ class DeepseekKeywordExtractor:
 
         return substring
 
-    def classify(self) -> str:
+    def extract_keywords(self) -> str:
         """
         Main workflow to locate the most recent .txt description, # TODO
         """
@@ -156,9 +156,9 @@ class DeepseekKeywordExtractor:
         return correct_substring
 
 def main():    
-    classifier = DeepseekKeywordExtractor(save_file=True)
-    final_answer = classifier.classify()
-    print("\nFinal correct answer substring:\n", final_answer)
+    keyword_extractor = DeepseekKeywordExtractor(save_file=True)
+    keyword_output = keyword_extractor.extract_keywords()
+    print("\nFinal correct answer substring:\n", keyword_output)
 
 if __name__ == "__main__":
     main()

@@ -15,8 +15,8 @@ venvs/
 # Logs, Images and Output Files
 *.log
 *.out
-.jpg
-.txt
+*.jpg
+*.txt
 
 # Model Checkpoints
 *.pth
