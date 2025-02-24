@@ -10,6 +10,8 @@ class GroundingDinoLocator:
     A class to locate objects in an image using the Grounding Dino model.
     """
 
+    STR_PREFIX = "[LOCATION | GDINO]"
+
     def __init__(
             self,
             grounding_dino_model_id: str = "IDEA-Research/grounding-dino-base",
@@ -18,6 +20,9 @@ class GroundingDinoLocator:
         """
         TODO
         """
+
+        print(f"\n{self.STR_PREFIX} Initializing Grounding DINO object locator...\n")
+
         self.script_dir = os.path.dirname(os.path.abspath(__file__))        
 
         # Load the processor and model
@@ -37,7 +42,7 @@ class GroundingDinoLocator:
         if os.path.isfile(input_image_path):
             self.input_image = Image.open(input_image_path)
         else:
-            raise FileNotFoundError(f"The image {input_image_name} was not found at {input_image_path}.")
+            raise FileNotFoundError(f"\n{self.STR_PREFIX} The image {input_image_name} was not found at {input_image_path}.")
         
         # Input keywords directory path
         self.input_keywords_dir = os.path.join(
@@ -53,19 +58,23 @@ class GroundingDinoLocator:
         self.input_keywords = self.read_keywords_from_file()
 
         # Output location directory path
-        self.output_location_dir = os.path.join(
+        output_location_dir = os.path.join(
             self.script_dir, 
             "output_location"
         )
 
         # Create the output directory if it does not exist
-        os.makedirs(self.output_location_dir, exist_ok=True)
+        os.makedirs(output_location_dir, exist_ok=True)
 
         # Prepare timestamped output file
         timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
-        self.output_filename = f"location_gdino_{timestamp}"
+        output_filename_txt = f"location_gdino_{timestamp}.txt"
+        output_filename_jpg = f"location_gdino_{timestamp}.jpg"
 
-    def read_keywords_from_file(self) -> str:
+        self.output_file_txt = os.path.join(output_location_dir, output_filename_txt)
+        self.output_file_jpg = os.path.join(output_location_dir, output_filename_jpg)
+
+    def read_keywords_from_file(self) -> str: # TODO: cambiar a read_input_tags
         """
         Reads the keywords from the most recent .txt file in the keywords directory.
         """
@@ -76,7 +85,7 @@ class GroundingDinoLocator:
             if f.endswith(".txt")
         ]
         if not txt_files:
-            raise FileNotFoundError(f"No .txt files found in {self.input_keywords_dir}")
+            raise FileNotFoundError(f"\n{self.STR_PREFIX} No .txt files found in {self.input_keywords_dir}")
 
         # Select and read the most recently modified .txt file
         latest_txt_path = max(txt_files, key=os.path.getmtime)
@@ -119,12 +128,10 @@ class GroundingDinoLocator:
             target_sizes=[self.input_image.size[::-1]]
         )[0]
 
-        # Save the results to a text file         
-        output_file = os.path.join(self.output_location_dir, self.output_filename + ".txt")
-
-        with open(output_file, "w", encoding="utf-8") as f:
+        # Save the results to a text file
+        with open(self.output_file_txt, "w", encoding="utf-8") as f:
             f.write(str(results))
-            print(f"[LOCATION | GDINO] Text results saved to: {output_file}")
+            print(f"{self.STR_PREFIX} Text results saved to: {self.output_file_txt}")
 
         return results
     
@@ -144,10 +151,8 @@ class GroundingDinoLocator:
                 draw.text((box[0], box[1] - 10), f"{label}: {score:.2f}", fill="red", font=font)
         
         # Save the image with bounding boxes
-        output_file = os.path.join(self.output_location_dir, self.output_filename + ".jpg")
-
-        image.save(output_file)
-        print(f"[LOCATION | GDINO] Result image saved to: {output_file}")
+        image.save(self.output_file_jpg)
+        print(f"\n{self.STR_PREFIX} Bounding box location image saved to: {self.output_file_jpg}")
 
         return image
 

@@ -6,11 +6,13 @@ import re
 
 class DeepseekKeywordExtractor:
     """
-    A class to # TODO
+    A class to extract keywords from an image description using the DeepSeek model.
     """
 
+    STR_PREFIX = "[TAGGING | KEYWORD EXTRACTION | DEEPSEEK]"
+
     def __init__(
-        self,        
+        self,
         deepseek_model_name: str = "deepseek-r1:14b",
         pipeline_description: str = None,  # The pipeline descriptions to be classified
         save_file: bool = True,  # Whether to save the classification results to a file
@@ -19,6 +21,9 @@ class DeepseekKeywordExtractor:
         """
         Initializes the paths, sets the timeout, and creates the classification directory.
         """
+
+        print(f"\n{self.STR_PREFIX} Initializing DeepSeek keyword extractor...\n")
+
         self.script_dir = os.path.dirname(os.path.abspath(__file__))
         self.deepseek_model_name = deepseek_model_name
         self.pipeline_description = pipeline_description
@@ -31,7 +36,7 @@ class DeepseekKeywordExtractor:
             self.prompt = f.read()
 
         if not pipeline_description:
-            # .txt file containing the image description (output from the LVLM description)
+            # Input descriptions directory path
             self.descriptions_dir = os.path.join(
                 self.script_dir,
                 "..",
@@ -39,11 +44,27 @@ class DeepseekKeywordExtractor:
                 "output_descriptions"
             )
 
-        # Directory to store the classification results
-        self.keywords_dir = os.path.join(self.script_dir, "output_keywords")
-        os.makedirs(self.keywords_dir, exist_ok=True)
+            # Load input description from the most recent .txt file in descriptions_dir
+            self.input_description = self.read_input_description()
 
-    def read_description_from_file(self) -> str:
+        # Output tags directory path
+        output_tags_dir = os.path.join(
+            self.script_dir,
+            "..",
+            "..",
+            "output_tags"
+        )
+
+        # Create the output directory if it does not exist
+        os.makedirs(output_tags_dir, exist_ok=True)
+
+        if save_file:
+            # Prepare timestamped output file
+            timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
+            output_filename = f"tags_deepseek_{timestamp}.txt"
+            self.output_file = os.path.join(output_tags_dir, output_filename)
+
+    def read_input_description(self) -> str:
         """
         Reads the description from the most recent .txt file in the descriptions directory.
         """
@@ -54,7 +75,7 @@ class DeepseekKeywordExtractor:
             if f.endswith(".txt")
         ]
         if not txt_files:
-            raise FileNotFoundError(f"No .txt files found in {self.descriptions_dir}")
+            raise FileNotFoundError(f"\n{self.STR_PREFIX} No .txt files found in {self.descriptions_dir}")
 
         # Select and read the most recently modified .txt file
         latest_txt_path = max(txt_files, key=os.path.getmtime)
@@ -115,7 +136,7 @@ class DeepseekKeywordExtractor:
         """
         Main workflow to locate the most recent .txt description, # TODO
         """
-        description_content = self.pipeline_description if self.pipeline_description else self.read_description_from_file()
+        description_content = self.pipeline_description if self.pipeline_description else self.input_description
 
         start_time = time.time()
         correct_substring = None
@@ -132,33 +153,28 @@ class DeepseekKeywordExtractor:
 
             deepseek_answer = response["message"]["content"]
 
-            print("Content:\n", deepseek_answer)
+            print(f"{self.STR_PREFIX} DeepSeek answer:\n", deepseek_answer + "\n")
 
             correct_substring = self.correct_answer_format(deepseek_answer)            
             if correct_substring is not None:
                 break
             else:
-                print("\nThe answer is not in the correct format. Trying again...\n")
+                print(f"{self.STR_PREFIX} The answer is not in the correct format. Trying again...\n")
         else:
-            raise TimeoutError(f"Timeout of {self.timeout} seconds reached without receiving a correct answer format.")
+            raise TimeoutError(f"{self.STR_PREFIX} Timeout of {self.timeout} seconds reached without receiving a correct answer format.\n")
 
         if self.save_file:
-            # Save the Deepseek answer with a timestamp
-            timestamp = time.strftime("%Y%m%d_%H%M%S")
-            output_filename = f"keywords_{timestamp}.txt"
-            output_path = os.path.join(self.keywords_dir, output_filename)
-
-            with open(output_path, "w", encoding="utf-8") as f:
+            with open(self.output_file, "w", encoding="utf-8") as f:
                 f.write(correct_substring)
 
-            print(f"Deepseek answer saved to {output_path}")
+            print(f"{self.STR_PREFIX} Deepseek answer substring saved to {self.output_file}\n")
 
+        print(f"{self.STR_PREFIX} Final correct answer substring:\n", correct_substring + "\n")
         return correct_substring
 
 def main():    
     keyword_extractor = DeepseekKeywordExtractor(save_file=True)
-    keyword_output = keyword_extractor.extract_keywords()
-    print("\nFinal correct answer substring:\n", keyword_output)
+    keyword_extractor.extract_keywords()
 
 if __name__ == "__main__":
     main()
