@@ -1,0 +1,11 @@
+{
+    "1": "wooden desk",
+    "2": "shelves",
+    "3": "white notepad",
+    "4": "papers",
+    "5": "books",
+    "6": "files",
+    "7": "black sports shoes",
+    "8": "beige curtain",
+    "9": "tiles"
+}

@@ -4,7 +4,7 @@ import time
 import json
 import re
 
-class DeepseekKeywordExtraction:
+class DeepseekKeywordExtractor:
     """
     A class to # TODO
     """
@@ -156,7 +156,7 @@ class DeepseekKeywordExtraction:
         return correct_substring
 
 def main():    
-    classifier = DeepseekKeywordExtraction(save_file=True)
+    classifier = DeepseekKeywordExtractor(save_file=True)
     final_answer = classifier.classify()
     print("\nFinal correct answer substring:\n", final_answer)
 

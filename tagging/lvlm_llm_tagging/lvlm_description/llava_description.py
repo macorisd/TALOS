@@ -98,7 +98,7 @@ class LlavaDescriptor:
 
 
 def main():
-    descriptor = LlavaDescriptor(input_image_name="dogs.jpg")
+    descriptor = LlavaDescriptor(input_image_name="desk.jpg")
     descriptor.load_image()
     descriptor.describe_image()
 
