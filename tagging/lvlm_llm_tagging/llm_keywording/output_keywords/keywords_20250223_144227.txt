@@ -1,7 +1,0 @@
-{
-    "1": "dog",
-    "2": "dirt path",
-    "3": "bushes",
-    "4": "hills",
-    "5": "sky"
-}
