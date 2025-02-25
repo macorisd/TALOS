@@ -1,0 +1,88 @@
+import time
+
+from tagging.ram_plus_tagging.ram_plus_tagging import RamPlusTagger
+from tagging.lvlm_llm_tagging.lvlm_description.llava_description import LlavaDescriptor
+from tagging.lvlm_llm_tagging.llm_keyword_extraction.deepseek_keyword_extraction import DeepseekKeywordExtractor
+from location.grounding_dino_location import GroundingDinoLocator
+
+RAM_PLUS = "[PIPELINE | TAGGING | RAM++]"
+LVLM_LLM = "[PIPELINE | TAGGING | DESCRIPTION & KEYWORD EXTRACTION]"
+LLAVA = "[PIPELINE | TAGGING | DESCRIPTION | LLAVA]"
+DEEPSEEK = "[PIPELINE | TAGGING | KEYWORD EXTRACTION | DEEPSEEK]"
+GROUNDING_DINO = "[PIPELINE | LOCATION | GDINO]"
+
+SEPARATOR = "---------------------------------------------------------"
+
+# TAGGING -------------------------------------------------------------------------------------
+
+def tagging(input_image_name: str, tagging_method: str, tagging_submethods: tuple[str, str]):
+
+    # RAM++
+
+    def tagging_ram_plus():
+        tagger = RamPlusTagger(
+            input_image_name=input_image_name
+        )
+        tagger.generate_tags()
+
+    # LLVM-LLM | LLAVA
+
+    def description_llava():
+        descriptor = LlavaDescriptor(input_image_name=input_image_name)    
+        descriptor.describe_image()
+
+    # LLVM-LLM | DEEPSEEK
+
+    def keyword_extraction_deepseek():
+        extractor = DeepseekKeywordExtractor()
+        extractor.extract_keywords()
+
+    # TAGGING
+
+    if tagging_method == RAM_PLUS:
+        print(f"{RAM_PLUS} {SEPARATOR}\n")
+        tagging_ram_plus()
+    elif tagging_method ==  LVLM_LLM:
+        print(f"{LVLM_LLM} {SEPARATOR}\n")
+        if tagging_submethods[0] == LLAVA:
+            print(f"{LLAVA} {SEPARATOR}")
+            description_llava()
+        if tagging_submethods[1] == DEEPSEEK:
+            print(f"{DEEPSEEK} {SEPARATOR}")
+            keyword_extraction_deepseek()
+
+# LOCATION -------------------------------------------------------------------------------------
+
+def location(input_image_name: str, location_method: str):
+
+    # GROUNDING DINO
+
+    def location_grounding_dino():
+        locator = GroundingDinoLocator(input_image_name=input_image_name)
+        location_output = locator.locate_objects()
+        locator.draw_bounding_boxes(location_output)
+
+    # LOCATION
+
+    if location_method == GROUNDING_DINO:
+        print(f"\n{GROUNDING_DINO} {SEPARATOR}")
+        location_grounding_dino()
+
+# PIPELINE -------------------------------------------------------------------------------------
+
+def pipeline(input_image_name: str, tagging_method: str, tagging_submethods: tuple[str, str], location_method: str):
+    print(f"\n[PIPELINE] Starting pipeline execution...\n")
+    tagging(input_image_name=input_image_name, tagging_method=tagging_method, tagging_submethods=tagging_submethods)
+    location(input_image_name=input_image_name, location_method=location_method)
+    print(f"\n[PIPELINE] Pipeline execution completed.\n")
+
+def main():
+    input_image_name = "desk.jpg"
+    tagging_method = LVLM_LLM
+    tagging_submethods = (LLAVA, DEEPSEEK)
+    location_method = GROUNDING_DINO
+
+    pipeline(input_image_name=input_image_name, tagging_method=tagging_method, tagging_submethods=tagging_submethods, location_method=location_method)
+
+if __name__ == "__main__":
+    main()
