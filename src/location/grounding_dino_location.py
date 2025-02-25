@@ -53,7 +53,11 @@ class GroundingDinoLocator:
         )
 
         # Load tags from the most recent .txt file in input_tags_dir
-        self.input_tags = self.read_input_tags(input_tags_dir=input_tags_dir)
+        self.input_tags, tags_filename = self.read_input_tags(input_tags_dir=input_tags_dir)
+
+        # Print input information
+        print(f"{self.STR_PREFIX} Input image filename: {input_image_path}\n")
+        print(f"{self.STR_PREFIX} Input tags filename: {input_tags_dir}/{tags_filename}\n")
 
         # Output location directory path
         output_location_dir = os.path.join(
@@ -70,11 +74,14 @@ class GroundingDinoLocator:
         output_filename_jpg = f"location_gdino_{timestamp}.jpg"
 
         self.output_file_txt = os.path.join(output_location_dir, output_filename_txt)
-        self.output_file_jpg = os.path.join(output_location_dir, output_filename_jpg)
+        self.output_file_jpg = os.path.join(output_location_dir, output_filename_jpg)    
 
-    def read_input_tags(self, input_tags_dir: str) -> str:
+    def read_input_tags(self, input_tags_dir: str) -> tuple[str, str]:
         """
         Reads the tags from the most recent .txt file in the tags directory.
+
+        Returns:
+            tuple[str, str]: A tuple containing the content of the file and the filename.
         """
         # Gather all .txt files in input_tags_dir
         txt_files = [
@@ -85,13 +92,18 @@ class GroundingDinoLocator:
         if not txt_files:
             raise FileNotFoundError(f"{self.STR_PREFIX} No .txt files found in {input_tags_dir}\n")
 
-        # Select and read the most recently modified .txt file
+        # Select the most recently modified .txt file
         latest_txt_path = max(txt_files, key=os.path.getmtime)
         
+        # Extract the filename (without the full path)
+        filename = os.path.basename(latest_txt_path)
+        
+        # Read the content of the file
         with open(latest_txt_path, "r", encoding="utf-8") as f:
             tags_content = f.read()
         
-        return tags_content
+        # Return a tuple of (content, filename)
+        return tags_content, filename
     
     def json_to_gdino_prompt(self, tags: str) -> str:
         """

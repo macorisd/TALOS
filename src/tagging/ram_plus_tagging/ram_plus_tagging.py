@@ -2,6 +2,7 @@ import os
 import torch
 import time
 from PIL import Image
+import json
 from ram.models import ram_plus
 from ram import inference_ram as inference
 from ram import get_transform
@@ -69,6 +70,22 @@ class RamPlusTagger:
             output_filename = f"tags_ram_plus_{timestamp}.txt"
             self.output_file = os.path.join(output_tags_dir, output_filename)
 
+    def ram_tags_to_json(self, tags: str) -> str:
+        """
+        Convert RAM++ tags to JSON format.
+        """
+        # Split the tags by the pipe character and strip any extra whitespace
+        tags = tags.split('|')
+        tags = [tag.strip() for tag in tags]
+        
+        # Create a dictionary with numbered keys
+        tags_dict = {str(i+1): tag for i, tag in enumerate(tags)}
+        
+        # Convert the dictionary to a JSON string with indentation
+        tags_json = json.dumps(tags_dict, indent=4, ensure_ascii=False)
+        
+        return tags_json
+
     def generate_tags(self) -> str:
         """
         Generate tags from the input image.
@@ -78,6 +95,7 @@ class RamPlusTagger:
 
         while time.time() - start_time < self.timeout:
             with torch.no_grad():
+                # Generate tags
                 res = inference(self.image, self.model)
                 if res and res[0].strip():
                     tags = res[0]
@@ -86,7 +104,8 @@ class RamPlusTagger:
         else:
             raise TimeoutError(f"{self.STR_PREFIX} Timeout of {self.timeout} seconds reached without receiving valid tags.\n")
 
-        print(f"{self.STR_PREFIX} Image tags: {tags}\n")
+        tags = self.ram_tags_to_json(tags)
+        print(f"\n{self.STR_PREFIX} Image tags: {tags}\n")
 
         # Save tags to file
         if self.save_file:
