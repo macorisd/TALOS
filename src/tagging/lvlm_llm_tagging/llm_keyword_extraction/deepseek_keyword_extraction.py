@@ -84,6 +84,12 @@ class DeepseekKeywordExtractor:
             description_content = f.read()
 
         return description_content
+    
+    def remove_thoughts(self, text: str) -> str:
+        """
+        Removes the <think></think> part of the answer.
+        """
+        return text.split("</think>")[1]
 
     def correct_answer_format(self, text: str) -> str:
         """
@@ -155,6 +161,10 @@ class DeepseekKeywordExtractor:
 
             print(f"{self.STR_PREFIX} DeepSeek answer:\n", deepseek_answer + "\n")
 
+            # Remove the <think></think> part of the answer
+            deepseek_answer = self.remove_thoughts(deepseek_answer)            
+
+            # Check if the answer is in the correct format
             correct_substring = self.correct_answer_format(deepseek_answer)            
             if correct_substring is not None:
                 break
