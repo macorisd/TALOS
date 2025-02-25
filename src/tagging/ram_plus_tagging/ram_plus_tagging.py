@@ -33,8 +33,7 @@ class RamPlusTagger:
         self.timeout = timeout
 
         # Load the model
-        # ram_plus_model_path = os.path.join(self.script_dir, 'models', ram_plus_model_name)
-        ram_plus_model_path = "models/" + ram_plus_model_name
+        ram_plus_model_path = os.path.join(self.script_dir, 'models', ram_plus_model_name)        
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')        
         self.transform = get_transform(image_size=image_size)
         self.model = ram_plus(pretrained=ram_plus_model_path, image_size=image_size, vit='swin_l').eval().to(device)        
