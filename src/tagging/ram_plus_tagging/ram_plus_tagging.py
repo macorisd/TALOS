@@ -1,3 +1,6 @@
+import warnings
+warnings.filterwarnings("ignore", module="timm")
+
 import os
 import torch
 import time
