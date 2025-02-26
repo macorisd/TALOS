@@ -23,4 +23,4 @@ venvs/
 *.pt
 
 # External repositories
-external-repositories/
+external-repos/
