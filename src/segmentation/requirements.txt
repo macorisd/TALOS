@@ -1,0 +1,5 @@
+segment-anything
+hydra-core
+iopath
+opencv-python
+matplotlib

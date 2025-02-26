@@ -16,7 +16,10 @@ class GroundingDinoLocator:
     def __init__(
             self,
             grounding_dino_model_id: str = "IDEA-Research/grounding-dino-base",
-            input_image_name: str = "input_image.jpg",            
+            input_image_name: str = "input_image.jpg",
+            score_threshold: float = 0.3,
+            save_file_json: bool = True,
+            save_file_jpg: bool = True
     ):
         """
         TODO
@@ -24,7 +27,10 @@ class GroundingDinoLocator:
 
         print(f"\n{self.STR_PREFIX} Initializing Grounding DINO object locator...\n")
 
-        self.script_dir = os.path.dirname(os.path.abspath(__file__))        
+        self.script_dir = os.path.dirname(os.path.abspath(__file__))
+        self.score_threshold = score_threshold
+        self.save_file_json = save_file_json
+        self.save_file_jpg = save_file_jpg
 
         # Load the processor and model
         device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -66,16 +72,21 @@ class GroundingDinoLocator:
             "output_location"
         )
 
-        # Create the output directory if it does not exist
-        os.makedirs(output_location_dir, exist_ok=True)
+        if save_file_json or save_file_jpg:
+            # Create the output directory if it does not exist
+            os.makedirs(output_location_dir, exist_ok=True)
+            
+            # Prepare timestamped output file
+            timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
 
-        # Prepare timestamped output file
-        timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
-        output_filename_json = f"location_gdino_{timestamp}.json"
-        output_filename_jpg = f"location_gdino_{timestamp}.jpg"
-
-        self.output_file_json = os.path.join(output_location_dir, output_filename_json)
-        self.output_file_jpg = os.path.join(output_location_dir, output_filename_jpg)    
+            if save_file_json:
+                # Prepare JSON output file
+                output_filename_json = f"location_gdino_{timestamp}.json"
+                self.output_file_json = os.path.join(output_location_dir, output_filename_json)
+            if save_file_jpg:
+                # Prepare JPG output file
+                output_filename_jpg = f"location_gdino_{timestamp}.jpg"
+                self.output_file_jpg = os.path.join(output_location_dir, output_filename_jpg)
 
     def read_input_tags(self, input_tags_dir: str) -> tuple[str, str]:
         """
@@ -123,16 +134,17 @@ class GroundingDinoLocator:
     
     def gdino_results_to_json(self, results: dict) -> str:
         """
-        Converts the Grounding Dino results to a JSON string.
-        """        
-        # scores = results.get("scores", torch.tensor([])).tolist()
+        Converts the Grounding DINO results to a JSON string.
+        """
+        scores = results.get("scores", torch.tensor([])).tolist()
         boxes = results.get("boxes", torch.tensor([])).tolist()
         labels = results.get("labels", [])
                 
         result = []
-        for label, bbox in zip(labels, boxes):
+        for label, bbox, score in zip(labels, boxes, scores):
             obj = {
                 "label": label,
+                "score": float(score),
                 "bbox": {
                     "x_min": bbox[0],
                     "y_min": bbox[1],
@@ -142,14 +154,50 @@ class GroundingDinoLocator:
             }
             result.append(obj)
         
-        return result 
+        return result
     
-    def locate_objects(self) -> dict:
+    def filter_confidence(self, results: dict, threshold: float) -> dict:
+        """
+        Filters the results based on the confidence threshold.
+        """
+        filtered_results = [result for result in results if result["score"] > threshold]
+        return filtered_results
+    
+    def draw_bounding_boxes(self, results: dict) -> Image:
+        """
+        Draws bounding boxes around the detected objects in the image.
+        """    
+        image = self.input_image.copy()
+        draw = ImageDraw.Draw(image)        
+        font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 20)
+
+        # Draw bounding boxes for each detected object
+        for obj in results:
+            label = obj.get("label", "unknown")
+            score = obj.get("score", 0.0)
+            bbox = obj.get("bbox", {})
+            
+            # Extract bounding box coordinates
+            x_min = int(bbox.get("x_min", 0))
+            y_min = int(bbox.get("y_min", 0))
+            x_max = int(bbox.get("x_max", 0))
+            y_max = int(bbox.get("y_max", 0))
+            
+            # Draw the bounding box
+            draw.rectangle([x_min, y_min, x_max, y_max], outline="red", width=3)
+            
+            # Draw the label and score
+            text = f"{label}: {score:.2f}"
+            draw.text((x_min, y_min - 20), text, fill="red", font=font)
+
+        return image
+    
+    def locate_objects(self, input_tags: str) -> dict:
         """
         TODO
         """
         # Convert the tags JSON text to a Grounding Dino prompt
-        text = self.json_to_gdino_prompt(self.input_tags)
+        text = self.json_to_gdino_prompt(input_tags)
 
         # Process and predict
         inputs = self.processor(images=self.input_image, text=text, return_tensors="pt").to(self.model.device)
@@ -164,44 +212,36 @@ class GroundingDinoLocator:
 
         print(f"{self.STR_PREFIX} Object detection results:\n{results}\n")
 
+        # Convert the results to JSON format
         results_json = self.gdino_results_to_json(results)
-        print(f"{self.STR_PREFIX} JSON results:\n{str(results_json)}\n")
 
-        # Save the results to a text file
-        with open(self.output_file_json, "w", encoding="utf-8") as f:
-            json.dump(results_json, f, indent=4)
-            print(f"{self.STR_PREFIX} Text results saved to: {self.output_file_json}\n")
+        # Filter the results based on the confidence threshold
+        results_json = self.filter_confidence(results_json, threshold=self.score_threshold)
 
-        return results
-    
-    def draw_bounding_boxes(self, results: dict) -> Image:
-        """
-        Draws bounding boxes around the detected objects in the image.
-        """    
-        image = self.input_image.copy()
-        draw = ImageDraw.Draw(image)        
-        font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 20)
-
-        # Draw bounding boxes
-        for score, box, label in zip(results["scores"], results["boxes"], results["text_labels"]):
-            if score > 0.1:
-                box = [int(b) for b in box.tolist()]
-                draw.rectangle(box, outline="red", width=3)
-                draw.text((box[0], box[1] - 10), f"{label}: {score:.2f}", fill="red", font=font)
+        print(f"{self.STR_PREFIX} JSON results:\n{json.dumps(results_json, indent=4)}\n")
         
-        # Save the image with bounding boxes
-        image.save(self.output_file_jpg)
-        print(f"{self.STR_PREFIX} Bounding box location image saved to: {self.output_file_jpg}")
+        if self.save_file_json:
+            # Save the results to a JSON file
+            with open(self.output_file_json, "w", encoding="utf-8") as f:
+                json.dump(results_json, f, indent=4)
+                print(f"{self.STR_PREFIX} Text results saved to: {self.output_file_json}\n")
 
-        return image
+        if self.save_file_jpg:
+            # Draw bounding boxes around the detected objects
+            results_image = self.draw_bounding_boxes(results_json)
+
+            # Save the image with bounding boxes
+            results_image.save(self.output_file_jpg)
+            print(f"{self.STR_PREFIX} Bounding box location image saved to: {self.output_file_jpg}")
+
+        return results_json
 
 def main():
     """
     Main function for the Grounding Dino Locator.
     """
     locator = GroundingDinoLocator(input_image_name="desk.jpg")
-    location_output = locator.locate_objects()
-    locator.draw_bounding_boxes(location_output)
+    locator.locate_objects(locator.input_tags)
 
 
 if __name__ == "__main__":

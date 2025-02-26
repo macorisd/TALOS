@@ -16,7 +16,7 @@ venvs/
 *.log
 *.out
 *.jpg
-*.txt
+output_*
 
 # Model Checkpoints
 *.pth
