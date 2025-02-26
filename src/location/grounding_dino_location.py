@@ -4,6 +4,7 @@ from transformers import AutoProcessor, AutoModelForZeroShotObjectDetection
 import os
 import re
 import time
+import json
 
 class GroundingDinoLocator:
     """
@@ -70,10 +71,10 @@ class GroundingDinoLocator:
 
         # Prepare timestamped output file
         timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
-        output_filename_txt = f"location_gdino_{timestamp}.txt"
+        output_filename_json = f"location_gdino_{timestamp}.json"
         output_filename_jpg = f"location_gdino_{timestamp}.jpg"
 
-        self.output_file_txt = os.path.join(output_location_dir, output_filename_txt)
+        self.output_file_json = os.path.join(output_location_dir, output_filename_json)
         self.output_file_jpg = os.path.join(output_location_dir, output_filename_jpg)    
 
     def read_input_tags(self, input_tags_dir: str) -> tuple[str, str]:
@@ -120,6 +121,29 @@ class GroundingDinoLocator:
 
         return prompt
     
+    def gdino_results_to_json(self, results: dict) -> str:
+        """
+        Converts the Grounding Dino results to a JSON string.
+        """        
+        # scores = results.get("scores", torch.tensor([])).tolist()
+        boxes = results.get("boxes", torch.tensor([])).tolist()
+        labels = results.get("labels", [])
+                
+        result = []
+        for label, bbox in zip(labels, boxes):
+            obj = {
+                "label": label,
+                "bbox": {
+                    "x_min": bbox[0],
+                    "y_min": bbox[1],
+                    "x_max": bbox[2],
+                    "y_max": bbox[3]
+                }
+            }
+            result.append(obj)
+        
+        return result 
+    
     def locate_objects(self) -> dict:
         """
         TODO
@@ -140,10 +164,13 @@ class GroundingDinoLocator:
 
         print(f"{self.STR_PREFIX} Object detection results:\n{results}\n")
 
+        results_json = self.gdino_results_to_json(results)
+        print(f"{self.STR_PREFIX} JSON results:\n{str(results_json)}\n")
+
         # Save the results to a text file
-        with open(self.output_file_txt, "w", encoding="utf-8") as f:
-            f.write(str(results))
-            print(f"{self.STR_PREFIX} Text results saved to: {self.output_file_txt}\n")
+        with open(self.output_file_json, "w", encoding="utf-8") as f:
+            json.dump(results_json, f, indent=4)
+            print(f"{self.STR_PREFIX} Text results saved to: {self.output_file_json}\n")
 
         return results
     
