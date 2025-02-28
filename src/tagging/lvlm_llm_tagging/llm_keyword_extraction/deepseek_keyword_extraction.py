@@ -61,7 +61,7 @@ class DeepseekKeywordExtractor:
         if save_file:
             # Prepare timestamped output file
             timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
-            output_filename = f"tags_deepseek_{timestamp}.txt"
+            output_filename = f"tags_deepseek_{timestamp}.json"
             self.output_file = os.path.join(output_tags_dir, output_filename)
 
     def read_input_description(self) -> str:
@@ -91,7 +91,7 @@ class DeepseekKeywordExtractor:
         """
         return text.split("</think>")[1]
 
-    def correct_answer_format(self, text: str) -> str:
+    def correct_answer_format(self, text: str) -> dict:
         """
         Checks if there is a substring within the given text that starts with '{' and ends with '}'
         and follows the exact format:
@@ -136,7 +136,7 @@ class DeepseekKeywordExtractor:
             if not isinstance(value, str):
                 return None
 
-        return substring
+        return parsed_data
 
     def extract_keywords(self) -> str:
         """
@@ -145,7 +145,7 @@ class DeepseekKeywordExtractor:
         description_content = self.pipeline_description if self.pipeline_description else self.input_description
 
         start_time = time.time()
-        correct_substring = None
+        correct_json = None
         while time.time() - start_time < self.timeout:
             response = ollama.chat(
                 model=self.deepseek_model_name,
@@ -165,8 +165,8 @@ class DeepseekKeywordExtractor:
             deepseek_answer = self.remove_thoughts(deepseek_answer)            
 
             # Check if the answer is in the correct format
-            correct_substring = self.correct_answer_format(deepseek_answer)            
-            if correct_substring is not None:
+            correct_json = self.correct_answer_format(deepseek_answer)
+            if correct_json is not None:
                 break
             else:
                 print(f"{self.STR_PREFIX} The answer is not in the correct format. Trying again...\n")
@@ -175,12 +175,12 @@ class DeepseekKeywordExtractor:
 
         if self.save_file:
             with open(self.output_file, "w", encoding="utf-8") as f:
-                f.write(correct_substring)
+                json.dump(correct_json, f, ensure_ascii=False, indent=4)
 
             print(f"{self.STR_PREFIX} Deepseek answer substring saved to {self.output_file}\n")
 
-        print(f"{self.STR_PREFIX} Final correct answer substring:\n", correct_substring + "\n")
-        return correct_substring
+        print(f"{self.STR_PREFIX} Final correct answer:\n", json.dumps(correct_json, indent=4) + "\n")
+        return correct_json
 
 def main():    
     keyword_extractor = DeepseekKeywordExtractor(save_file=True)
