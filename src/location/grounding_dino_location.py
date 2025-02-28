@@ -59,7 +59,7 @@ class GroundingDinoLocator:
             "output_tags"
         )
 
-        # Load tags from the most recent .txt file in input_tags_dir
+        # Load tags from the most recent .json file in input_tags_dir
         self.input_tags, tags_filename = self.read_input_tags(input_tags_dir=input_tags_dir)
 
         # Print input information
@@ -88,53 +88,50 @@ class GroundingDinoLocator:
                 output_filename_jpg = f"location_gdino_{timestamp}.jpg"
                 self.output_file_jpg = os.path.join(output_location_dir, output_filename_jpg)
 
-    def read_input_tags(self, input_tags_dir: str) -> tuple[str, str]:
+    def read_input_tags(self, input_tags_dir: str) -> tuple[dict, str]:
         """
-        Reads the tags from the most recent .txt file in the tags directory.
+        Reads the tags from the most recent .json file in the tags directory.
 
         Returns:
-            tuple[str, str]: A tuple containing the content of the file and the filename.
+            tuple[str, str]: A tuple containing the content of the file as a dictionary and the filename.
         """
-        # Gather all .txt files in input_tags_dir
-        txt_files = [
+        # Gather all .json files in input_tags_dir
+        json_files = [
             os.path.join(input_tags_dir, f)
             for f in os.listdir(input_tags_dir)
-            if f.endswith(".txt")
+            if f.endswith(".json")
         ]
-        if not txt_files:
-            raise FileNotFoundError(f"{self.STR_PREFIX} No .txt files found in {input_tags_dir}\n")
+        if not json_files:
+            raise FileNotFoundError(f"{self.STR_PREFIX} No .json files found in {input_tags_dir}\n")
 
-        # Select the most recently modified .txt file
-        latest_txt_path = max(txt_files, key=os.path.getmtime)
+        # Select the most recently modified .json file
+        latest_json_path = max(json_files, key=os.path.getmtime)
         
         # Extract the filename (without the full path)
-        filename = os.path.basename(latest_txt_path)
+        filename = os.path.basename(latest_json_path)
         
         # Read the content of the file
-        with open(latest_txt_path, "r", encoding="utf-8") as f:
-            tags_content = f.read()
+        with open(latest_json_path, "r", encoding="utf-8") as f:
+            tags_content = json.load(f)  # Cargar el contenido como un diccionario
         
         # Return a tuple of (content, filename)
         return tags_content, filename
     
-    def json_to_gdino_prompt(self, tags: str) -> str:
+    def json_to_gdino_prompt(self, tags: dict) -> str:
         """
-        Converts the tags JSON text to a Grounding DINO prompt.
+        Converts the tags dictionary to a Grounding DINO prompt.
         """
-        # Remove special characters from the tags
-        tags = re.sub(r"[^a-zA-Z0-9\s]", "", tags)
-
-        # Split the tags into a list
-        tags_list = tags.split()
-
+        # Extract the tags from the dictionary
+        tags_list = [tag for tag in tags.values()]
+        
         # Build the Grounding Dino prompt
         prompt = ". ".join(tags_list) + "."
 
         return prompt
     
-    def gdino_results_to_json(self, results: dict) -> str:
+    def gdino_results_to_json(self, results: dict) -> dict:
         """
-        Converts the Grounding DINO results to a JSON string.
+        Converts the Grounding DINO results to a JSON dict.
         """
         scores = results.get("scores", torch.tensor([])).tolist()
         boxes = results.get("boxes", torch.tensor([])).tolist()
@@ -238,7 +235,7 @@ class GroundingDinoLocator:
 
 def main():
     """
-    Main function for the Grounding Dino Locator.
+    Main function for the Grounding DINO Locator.
     """
     locator = GroundingDinoLocator(input_image_name="desk.jpg")
     locator.locate_objects(locator.input_tags)
