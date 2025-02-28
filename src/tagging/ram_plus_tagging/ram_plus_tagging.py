@@ -69,10 +69,10 @@ class RamPlusTagger:
         if save_file:
             # Prepare timestamped output file
             timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
-            output_filename = f"tags_ram_plus_{timestamp}.txt"
+            output_filename = f"tags_ram_plus_{timestamp}.json"
             self.output_file = os.path.join(output_tags_dir, output_filename)
 
-    def ram_tags_to_json(self, tags: str) -> str:
+    def ram_tags_to_json(self, tags: str) -> dict:
         """
         Convert RAM++ tags to JSON format.
         """
@@ -83,10 +83,7 @@ class RamPlusTagger:
         # Create a dictionary with numbered keys
         tags_dict = {str(i+1): tag for i, tag in enumerate(tags)}
         
-        # Convert the dictionary to a JSON string with indentation
-        tags_json = json.dumps(tags_dict, indent=4, ensure_ascii=False)
-        
-        return tags_json
+        return tags_dict
 
     def generate_tags(self) -> str:
         """
@@ -106,13 +103,13 @@ class RamPlusTagger:
         else:
             raise TimeoutError(f"{self.STR_PREFIX} Timeout of {self.timeout} seconds reached without receiving valid tags.\n")
 
-        tags = self.ram_tags_to_json(tags)
+        tags_json = self.ram_tags_to_json(tags)
         print(f"\n{self.STR_PREFIX} Image tags: {tags}\n")
 
         # Save tags to file
         if self.save_file:
             with open(self.output_file, 'w', encoding='utf-8') as f:
-                f.write(tags)
+                json.dump(tags_json, f, ensure_ascii=False, indent=4)
             print(f"{self.STR_PREFIX} Tags saved to {self.output_file}\n")
         else:
             print(f"{self.STR_PREFIX} Saving file is disabled. Tags were not saved.\n")
