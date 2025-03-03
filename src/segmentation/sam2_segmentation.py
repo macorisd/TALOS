@@ -18,9 +18,9 @@ class Sam2Segmenter:
     def __init__(
         self,        
         sam2_model_name: str = "facebook/sam2-hiera-large",
-        input_image_name: str = "input_image.jpg",
-        save_file_json: bool = True,
+        input_image_name: str = "input_image.jpg",        
         save_files_jpg: bool = True,
+        save_files_npy: bool = True,        
         timeout: int = 120  # Timeout in seconds
     ):
         """
@@ -30,9 +30,9 @@ class Sam2Segmenter:
         print(f"\n{self.STR_PREFIX} Initializing SAM2 instance segmenter...\n")
         print(f"{self.STR_PREFIX} Input image name: {input_image_name}\n")
 
-        self.script_dir = os.path.dirname(os.path.abspath(__file__))
-        self.save_file_json = save_file_json
+        self.script_dir = os.path.dirname(os.path.abspath(__file__))        
         self.save_files_jpg = save_files_jpg
+        self.save_files_npy = save_files_npy
         self.timeout = timeout
 
         # Load SAM2 predictor
@@ -74,7 +74,7 @@ class Sam2Segmenter:
             "output_segments"
         )
 
-        if save_files_jpg or save_file_json:
+        if save_files_jpg or save_files_npy:
             # Create the output directory if it does not exist
             os.makedirs(output_segments_dir, exist_ok=True)
 
@@ -90,10 +90,11 @@ class Sam2Segmenter:
             # Create the timestamped output directory 
             os.makedirs(output_timestamped_segments_dir)
 
-            if save_file_json:
-                # Prepare JSON output file
-                output_filename_json = f"segmentation_sam2_{timestamp}.json"
-                self.output_file_json = os.path.join(output_timestamped_segments_dir, output_filename_json)
+            if save_files_npy:
+                self.output_files_npy = [
+                    os.path.join(output_timestamped_segments_dir, f"segment_{i}_mask.npy")
+                    for i in range(len(self.input_bbox_location))
+                ]
 
             if save_files_jpg:
                 # Prepare JPG output files
@@ -130,12 +131,8 @@ class Sam2Segmenter:
         """
         print(f"{self.STR_PREFIX} Starting segmentation process...\n")
 
-        # List to store segmentation results
-        segmentation_results = []
-
         # Iterate over each instance in the input_bbox_location
-        for i, instance in enumerate(self.input_bbox_location):
-            label = instance.get("label", "unknown")            
+        for i, instance in enumerate(self.input_bbox_location):                      
             bbox = instance.get("bbox", {})
             
             # Extract bounding box coordinates
@@ -156,14 +153,6 @@ class Sam2Segmenter:
             best_mask_index = np.argmax(scores)
             best_mask = masks[best_mask_index]
 
-            # Store the segmentation result
-            segmentation_result = {
-                "label": label,                
-                "bbox": bbox,
-                "mask": best_mask.tolist()  # Convert mask to list for JSON serialization
-            }
-            segmentation_results.append(segmentation_result)
-
             # Save the segmented image if save_files_jpg is True
             if self.save_files_jpg:
                 # Create an overlay image with the mask
@@ -176,18 +165,25 @@ class Sam2Segmenter:
                 alpha = 0.5  # Transparency level
                 overlayed_image = cv2.addWeighted(self.input_image, 1 - alpha, mask_overlay, alpha, 0)
 
+                # Add the label to the image
+                label = instance.get("label", "unknown")
+                font = cv2.FONT_HERSHEY_SIMPLEX
+                font_scale = 2
+                thickness = 2
+                text_size = cv2.getTextSize(label, font, font_scale, thickness)[0]
+                text_x, text_y = 10, 10 + text_size[1]  # Position in top-left corner
+                cv2.putText(overlayed_image, label, (text_x, text_y), font, font_scale, color.tolist()[0], thickness)
+
                 # Save the overlayed image
                 output_image_path = self.output_files_jpg[i]
                 cv2.imwrite(output_image_path, cv2.cvtColor(overlayed_image, cv2.COLOR_RGB2BGR))
                 print(f"{self.STR_PREFIX} Segmented image for instance {i} saved at: {output_image_path}")
 
-        # Save the segmentation results to a JSON file if save_file_json is True
-        if self.save_file_json:
-            with open(self.output_file_json, "w") as f:
-                json.dump(segmentation_results, f, indent=4)
-                print(f"{self.STR_PREFIX} Segmentation results saved to: {self.output_file_json}")
-
-        return segmentation_results
+            # Save the segmentation results to a JSON file if save_files_npy is True
+            if self.save_files_npy:
+                output_npy_path = self.output_files_npy[i]
+                np.save(output_npy_path, best_mask)
+                print(f"{self.STR_PREFIX} Segmented mask for instance {i} saved at: {output_npy_path}")
     
 def main():
     segmenter = Sam2Segmenter(
