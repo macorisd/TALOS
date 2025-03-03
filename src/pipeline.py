@@ -5,12 +5,14 @@ from tagging.ram_plus_tagging.ram_plus_tagging import RamPlusTagger
 from tagging.lvlm_llm_tagging.lvlm_description.llava_description import LlavaDescriptor
 from tagging.lvlm_llm_tagging.llm_keyword_extraction.deepseek_keyword_extraction import DeepseekKeywordExtractor
 from location.grounding_dino_location import GroundingDinoLocator
+from segmentation.sam2_segmentation import Sam2Segmenter
 
 RAM_PLUS = "[PIPELINE | TAGGING | RAM++]"
 LVLM_LLM = "[PIPELINE | TAGGING | DESCRIPTION & KEYWORD EXTRACTION]"
 LLAVA = "[PIPELINE | TAGGING | DESCRIPTION | LLAVA]"
 DEEPSEEK = "[PIPELINE | TAGGING | KEYWORD EXTRACTION | DEEPSEEK]"
 GROUNDING_DINO = "[PIPELINE | LOCATION | GDINO]"
+SAM2 = "[PIPELINE | SEGMENTATION | SAM2]"
 
 # TAGGING -------------------------------------------------------------------------------------
 
@@ -67,26 +69,52 @@ def location(input_image_name: str, location_method: str):
         print_green(f"\n{GROUNDING_DINO}")
         location_grounding_dino()
 
+# SEGMENTATION -------------------------------------------------------------------------------------
+
+def segmentation(input_image_name: str, segmentation_method: str):
+
+    # SAM2
+
+    def segmentation_sam2():
+        segmenter = Sam2Segmenter(
+            input_image_name=input_image_name
+        )
+        segmenter.segment_image()
+
+    # SEGMENTATION
+
+    if segmentation_method == SAM2:
+        print_green(f"\n{SAM2}")
+        segmentation_sam2()
+
 # PIPELINE -------------------------------------------------------------------------------------
 
-def pipeline(input_image_name: str, tagging_method: str, tagging_submethods: tuple[str, str], location_method: str):
+def pipeline(input_image_name: str, tagging_method: str, tagging_submethods: tuple[str, str], location_method: str, segmentation_method: str):
     start_time = time.time()
 
     print_purple(f"\n[PIPELINE] Starting pipeline execution...\n")
 
     tagging(input_image_name=input_image_name, tagging_method=tagging_method, tagging_submethods=tagging_submethods)
     location(input_image_name=input_image_name, location_method=location_method)
+    segmentation(input_image_name=input_image_name, segmentation_method=segmentation_method)
 
     end_time = time.time()
     print_purple(f"\n[PIPELINE] Pipeline execution completed in {end_time - start_time} seconds.\n")
 
 def main():
-    input_image_name = "desk.jpg"
+    input_image_name = "stop_sign.jpg"
     tagging_method = LVLM_LLM
     tagging_submethods = (LLAVA, DEEPSEEK)
     location_method = GROUNDING_DINO
+    segmentation_method = SAM2
 
-    pipeline(input_image_name=input_image_name, tagging_method=tagging_method, tagging_submethods=tagging_submethods, location_method=location_method)
+    pipeline(
+        input_image_name=input_image_name, 
+        tagging_method=tagging_method, 
+        tagging_submethods=tagging_submethods, 
+        location_method=location_method,
+        segmentation_method=segmentation_method
+    )
 
 if __name__ == "__main__":
     main()

@@ -189,12 +189,12 @@ class GroundingDinoLocator:
 
         return image
     
-    def locate_objects(self, input_tags: str) -> dict:
+    def locate_objects(self) -> dict:
         """
         TODO
         """
         # Convert the tags JSON text to a Grounding Dino prompt
-        text = self.json_to_gdino_prompt(input_tags)
+        text = self.json_to_gdino_prompt(self.input_tags)
 
         # Process and predict
         inputs = self.processor(images=self.input_image, text=text, return_tensors="pt").to(self.model.device)
