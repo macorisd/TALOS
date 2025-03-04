@@ -157,7 +157,8 @@ class Sam2Segmenter:
             if self.save_files_jpg:
                 # Create an overlay image with the mask
                 mask_overlay = np.zeros_like(self.input_image, dtype=np.uint8)
-                color = np.random.randint(0, 255, (1, 3), dtype=np.uint8)  # Random color
+                color = (0, 255, 0) # Green color for the mask and text
+                bg_color = (0, 0, 0)  # Black color for the text background
                 mask_bool = best_mask.astype(bool)  # Convert mask to boolean
                 mask_overlay[mask_bool] = color
 
@@ -167,12 +168,25 @@ class Sam2Segmenter:
 
                 # Add the label to the image
                 label = instance.get("label", "unknown")
-                font = cv2.FONT_HERSHEY_SIMPLEX
+                font = cv2.FONT_HERSHEY_DUPLEX
                 font_scale = 2
                 thickness = 2
                 text_size = cv2.getTextSize(label, font, font_scale, thickness)[0]
                 text_x, text_y = 10, 10 + text_size[1]  # Position in top-left corner
-                cv2.putText(overlayed_image, label, (text_x, text_y), font, font_scale, color.tolist()[0], thickness)
+
+                box_x, box_y = text_x - 5, text_y - text_size[1] - 5
+
+                # Text background
+                cv2.rectangle(
+                    overlayed_image,
+                    (box_x, box_y),
+                    (text_x + text_size[0] + 5, text_y + 5),
+                    bg_color,
+                    -1
+                )
+
+                # Text
+                cv2.putText(overlayed_image, label, (text_x, text_y), font, font_scale, color, thickness)
 
                 # Save the overlayed image
                 output_image_path = self.output_files_jpg[i]
@@ -187,7 +201,7 @@ class Sam2Segmenter:
     
 def main():
     segmenter = Sam2Segmenter(
-        input_image_name="desk.jpg"
+        input_image_name="279.jpg"
     )
 
     segmenter.segment_image()
