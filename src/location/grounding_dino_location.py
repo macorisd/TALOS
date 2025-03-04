@@ -2,7 +2,6 @@ import torch
 from PIL import Image, ImageDraw, ImageFont
 from transformers import AutoProcessor, AutoModelForZeroShotObjectDetection
 import os
-import re
 import time
 import json
 
@@ -82,9 +81,11 @@ class GroundingDinoLocator:
     def load_tags(self, pipeline_tags: dict = None) -> None:
         print(f"{self.STR_PREFIX} Loading input tags...", end=" ")
 
+        # If pipeline_tags is provided, use it
         if pipeline_tags is not None:
             self.input_tags = pipeline_tags
         
+        # Otherwise, read the most recent .json file from output_tags
         else:
             # Input tags directory path
             input_tags_dir = os.path.join(
@@ -106,7 +107,7 @@ class GroundingDinoLocator:
             # Select the most recently modified .json file
             latest_json_path = max(json_files, key=os.path.getmtime)
             
-            # Extract the filename (without the full path)
+            # Extract the filename
             filename = os.path.basename(latest_json_path)
             print("Most recent .json file:", filename, end="... ")
             
@@ -125,8 +126,6 @@ class GroundingDinoLocator:
         
         # Build the Grounding Dino prompt
         prompt = ". ".join(tags_list) + "."
-
-        print(f"{self.STR_PREFIX} Grounding DINO prompt:\n{prompt}\n")
 
         return prompt
     
@@ -194,6 +193,8 @@ class GroundingDinoLocator:
         """
         TODO
         """
+        print(f"{self.STR_PREFIX} Running Grounding DINO object bounding box locator...", end=" ")
+
         # Convert the tags JSON text to a Grounding Dino prompt
         text = self.json_to_gdino_prompt(self.input_tags)
 
@@ -208,7 +209,7 @@ class GroundingDinoLocator:
             target_sizes=[self.input_image.size[::-1]]
         )[0]
 
-        print(f"{self.STR_PREFIX} Object detection results:\n\n{results}\n")
+        print(f"Object detection results:\n\n{results}\n")
 
         # Convert the results to JSON format
         results_json = self.gdino_results_to_json(results)
@@ -216,13 +217,13 @@ class GroundingDinoLocator:
         # Filter the results based on the confidence threshold
         results_json = self.filter_confidence(results_json, threshold=self.score_threshold)
 
-        print(f"{self.STR_PREFIX} JSON results:\n{json.dumps(results_json, indent=4)}\n")
+        print(f"{self.STR_PREFIX} JSON results:\n\n{json.dumps(results_json, indent=4)}\n")
         
         if self.save_file_json:
             # Save the results to a JSON file
             with open(self.output_file_json, "w", encoding="utf-8") as f:
                 json.dump(results_json, f, indent=4)
-                print(f"{self.STR_PREFIX} JSON results saved to: {self.output_file_json}\n")
+                print(f"{self.STR_PREFIX} Object bounding box location JSON results saved to: {self.output_file_json}\n")
 
         if self.save_file_jpg:
             # Draw bounding boxes around the detected objects

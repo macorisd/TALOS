@@ -79,15 +79,15 @@ def location(input_image_name: str, input_tags: dict, location_method: str) -> d
 
 # SEGMENTATION -------------------------------------------------------------------------------------
 
-def segmentation(input_image_name: str, segmentation_method: str):
+def segmentation(input_image_name: str, input_bbox_location: dict, segmentation_method: str):
 
     # SAM2
 
     def segmentation_sam2():
-        segmenter = Sam2Segmenter(
-            input_image_name=input_image_name
-        )
-        segmenter.segment_image()
+        segmenter = Sam2Segmenter()
+        segmenter.load_image(input_image_name=input_image_name)
+        segmenter.load_bbox_location(pipeline_bbox_location=input_bbox_location)
+        segmenter.run()
 
     # SEGMENTATION
 
@@ -102,16 +102,30 @@ def pipeline(input_image_name: str, tagging_method: str, tagging_submethods: tup
 
     print_purple(f"\n[PIPELINE] Starting pipeline execution...\n")
 
-    tagging_output = tagging(input_image_name=input_image_name, tagging_method=tagging_method, tagging_submethods=tagging_submethods)
-    location(input_image_name=input_image_name, input_tags=tagging_output, location_method=location_method)
-    segmentation(input_image_name=input_image_name, segmentation_method=segmentation_method)
+    tagging_output = tagging(
+                        input_image_name=input_image_name, 
+                        tagging_method=tagging_method, 
+                        tagging_submethods=tagging_submethods
+                    )
+    
+    location_output = location(
+                        input_image_name=input_image_name, 
+                        input_tags=tagging_output, 
+                        location_method=location_method
+                    )
+    
+    segmentation(
+        input_image_name=input_image_name,
+        input_bbox_location=location_output,
+        segmentation_method=segmentation_method
+    )
 
     end_time = time.time()
     print_purple(f"\n[PIPELINE] Pipeline execution completed in {end_time - start_time} seconds.\n")
 
 def main():
     input_image_name = "4757.jpg"
-    tagging_method = RAM_PLUS
+    tagging_method = LVLM_LLM
     tagging_submethods = (LLAVA, DEEPSEEK)
     location_method = GROUNDING_DINO
     segmentation_method = SAM2

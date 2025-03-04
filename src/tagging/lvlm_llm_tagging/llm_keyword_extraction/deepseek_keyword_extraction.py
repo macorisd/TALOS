@@ -143,7 +143,7 @@ class DeepseekKeywordExtractor:
         """
         Main workflow # TODO
         """
-        print(f"{self.STR_PREFIX} Running DeepSeek keyword extraction...\n")        
+        print(f"{self.STR_PREFIX} Running DeepSeek keyword extraction...", end=" ")        
 
         start_time = time.time()
         correct_json = None
@@ -160,7 +160,7 @@ class DeepseekKeywordExtractor:
 
             deepseek_answer = response["message"]["content"]
 
-            print(f"{self.STR_PREFIX} DeepSeek answer:\n\n", deepseek_answer + "\n")
+            print(f"DeepSeek answer:\n\n", deepseek_answer + "\n")
 
             # Remove the <think></think> part of the answer
             deepseek_answer = self.remove_thoughts(deepseek_answer)            
@@ -178,9 +178,9 @@ class DeepseekKeywordExtractor:
             with open(self.output_file, "w", encoding="utf-8") as f:
                 json.dump(correct_json, f, ensure_ascii=False, indent=4)
 
-            print(f"{self.STR_PREFIX} Deepseek answer substring saved to {self.output_file}\n")
+            print(f"{self.STR_PREFIX} DeepSeek answer substring saved to: {self.output_file}\n")
 
-        print(f"{self.STR_PREFIX} Final correct answer:\n\n", json.dumps(correct_json, indent=4) + "\n")
+        print(f"{self.STR_PREFIX} Final answer substring:\n\n", json.dumps(correct_json, indent=4) + "\n")
         return correct_json
 
 def main():    

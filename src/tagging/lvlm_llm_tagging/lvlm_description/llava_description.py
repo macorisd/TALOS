@@ -1,7 +1,6 @@
 import ollama
 
 import os
-from PIL import Image
 import time
 
 class LlavaDescriptor:
@@ -22,7 +21,7 @@ class LlavaDescriptor:
         Initialize the paths and create necessary directories.
         """
 
-        print(f"\n{self.STR_PREFIX} Initializing LLaVA image descriptor...\n")        
+        print(f"\n{self.STR_PREFIX} Initializing LLaVA image descriptor...", end=" ")        
 
         self.script_dir = os.path.dirname(os.path.abspath(__file__))        
         self.llava_model_name = llava_model_name        
@@ -44,6 +43,8 @@ class LlavaDescriptor:
             timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
             output_filename = f"description_llava_{timestamp}.txt"
             self.output_file = os.path.join(output_descriptions_dir, output_filename)
+        
+        print("Done.\n")
 
     def load_image_path(self, input_image_name: str) -> None:
         print(f"{self.STR_PREFIX} Loading input image: {input_image_name}...", end=" ")
@@ -69,6 +70,7 @@ class LlavaDescriptor:
         Generates a description for the loaded image using Ollama's LLaVA model,
         and writes the description to a text file.
         """
+        print(f"{self.STR_PREFIX} Running LLaVA image descriptor...", end=" ")
         description = ""
         start_time = time.time()  # Start timer for timeout
         
@@ -93,13 +95,13 @@ class LlavaDescriptor:
             raise TimeoutError(f"{self.STR_PREFIX} Timeout of {self.timeout} seconds reached without receiving a valid description.\n")
 
         # Print the description                   
-        print(f"{self.STR_PREFIX} Image description: " + description + "\n")
+        print(f"Image description:\n\n" + description + "\n")
 
         # Save the description to a text file if saving is enabled
         if self.save_file:
             with open(self.output_file, "w", encoding="utf-8") as f:
                 f.write(description)
-            print(f"{self.STR_PREFIX} Description saved in {self.output_file}\n")
+            print(f"{self.STR_PREFIX} Description saved to: {self.output_file}\n")
         else:
             print(f"{self.STR_PREFIX} Saving file is disabled. Description was not saved.\n")
 
