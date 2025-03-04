@@ -15,8 +15,7 @@ class GroundingDinoLocator:
 
     def __init__(
             self,
-            grounding_dino_model_id: str = "IDEA-Research/grounding-dino-base",
-            input_image_name: str = "input_image.jpg",
+            grounding_dino_model_id: str = "IDEA-Research/grounding-dino-base",            
             score_threshold: float = 0.2,
             save_file_json: bool = True,
             save_file_jpg: bool = True
@@ -25,7 +24,7 @@ class GroundingDinoLocator:
         TODO
         """
 
-        print(f"\n{self.STR_PREFIX} Initializing Grounding DINO object locator...\n")
+        print(f"\n{self.STR_PREFIX} Initializing Grounding DINO object locator...", end=" ")
 
         self.script_dir = os.path.dirname(os.path.abspath(__file__))
         self.score_threshold = score_threshold
@@ -36,6 +35,33 @@ class GroundingDinoLocator:
         device = "cuda" if torch.cuda.is_available() else "cpu"
         self.processor = AutoProcessor.from_pretrained(grounding_dino_model_id)
         self.model = AutoModelForZeroShotObjectDetection.from_pretrained(grounding_dino_model_id).to(device)
+
+        if save_file_json or save_file_jpg:
+            # Output location directory path
+            output_location_dir = os.path.join(
+                self.script_dir, 
+                "output_location"
+            )
+
+            # Create the output directory if it does not exist
+            os.makedirs(output_location_dir, exist_ok=True)
+            
+            # Prepare timestamped output file
+            timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
+
+            if save_file_json:
+                # Prepare JSON output file
+                output_filename_json = f"location_gdino_{timestamp}.json"
+                self.output_file_json = os.path.join(output_location_dir, output_filename_json)
+            if save_file_jpg:
+                # Prepare JPG output file
+                output_filename_jpg = f"location_gdino_{timestamp}.jpg"
+                self.output_file_jpg = os.path.join(output_location_dir, output_filename_jpg)
+        
+        print("Done.\n")
+
+    def load_image(self, input_image_name: str) -> None:
+        print(f"{self.STR_PREFIX} Loading input image: {input_image_name}...", end=" ")
 
         # Input image path
         input_image_path = os.path.join(
@@ -51,71 +77,44 @@ class GroundingDinoLocator:
         else:
             raise FileNotFoundError(f"{self.STR_PREFIX} The image {input_image_name} was not found at {input_image_path}.\n")
         
-        # Input tags directory path
-        input_tags_dir = os.path.join(
-            self.script_dir, 
-            "..",
-            "tagging",
-            "output_tags"
-        )
+        print("Done.\n")
+    
+    def load_tags(self, pipeline_tags: dict = None) -> None:
+        print(f"{self.STR_PREFIX} Loading input tags...", end=" ")
 
-        # Load tags from the most recent .json file in input_tags_dir
-        self.input_tags, tags_filename = self.read_input_tags(input_tags_dir=input_tags_dir)
+        if pipeline_tags is not None:
+            self.input_tags = pipeline_tags
+        
+        else:
+            # Input tags directory path
+            input_tags_dir = os.path.join(
+                self.script_dir, 
+                "..",
+                "tagging",
+                "output_tags"
+            )
 
-        # Print input information
-        print(f"{self.STR_PREFIX} Input image filename: {input_image_path}\n")
-        print(f"{self.STR_PREFIX} Input tags filename: {input_tags_dir}/{tags_filename}\n")
+            # Gather all .json files in input_tags_dir
+            json_files = [
+                os.path.join(input_tags_dir, f)
+                for f in os.listdir(input_tags_dir)
+                if f.endswith(".json")
+            ]
+            if not json_files:
+                raise FileNotFoundError(f"{self.STR_PREFIX} No .json files found in {input_tags_dir}\n")
 
-        # Output location directory path
-        output_location_dir = os.path.join(
-            self.script_dir, 
-            "output_location"
-        )
-
-        if save_file_json or save_file_jpg:
-            # Create the output directory if it does not exist
-            os.makedirs(output_location_dir, exist_ok=True)
+            # Select the most recently modified .json file
+            latest_json_path = max(json_files, key=os.path.getmtime)
             
-            # Prepare timestamped output file
-            timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
+            # Extract the filename (without the full path)
+            filename = os.path.basename(latest_json_path)
+            print("Most recent .json file:", filename, end="... ")
+            
+            # Read the content of the file
+            with open(latest_json_path, "r", encoding="utf-8") as f:
+                self.input_tags = json.load(f)
 
-            if save_file_json:
-                # Prepare JSON output file
-                output_filename_json = f"location_gdino_{timestamp}.json"
-                self.output_file_json = os.path.join(output_location_dir, output_filename_json)
-            if save_file_jpg:
-                # Prepare JPG output file
-                output_filename_jpg = f"location_gdino_{timestamp}.jpg"
-                self.output_file_jpg = os.path.join(output_location_dir, output_filename_jpg)
-
-    def read_input_tags(self, input_tags_dir: str) -> tuple[dict, str]:
-        """
-        Reads the tags from the most recent .json file in the tags directory.
-
-        Returns:
-            tuple[str, str]: A tuple containing the content of the file as a dictionary and the filename.
-        """
-        # Gather all .json files in input_tags_dir
-        json_files = [
-            os.path.join(input_tags_dir, f)
-            for f in os.listdir(input_tags_dir)
-            if f.endswith(".json")
-        ]
-        if not json_files:
-            raise FileNotFoundError(f"{self.STR_PREFIX} No .json files found in {input_tags_dir}\n")
-
-        # Select the most recently modified .json file
-        latest_json_path = max(json_files, key=os.path.getmtime)
-        
-        # Extract the filename (without the full path)
-        filename = os.path.basename(latest_json_path)
-        
-        # Read the content of the file
-        with open(latest_json_path, "r", encoding="utf-8") as f:
-            tags_content = json.load(f)  # Cargar el contenido como un diccionario
-        
-        # Return a tuple of (content, filename)
-        return tags_content, filename
+        print("Done.\n")        
     
     def json_to_gdino_prompt(self, tags: dict) -> str:
         """
@@ -191,7 +190,7 @@ class GroundingDinoLocator:
 
         return image
     
-    def locate_objects(self) -> dict:
+    def run(self) -> dict:
         """
         TODO
         """
@@ -209,7 +208,7 @@ class GroundingDinoLocator:
             target_sizes=[self.input_image.size[::-1]]
         )[0]
 
-        print(f"{self.STR_PREFIX} Object detection results:\n{results}\n")
+        print(f"{self.STR_PREFIX} Object detection results:\n\n{results}\n")
 
         # Convert the results to JSON format
         results_json = self.gdino_results_to_json(results)
@@ -223,7 +222,7 @@ class GroundingDinoLocator:
             # Save the results to a JSON file
             with open(self.output_file_json, "w", encoding="utf-8") as f:
                 json.dump(results_json, f, indent=4)
-                print(f"{self.STR_PREFIX} Text results saved to: {self.output_file_json}\n")
+                print(f"{self.STR_PREFIX} JSON results saved to: {self.output_file_json}\n")
 
         if self.save_file_jpg:
             # Draw bounding boxes around the detected objects
@@ -239,11 +238,12 @@ def main():
     """
     Main function for the Grounding DINO Locator.
     """
-    locator = GroundingDinoLocator(
-        input_image_name="279.jpg",
+    locator = GroundingDinoLocator(        
         score_threshold=0
     )
-    locator.locate_objects()
+    locator.load_image("desk.jpg")
+    locator.load_tags()
+    locator.run()
 
 
 if __name__ == "__main__":

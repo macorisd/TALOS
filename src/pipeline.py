@@ -60,13 +60,15 @@ def tagging(input_image_name: str, tagging_method: str, tagging_submethods: tupl
 
 # LOCATION -------------------------------------------------------------------------------------
 
-def location(input_image_name: str, input_tags: dict, location_method: str):
+def location(input_image_name: str, input_tags: dict, location_method: str) -> dict:
 
     # GROUNDING DINO
 
     def location_grounding_dino():
-        locator = GroundingDinoLocator(input_image_name=input_image_name)
-        location_output = locator.locate_objects()
+        locator = GroundingDinoLocator()
+        locator.load_image(input_image_name=input_image_name)
+        locator.load_tags(pipeline_tags=input_tags)
+        location_output = locator.run()
         locator.draw_bounding_boxes(location_output)
 
     # LOCATION

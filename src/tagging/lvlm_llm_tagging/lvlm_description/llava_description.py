@@ -46,7 +46,7 @@ class LlavaDescriptor:
             self.output_file = os.path.join(output_descriptions_dir, output_filename)
 
     def load_image_path(self, input_image_name: str) -> None:
-        print(f"{self.STR_PREFIX} Loading input image: {input_image_name}\n")
+        print(f"{self.STR_PREFIX} Loading input image: {input_image_name}...", end=" ")
 
         # Input image path
         self.input_image_path = os.path.join(
@@ -61,6 +61,8 @@ class LlavaDescriptor:
         # Check if the image exists
         if not os.path.isfile(self.input_image_path):
             raise FileNotFoundError(f"{self.STR_PREFIX} The image {self.input_image_name} was not found.\n")
+        
+        print("Done.\n")
 
     def run(self) -> str:
         """

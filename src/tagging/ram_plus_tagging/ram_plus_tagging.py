@@ -56,7 +56,7 @@ class RamPlusTagger:
             self.output_file = os.path.join(output_tags_dir, output_filename)
 
     def load_image(self, input_image_name: str) -> None:
-        print(f"\n{self.STR_PREFIX} Loading input image: {input_image_name}\n")
+        print(f"\n{self.STR_PREFIX} Loading input image: {input_image_name} ...", end=" ")
 
         # Input image path
         image_path = os.path.join(
@@ -72,6 +72,8 @@ class RamPlusTagger:
             self.image = self.transform(Image.open(image_path)).unsqueeze(0).to(self.device)
         else:
             raise FileNotFoundError(f"{self.STR_PREFIX} The image '{input_image_name}' was not found at {image_path}.\n")
+        
+        print("Done.\n")
 
     def ram_tags_to_json(self, tags: str) -> dict:
         """
