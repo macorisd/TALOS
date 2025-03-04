@@ -8,3 +8,10 @@ transformers
 scipy
 fairscale
 git+https://github.com/openai/CLIP.git
+ollama
+segment-anything
+sam2
+hydra-core
+iopath
+opencv-python
+matplotlib
