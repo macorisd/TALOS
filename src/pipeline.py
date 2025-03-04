@@ -16,45 +16,51 @@ SAM2 = "[PIPELINE | SEGMENTATION | SAM2]"
 
 # TAGGING -------------------------------------------------------------------------------------
 
-def tagging(input_image_name: str, tagging_method: str, tagging_submethods: tuple[str, str]):
+def tagging(input_image_name: str, tagging_method: str, tagging_submethods: tuple[str, str]) -> dict:
 
     # RAM++
 
-    def tagging_ram_plus():
-        tagger = RamPlusTagger(
-            input_image_name=input_image_name
-        )
-        tagger.generate_tags()
+    def tagging_ram_plus() -> dict:
+        tagger = RamPlusTagger()
+        tagger.load_image(input_image_name=input_image_name)
+        tags_json = tagger.run()
+        return tags_json
 
     # LLVM-LLM | LLAVA
 
-    def description_llava():
-        descriptor = LlavaDescriptor(input_image_name=input_image_name)    
-        descriptor.describe_image()
+    def description_llava() -> str:
+        descriptor = LlavaDescriptor()
+        descriptor.load_image_path(input_image_name=input_image_name)
+        description_str = descriptor.run()
+        return description_str
 
     # LLVM-LLM | DEEPSEEK
 
-    def keyword_extraction_deepseek():
+    def keyword_extraction_deepseek(pipeline_description: str) -> dict:
         extractor = DeepseekKeywordExtractor()
-        extractor.extract_keywords()
+        extractor.load_description(pipeline_description=pipeline_description)
+        tags_json = extractor.run()
+        return tags_json
 
     # TAGGING
 
     if tagging_method == RAM_PLUS:
         print_green(f"{RAM_PLUS}\n")
-        tagging_ram_plus()
+        tags_json = tagging_ram_plus()
     elif tagging_method ==  LVLM_LLM:
         print_green(f"{LVLM_LLM}\n")
         if tagging_submethods[0] == LLAVA:
             print_green(f"{LLAVA}")
-            description_llava()
+            description_str = description_llava()
         if tagging_submethods[1] == DEEPSEEK:
             print_green(f"{DEEPSEEK}")
-            keyword_extraction_deepseek()
+            tags_json = keyword_extraction_deepseek(pipeline_description=description_str)
+
+    return tags_json
 
 # LOCATION -------------------------------------------------------------------------------------
 
-def location(input_image_name: str, location_method: str):
+def location(input_image_name: str, input_tags: dict, location_method: str):
 
     # GROUNDING DINO
 
@@ -94,16 +100,16 @@ def pipeline(input_image_name: str, tagging_method: str, tagging_submethods: tup
 
     print_purple(f"\n[PIPELINE] Starting pipeline execution...\n")
 
-    tagging(input_image_name=input_image_name, tagging_method=tagging_method, tagging_submethods=tagging_submethods)
-    location(input_image_name=input_image_name, location_method=location_method)
+    tagging_output = tagging(input_image_name=input_image_name, tagging_method=tagging_method, tagging_submethods=tagging_submethods)
+    location(input_image_name=input_image_name, input_tags=tagging_output, location_method=location_method)
     segmentation(input_image_name=input_image_name, segmentation_method=segmentation_method)
 
     end_time = time.time()
     print_purple(f"\n[PIPELINE] Pipeline execution completed in {end_time - start_time} seconds.\n")
 
 def main():
-    input_image_name = "stop_sign.jpg"
-    tagging_method = LVLM_LLM
+    input_image_name = "4757.jpg"
+    tagging_method = RAM_PLUS
     tagging_submethods = (LLAVA, DEEPSEEK)
     location_method = GROUNDING_DINO
     segmentation_method = SAM2

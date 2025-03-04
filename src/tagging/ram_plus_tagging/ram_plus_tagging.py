@@ -19,8 +19,7 @@ class RamPlusTagger:
 
     def __init__(
         self,        
-        ram_plus_model_name: str = "ram_plus_swin_large_14m.pth",
-        input_image_name: str = "input_image.jpg",
+        ram_plus_model_name: str = "ram_plus_swin_large_14m.pth",        
         image_size: int = 384,
         save_file: bool = True,
         timeout: int = 120
@@ -28,8 +27,7 @@ class RamPlusTagger:
         """
         Initialize RAM++ tagger.
         """
-        print(f"\n{self.STR_PREFIX} Initializing RAM++ tagger...\n")
-        print(f"{self.STR_PREFIX} Input image name: {input_image_name}\n")
+        print(f"\n{self.STR_PREFIX} Initializing RAM++ tagger...\n")        
 
         self.script_dir = os.path.dirname(os.path.abspath(__file__))         
         self.save_file = save_file
@@ -37,9 +35,28 @@ class RamPlusTagger:
 
         # Load the model
         ram_plus_model_path = os.path.join(self.script_dir, 'models', ram_plus_model_name)        
-        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')        
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')        
         self.transform = get_transform(image_size=image_size)
-        self.model = ram_plus(pretrained=ram_plus_model_path, image_size=image_size, vit='swin_l').eval().to(device)        
+        self.model = ram_plus(pretrained=ram_plus_model_path, image_size=image_size, vit='swin_l').eval().to(self.device)
+
+        if save_file:
+            # Output directory for tags
+            output_tags_dir = os.path.join(
+                self.script_dir, 
+                '..', 
+                'output_tags'
+            )
+
+            # Create the output directory if it does not exist
+            os.makedirs(output_tags_dir, exist_ok=True)
+
+            # Prepare timestamped output file
+            timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
+            output_filename = f"tags_ram_plus_{timestamp}.json"
+            self.output_file = os.path.join(output_tags_dir, output_filename)
+
+    def load_image(self, input_image_name: str) -> None:
+        print(f"\n{self.STR_PREFIX} Loading input image: {input_image_name}\n")
 
         # Input image path
         image_path = os.path.join(
@@ -48,29 +65,13 @@ class RamPlusTagger:
             "..",
             "input_images",
             input_image_name
-        )        
+        )
 
         # Load and transform input image
         if os.path.isfile(image_path):
-            self.image = self.transform(Image.open(image_path)).unsqueeze(0).to(device)
+            self.image = self.transform(Image.open(image_path)).unsqueeze(0).to(self.device)
         else:
             raise FileNotFoundError(f"{self.STR_PREFIX} The image '{input_image_name}' was not found at {image_path}.\n")
-
-        # Output directory for tags
-        output_tags_dir = os.path.join(
-            self.script_dir, 
-            '..', 
-            'output_tags'
-        )
-
-        # Create the output directory if it does not exist
-        os.makedirs(output_tags_dir, exist_ok=True)
-
-        if save_file:
-            # Prepare timestamped output file
-            timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
-            output_filename = f"tags_ram_plus_{timestamp}.json"
-            self.output_file = os.path.join(output_tags_dir, output_filename)
 
     def ram_tags_to_json(self, tags: str) -> dict:
         """
@@ -85,7 +86,7 @@ class RamPlusTagger:
         
         return tags_dict
 
-    def generate_tags(self) -> str:
+    def run(self) -> dict:
         """
         Generate tags from the input image.
         """
@@ -104,7 +105,7 @@ class RamPlusTagger:
             raise TimeoutError(f"{self.STR_PREFIX} Timeout of {self.timeout} seconds reached without receiving valid tags.\n")
 
         tags_json = self.ram_tags_to_json(tags)
-        print(f"\n{self.STR_PREFIX} Image tags: {tags}\n")
+        print(f"{self.STR_PREFIX} Image tags: {tags}\n")
 
         # Save tags to file
         if self.save_file:
@@ -114,15 +115,13 @@ class RamPlusTagger:
         else:
             print(f"{self.STR_PREFIX} Saving file is disabled. Tags were not saved.\n")
 
-        return tags
+        return tags_json
 
 
 def main():
-    tagger = RamPlusTagger(
-        input_image_name="desk.jpg"
-    )
-
-    tagger.generate_tags()
+    tagger = RamPlusTagger()
+    tagger.load_image(input_image_name="desk.jpg")
+    tagger.run()
 
 
 if __name__ == '__main__':

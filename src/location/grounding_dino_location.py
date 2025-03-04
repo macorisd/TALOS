@@ -17,7 +17,7 @@ class GroundingDinoLocator:
             self,
             grounding_dino_model_id: str = "IDEA-Research/grounding-dino-base",
             input_image_name: str = "input_image.jpg",
-            score_threshold: float = 0.3,
+            score_threshold: float = 0.2,
             save_file_json: bool = True,
             save_file_jpg: bool = True
     ):
@@ -126,6 +126,8 @@ class GroundingDinoLocator:
         
         # Build the Grounding Dino prompt
         prompt = ". ".join(tags_list) + "."
+
+        print(f"{self.STR_PREFIX} Grounding DINO prompt:\n{prompt}\n")
 
         return prompt
     
@@ -237,8 +239,11 @@ def main():
     """
     Main function for the Grounding DINO Locator.
     """
-    locator = GroundingDinoLocator(input_image_name="desk.jpg")
-    locator.locate_objects(locator.input_tags)
+    locator = GroundingDinoLocator(
+        input_image_name="279.jpg",
+        score_threshold=0
+    )
+    locator.locate_objects()
 
 
 if __name__ == "__main__":

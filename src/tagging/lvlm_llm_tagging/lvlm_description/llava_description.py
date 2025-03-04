@@ -13,8 +13,7 @@ class LlavaDescriptor:
 
     def __init__(
         self,        
-        llava_model_name: str = "llava:34b",
-        input_image_name: str = "input_image.png",
+        llava_model_name: str = "llava:34b",        
         prompt: str = "Describe the image.",
         save_file: bool = True,  # Whether to save the description results to a file
         timeout: int = 120  # Timeout in seconds
@@ -23,14 +22,31 @@ class LlavaDescriptor:
         Initialize the paths and create necessary directories.
         """
 
-        print(f"\n{self.STR_PREFIX} Initializing LLaVA image descriptor...\n")
-        print(f"{self.STR_PREFIX} Input image name: {input_image_name}\n")
+        print(f"\n{self.STR_PREFIX} Initializing LLaVA image descriptor...\n")        
 
         self.script_dir = os.path.dirname(os.path.abspath(__file__))        
         self.llava_model_name = llava_model_name        
         self.prompt = prompt
         self.save_file = save_file
         self.timeout = timeout
+        
+        if save_file:
+            # Output descriptions directory path
+            output_descriptions_dir = os.path.join(
+                self.script_dir, 
+                "output_descriptions"
+            )
+
+            # Create the output directory if it does not exist
+            os.makedirs(output_descriptions_dir, exist_ok=True)
+
+            # Prepare timestamped output file
+            timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
+            output_filename = f"description_llava_{timestamp}.txt"
+            self.output_file = os.path.join(output_descriptions_dir, output_filename)
+
+    def load_image_path(self, input_image_name: str) -> None:
+        print(f"{self.STR_PREFIX} Loading input image: {input_image_name}\n")
 
         # Input image path
         self.input_image_path = os.path.join(
@@ -44,24 +60,9 @@ class LlavaDescriptor:
         
         # Check if the image exists
         if not os.path.isfile(self.input_image_path):
-            raise FileNotFoundError(f"\n{self.STR_PREFIX} The image {self.input_image_name} was not found.\n")
+            raise FileNotFoundError(f"{self.STR_PREFIX} The image {self.input_image_name} was not found.\n")
 
-        # Output descriptions directory path
-        output_descriptions_dir = os.path.join(
-            self.script_dir, 
-            "output_descriptions"
-        )
-
-        # Create the output directory if it does not exist
-        os.makedirs(output_descriptions_dir, exist_ok=True)
-
-        if save_file:
-            # Prepare timestamped output file
-            timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
-            output_filename = f"description_llava_{timestamp}.txt"
-            self.output_file = os.path.join(output_descriptions_dir, output_filename)        
-
-    def describe_image(self) -> str:
+    def run(self) -> str:
         """
         Generates a description for the loaded image using Ollama's LLaVA model,
         and writes the description to a text file.
@@ -104,8 +105,9 @@ class LlavaDescriptor:
 
 
 def main():
-    descriptor = LlavaDescriptor(input_image_name="desk.jpg")    
-    descriptor.describe_image()
+    descriptor = LlavaDescriptor()
+    descriptor.load_image_path("desk.jpg")
+    descriptor.run()
 
 
 if __name__ == "__main__":
