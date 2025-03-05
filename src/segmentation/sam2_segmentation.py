@@ -107,6 +107,42 @@ class Sam2Segmenter:
 
         print("Done.\n")
 
+    def highlighted_segment_image(self, image, mask, label="unknown", color=(0, 255, 0), alpha=0.5):
+        """
+        Overlay a segmentation mask on the image and add a label.
+        """
+        mask_overlay = np.zeros_like(image, dtype=np.uint8)
+        mask_bool = mask.astype(bool)  # Ensure mask is boolean
+        mask_overlay[mask_bool] = color
+        
+        # Blend original image with mask overlay
+        overlayed_image = cv2.addWeighted(image, 1 - alpha, mask_overlay, alpha, 0)
+        
+        # Add label text
+        font = cv2.FONT_HERSHEY_DUPLEX
+        font_scale = 2
+        thickness = 2
+        text_size = cv2.getTextSize(label, font, font_scale, thickness)[0]
+        text_x, text_y = 10, 10 + text_size[1]  # Position in top-left corner
+        
+        # Text background (black rectangle)
+        cv2.rectangle(
+            overlayed_image,
+            (text_x - 5, text_y - text_size[1] - 5),
+            (text_x + text_size[0] + 5, text_y + 5),
+            (0, 0, 0),
+            -1
+        )
+        
+        # Overlay text
+        cv2.putText(overlayed_image, label, (text_x, text_y), font, font_scale, color, thickness)
+
+        # Convert to BGR
+        # cv2.cvtColor(overlayed_image, cv2.COLOR_RGB2BGR)
+        
+        return overlayed_image
+
+
     def build_path_npy(self, output_dir: str, idx: int) -> str:
         """
         Build the path for the output .npy file.
@@ -169,43 +205,20 @@ class Sam2Segmenter:
             best_mask = masks[best_mask_index]
 
             # Save the segmented image if save_files_jpg is True
-            if self.save_files_jpg:
-                # Create an overlay image with the mask
-                mask_overlay = np.zeros_like(self.input_image, dtype=np.uint8)
-                color = (0, 255, 0) # Green color for the mask and text
-                bg_color = (0, 0, 0)  # Black color for the text background
-                mask_bool = best_mask.astype(bool)  # Convert mask to boolean
-                mask_overlay[mask_bool] = color
-
-                # Merge the original image with the segmentation
-                alpha = 0.5  # Transparency level
-                overlayed_image = cv2.addWeighted(self.input_image, 1 - alpha, mask_overlay, alpha, 0)
-
-                # Add the label to the image
-                label = instance.get("label", "unknown")
-                font = cv2.FONT_HERSHEY_DUPLEX
-                font_scale = 2
-                thickness = 2
-                text_size = cv2.getTextSize(label, font, font_scale, thickness)[0]
-                text_x, text_y = 10, 10 + text_size[1]  # Position in top-left corner
-
-                box_x, box_y = text_x - 5, text_y - text_size[1] - 5
-
-                # Text background
-                cv2.rectangle(
-                    overlayed_image,
-                    (box_x, box_y),
-                    (text_x + text_size[0] + 5, text_y + 5),
-                    bg_color,
-                    -1
-                )
-
-                # Text
-                cv2.putText(overlayed_image, label, (text_x, text_y), font, font_scale, color, thickness)
-
-                # Save the overlayed image
+            if self.save_files_jpg:                
                 output_image_path = self.build_path_jpg(output_dir=output_timestamped_segments_dir, idx=i)
-                cv2.imwrite(output_image_path, cv2.cvtColor(overlayed_image, cv2.COLOR_RGB2BGR))
+                
+                highlighted_segment_image = self.highlighted_segment_image(
+                    self.input_image, 
+                    best_mask, 
+                    label=instance.get("label", "unknown")
+                )
+                
+                cv2.imwrite(
+                    output_image_path,
+                    cv2.cvtColor(highlighted_segment_image, cv2.COLOR_RGB2BGR)
+                )
+                
                 print(f"{self.STR_PREFIX} Segmented image for instance {i} saved at: {output_image_path}")
 
             # Save the segmentation results to a JSON file if save_files_npy is True
