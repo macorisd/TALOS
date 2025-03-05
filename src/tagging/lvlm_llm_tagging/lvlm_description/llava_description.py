@@ -31,18 +31,13 @@ class LlavaDescriptor:
         
         if save_file:
             # Output descriptions directory path
-            output_descriptions_dir = os.path.join(
+            self.output_descriptions_dir = os.path.join(
                 self.script_dir, 
                 "output_descriptions"
             )
 
             # Create the output directory if it does not exist
-            os.makedirs(output_descriptions_dir, exist_ok=True)
-
-            # Prepare timestamped output file
-            timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
-            output_filename = f"description_llava_{timestamp}.txt"
-            self.output_file = os.path.join(output_descriptions_dir, output_filename)
+            os.makedirs(self.output_descriptions_dir, exist_ok=True)
         
         print("Done.\n")
 
@@ -99,9 +94,14 @@ class LlavaDescriptor:
 
         # Save the description to a text file if saving is enabled
         if self.save_file:
-            with open(self.output_file, "w", encoding="utf-8") as f:
+            # Prepare timestamped output file
+            timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
+            output_filename = f"description_llava_{timestamp}.txt"
+            output_file = os.path.join(self.output_descriptions_dir, output_filename)
+
+            with open(output_file, "w", encoding="utf-8") as f:
                 f.write(description)
-            print(f"{self.STR_PREFIX} Description saved to: {self.output_file}\n")
+            print(f"{self.STR_PREFIX} Description saved to: {output_file}\n")
         else:
             print(f"{self.STR_PREFIX} Saving file is disabled. Description was not saved.\n")
 
