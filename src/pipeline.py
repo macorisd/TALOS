@@ -16,12 +16,12 @@ SAM2 = "[PIPELINE | SEGMENTATION | SAM2]"
 
 # TAGGING -------------------------------------------------------------------------------------
 
-def tagging(input_image_name: str, tagging_method: str, tagging_submethods: tuple[str, str]) -> dict:
+def tagging(input_image_name: str, tagging_method: str, tagging_submethods: tuple[str, str], save_files: bool) -> dict:
 
     # RAM++
 
     def tagging_ram_plus() -> dict:
-        tagger = RamPlusTagger()
+        tagger = RamPlusTagger(save_file=save_files)
         tagger.load_image(input_image_name=input_image_name)
         tags_json = tagger.run()
         return tags_json
@@ -29,7 +29,7 @@ def tagging(input_image_name: str, tagging_method: str, tagging_submethods: tupl
     # LLVM-LLM | LLAVA
 
     def description_llava() -> str:
-        descriptor = LlavaDescriptor()
+        descriptor = LlavaDescriptor(save_file=save_files)
         descriptor.load_image_path(input_image_name=input_image_name)
         description_str = descriptor.run()
         return description_str
@@ -37,7 +37,7 @@ def tagging(input_image_name: str, tagging_method: str, tagging_submethods: tupl
     # LLVM-LLM | DEEPSEEK
 
     def keyword_extraction_deepseek(pipeline_description: str) -> dict:
-        extractor = DeepseekKeywordExtractor()
+        extractor = DeepseekKeywordExtractor(save_file=save_files)
         extractor.load_description(pipeline_description=pipeline_description)
         tags_json = extractor.run()
         return tags_json
@@ -60,22 +60,24 @@ def tagging(input_image_name: str, tagging_method: str, tagging_submethods: tupl
 
 # LOCATION -------------------------------------------------------------------------------------
 
-def location(input_image_name: str, input_tags: dict, location_method: str) -> dict:
+def location(input_image_name: str, input_tags: dict, location_method: str, save_files: bool) -> dict:
 
     # GROUNDING DINO
 
     def location_grounding_dino():
-        locator = GroundingDinoLocator()
+        locator = GroundingDinoLocator(save_file_jpg=save_files, save_file_json=save_files)
         locator.load_image(input_image_name=input_image_name)
         locator.load_tags(pipeline_tags=input_tags)
         location_output = locator.run()
-        locator.draw_bounding_boxes(location_output)
+        return location_output
 
     # LOCATION
 
     if location_method == GROUNDING_DINO:
         print_green(f"\n{GROUNDING_DINO}")
-        location_grounding_dino()
+        location_output = location_grounding_dino()
+    
+    return location_output
 
 # SEGMENTATION -------------------------------------------------------------------------------------
 
@@ -97,7 +99,7 @@ def segmentation(input_image_name: str, input_bbox_location: dict, segmentation_
 
 # PIPELINE -------------------------------------------------------------------------------------
 
-def pipeline(input_image_name: str, tagging_method: str, tagging_submethods: tuple[str, str], location_method: str, segmentation_method: str):
+def pipeline(input_image_name: str, tagging_method: str, tagging_submethods: tuple[str, str], location_method: str, segmentation_method: str, save_files: bool = False):
     start_time = time.time()
 
     print_purple(f"\n[PIPELINE] Starting pipeline execution...\n")
@@ -105,13 +107,15 @@ def pipeline(input_image_name: str, tagging_method: str, tagging_submethods: tup
     tagging_output = tagging(
                         input_image_name=input_image_name, 
                         tagging_method=tagging_method, 
-                        tagging_submethods=tagging_submethods
+                        tagging_submethods=tagging_submethods,
+                        save_files=save_files
                     )
     
     location_output = location(
                         input_image_name=input_image_name, 
                         input_tags=tagging_output, 
-                        location_method=location_method
+                        location_method=location_method,
+                        save_files=save_files
                     )
     
     segmentation(
@@ -135,7 +139,8 @@ def main():
         tagging_method=tagging_method, 
         tagging_submethods=tagging_submethods, 
         location_method=location_method,
-        segmentation_method=segmentation_method
+        segmentation_method=segmentation_method,
+        save_files=False
     )
 
 if __name__ == "__main__":
