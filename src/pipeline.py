@@ -14,134 +14,96 @@ DEEPSEEK = "[PIPELINE | TAGGING | KEYWORD EXTRACTION | DEEPSEEK]"
 GROUNDING_DINO = "[PIPELINE | LOCATION | GDINO]"
 SAM2 = "[PIPELINE | SEGMENTATION | SAM2]"
 
-# TAGGING -------------------------------------------------------------------------------------
+class PipelineTLS:
+    def __init__(self, tagging_method: str, tagging_submethods: str, location_method: str, segmentation_method: str, save_files: bool = False):
+        print_purple("\n[PIPELINE] Loading models...")
 
-def tagging(input_image_name: str, tagging_method: str, tagging_submethods: tuple[str, str], save_files: bool) -> dict:
+        self.tagging_method = tagging_method
+        self.tagging_submethods = tagging_submethods
+        self.location_method = location_method
+        self.segmentation_method = segmentation_method
+        self.save_files = save_files
 
-    # RAM++
+        # Initialize models
+        if tagging_method == RAM_PLUS:
+            self.tagger_ram_plus = RamPlusTagger(save_file=save_files)
+        elif tagging_method == LVLM_LLM:
+            if tagging_submethods[0] == LLAVA:
+                self.descriptor_llava = LlavaDescriptor(save_file=save_files)
+            if tagging_submethods[1] == DEEPSEEK:
+                self.extractor_deepseek = DeepseekKeywordExtractor(save_file=save_files)
 
-    def tagging_ram_plus() -> dict:
-        tagger = RamPlusTagger(save_file=save_files)
-        tagger.load_image(input_image_name=input_image_name)
-        tags_json = tagger.run()
-        return tags_json
+        if location_method == GROUNDING_DINO:
+            self.locator_gdino = GroundingDinoLocator(save_file_jpg=save_files, save_file_json=save_files)
+        
+        if segmentation_method == SAM2:
+            self.segmenter_sam2 = Sam2Segmenter()
 
-    # LLVM-LLM | LLAVA
+        print_purple("[PIPELINE] All models loaded successfully.\n")
 
-    def description_llava() -> str:
-        descriptor = LlavaDescriptor(save_file=save_files)
-        descriptor.load_image_path(input_image_name=input_image_name)
-        description_str = descriptor.run()
-        return description_str
+    def tagging(self, input_image_name: str) -> dict:
+        if self.tagging_method == RAM_PLUS:
+            print_green(f"{RAM_PLUS}\n")
+            self.tagger_ram_plus.load_image(input_image_name)
+            return self.tagger_ram_plus.run()
+                
+        elif self.tagging_method == LVLM_LLM:
+            print_green(f"{LVLM_LLM}\n")
 
-    # LLVM-LLM | DEEPSEEK
+            if self.tagging_submethods[0] == LLAVA:
+                print_green(f"{LLAVA}\n")
+                self.descriptor_llava.load_image_path(input_image_name)
+                description_str = self.descriptor_llava.run()
 
-    def keyword_extraction_deepseek(pipeline_description: str) -> dict:
-        extractor = DeepseekKeywordExtractor(save_file=save_files)
-        extractor.load_description(pipeline_description=pipeline_description)
-        tags_json = extractor.run()
-        return tags_json
+            if self.tagging_submethods[1] == DEEPSEEK:
+                print_green(f"{DEEPSEEK}\n")
+                self.extractor_deepseek.load_description(description_str)
+                return self.extractor_deepseek.run()
+        return {}
 
-    # TAGGING
+    def location(self, input_image_name: str, input_tags: dict) -> dict:
+        if self.location_method == GROUNDING_DINO:
+            print_green(f"{GROUNDING_DINO}\n")
+            self.locator_gdino.load_image(input_image_name)
+            self.locator_gdino.load_tags(input_tags)
+            return self.locator_gdino.run()
+        return {}
 
-    if tagging_method == RAM_PLUS:
-        print_green(f"{RAM_PLUS}\n")
-        tags_json = tagging_ram_plus()
-    elif tagging_method ==  LVLM_LLM:
-        print_green(f"{LVLM_LLM}\n")
-        if tagging_submethods[0] == LLAVA:
-            print_green(f"{LLAVA}")
-            description_str = description_llava()
-        if tagging_submethods[1] == DEEPSEEK:
-            print_green(f"{DEEPSEEK}")
-            tags_json = keyword_extraction_deepseek(pipeline_description=description_str)
+    def segmentation(self, input_image_name: str, input_bbox_location: dict):
+        if self.segmentation_method == SAM2:
+            print_green(f"{SAM2}\n")
+            self.segmenter_sam2.load_image(input_image_name)
+            self.segmenter_sam2.load_bbox_location(input_bbox_location)
+            self.segmenter_sam2.run()
 
-    return tags_json
+    def run(self, input_image_name: str):
+        start_time = time.time()
+        print_purple("\n[PIPELINE] Starting pipeline execution...\n")
 
-# LOCATION -------------------------------------------------------------------------------------
+        tagging_output = self.tagging(input_image_name)
+        location_output = self.location(input_image_name, tagging_output)
+        self.segmentation(input_image_name, location_output)
 
-def location(input_image_name: str, input_tags: dict, location_method: str, save_files: bool) -> dict:
+        end_time = time.time()
+        print_purple(f"\n[PIPELINE] Pipeline execution completed in {end_time - start_time} seconds.\n")
 
-    # GROUNDING DINO
 
-    def location_grounding_dino():
-        locator = GroundingDinoLocator(save_file_jpg=save_files, save_file_json=save_files)
-        locator.load_image(input_image_name=input_image_name)
-        locator.load_tags(pipeline_tags=input_tags)
-        location_output = locator.run()
-        return location_output
-
-    # LOCATION
-
-    if location_method == GROUNDING_DINO:
-        print_green(f"\n{GROUNDING_DINO}")
-        location_output = location_grounding_dino()
-    
-    return location_output
-
-# SEGMENTATION -------------------------------------------------------------------------------------
-
-def segmentation(input_image_name: str, input_bbox_location: dict, segmentation_method: str):
-
-    # SAM2
-
-    def segmentation_sam2():
-        segmenter = Sam2Segmenter()
-        segmenter.load_image(input_image_name=input_image_name)
-        segmenter.load_bbox_location(pipeline_bbox_location=input_bbox_location)
-        segmenter.run()
-
-    # SEGMENTATION
-
-    if segmentation_method == SAM2:
-        print_green(f"\n{SAM2}")
-        segmentation_sam2()
-
-# PIPELINE -------------------------------------------------------------------------------------
-
-def pipeline(input_image_name: str, tagging_method: str, tagging_submethods: tuple[str, str], location_method: str, segmentation_method: str, save_files: bool = False):
-    start_time = time.time()
-
-    print_purple(f"\n[PIPELINE] Starting pipeline execution...\n")
-
-    tagging_output = tagging(
-                        input_image_name=input_image_name, 
-                        tagging_method=tagging_method, 
-                        tagging_submethods=tagging_submethods,
-                        save_files=save_files
-                    )
-    
-    location_output = location(
-                        input_image_name=input_image_name, 
-                        input_tags=tagging_output, 
-                        location_method=location_method,
-                        save_files=save_files
-                    )
-    
-    segmentation(
-        input_image_name=input_image_name,
-        input_bbox_location=location_output,
-        segmentation_method=segmentation_method
-    )
-
-    end_time = time.time()
-    print_purple(f"\n[PIPELINE] Pipeline execution completed in {end_time - start_time} seconds.\n")
-
-def main():
+def main():    
     input_image_name = "4757.jpg"
+
     tagging_method = LVLM_LLM
     tagging_submethods = (LLAVA, DEEPSEEK)
     location_method = GROUNDING_DINO
     segmentation_method = SAM2
 
-    pipeline(
-        input_image_name=input_image_name, 
+    pipeline = PipelineTLS(
         tagging_method=tagging_method, 
         tagging_submethods=tagging_submethods, 
-        location_method=location_method,
-        segmentation_method=segmentation_method,
-        save_files=False
+        location_method=location_method, 
+        segmentation_method=segmentation_method
     )
+
+    pipeline.run(input_image_name=input_image_name)
 
 if __name__ == "__main__":
     main()
