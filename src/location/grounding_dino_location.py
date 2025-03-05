@@ -45,25 +45,13 @@ class GroundingDinoLocator:
 
         if save_file_json or save_file_jpg:
             # Output location directory path
-            output_location_dir = os.path.join(
+            self.output_location_dir = os.path.join(
                 self.script_dir, 
                 "output_location"
             )
 
             # Create the output directory if it does not exist
-            os.makedirs(output_location_dir, exist_ok=True)
-            
-            # Prepare timestamped output file
-            timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
-
-            if save_file_json:
-                # Prepare JSON output file
-                output_filename_json = f"location_gdino_{timestamp}.json"
-                self.output_file_json = os.path.join(output_location_dir, output_filename_json)
-            if save_file_jpg:
-                # Prepare JPG output file
-                output_filename_jpg = f"location_gdino_{timestamp}.jpg"
-                self.output_file_jpg = os.path.join(output_location_dir, output_filename_jpg)
+            os.makedirs(self.output_location_dir, exist_ok=True)
         
         print("Done.\n")
 
@@ -226,20 +214,33 @@ class GroundingDinoLocator:
         results_json = self.filter_confidence(results_json, threshold=self.score_threshold)
 
         print(f"{self.STR_PREFIX} JSON results:\n\n{json.dumps(results_json, indent=4)}\n")
-        
-        if self.save_file_json:
-            # Save the results to a JSON file
-            with open(self.output_file_json, "w", encoding="utf-8") as f:
-                json.dump(results_json, f, indent=4)
-                print(f"{self.STR_PREFIX} Object bounding box location JSON results saved to: {self.output_file_json}\n")
 
-        if self.save_file_jpg:
-            # Draw bounding boxes around the detected objects
-            results_image = self.draw_bounding_boxes(results_json)
+        # Save the results to a JSON file and/or an image file
+        if self.save_file_json or self.save_file_jpg:
+            # Prepare timestamped output file
+            timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
 
-            # Save the image with bounding boxes
-            results_image.save(self.output_file_jpg)
-            print(f"{self.STR_PREFIX} Bounding box location image saved to: {self.output_file_jpg}")
+            if self.save_file_json:
+                # Prepare JSON output file
+                output_filename_json = f"location_gdino_{timestamp}.json"
+                output_file_json = os.path.join(self.output_location_dir, output_filename_json)
+
+                # Save the results to a JSON file
+                with open(output_file_json, "w", encoding="utf-8") as f:
+                    json.dump(results_json, f, indent=4)
+                    print(f"{self.STR_PREFIX} Object bounding box location JSON results saved to: {output_file_json}\n")
+
+            if self.save_file_jpg:
+                # Prepare JPG output file
+                output_filename_jpg = f"location_gdino_{timestamp}.jpg"
+                output_file_jpg = os.path.join(self.output_location_dir, output_filename_jpg)
+
+                # Draw bounding boxes around the detected objects
+                results_image = self.draw_bounding_boxes(results_json)
+
+                # Save the image with bounding boxes
+                results_image.save(output_file_jpg)
+                print(f"{self.STR_PREFIX} Bounding box location image saved to: {output_file_jpg}")
 
         return results_json
 
