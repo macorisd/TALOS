@@ -15,7 +15,14 @@ GROUNDING_DINO = "[PIPELINE | LOCATION | GDINO]"
 SAM2 = "[PIPELINE | SEGMENTATION | SAM2]"
 
 class PipelineTLS:
-    def __init__(self, tagging_method: str, tagging_submethods: str, location_method: str, segmentation_method: str, save_files: bool = False):
+    def __init__(
+            self,
+            tagging_method: str,
+            tagging_submethods: str,
+            location_method: str,
+            segmentation_method: str,
+            save_files: bool = False
+        ):
         print_purple("\n[PIPELINE] Loading models...")
 
         self.tagging_method = tagging_method
@@ -76,7 +83,7 @@ class PipelineTLS:
             self.segmenter_sam2.load_bbox_location(input_bbox_location)
             self.segmenter_sam2.run()
 
-    def run(self, input_image_name: str):
+    def run(self, input_image_name: str) -> float:
         start_time = time.time()
         print_purple("\n[PIPELINE] Starting pipeline execution...\n")
 
@@ -85,25 +92,42 @@ class PipelineTLS:
         self.segmentation(input_image_name, location_output)
 
         end_time = time.time()
-        print_purple(f"\n[PIPELINE] Pipeline execution completed in {end_time - start_time} seconds.\n")
+        total_time = end_time - start_time
+
+        print_purple(f"\n[PIPELINE] Pipeline execution completed in {total_time} seconds.\n")
+        return total_time
 
 
-def main():    
-    input_image_name = "4757.jpg"
-
+def main(iters: int = 1):
     tagging_method = LVLM_LLM
     tagging_submethods = (LLAVA, DEEPSEEK)
     location_method = GROUNDING_DINO
     segmentation_method = SAM2
 
     pipeline = PipelineTLS(
-        tagging_method=tagging_method, 
-        tagging_submethods=tagging_submethods, 
-        location_method=location_method, 
-        segmentation_method=segmentation_method
+        tagging_method=tagging_method,
+        tagging_submethods=tagging_submethods,
+        location_method=location_method,
+        segmentation_method=segmentation_method,
+        save_files=True
     )
 
-    pipeline.run(input_image_name=input_image_name)
+    input_image_name = "desk.jpg"
 
-if __name__ == "__main__":
-    main()
+    # One iteration
+    if iters <= 1:
+        pipeline.run(input_image_name=input_image_name)
+    
+    # Multiple iterations, to measure the average execution time
+    else:
+        total_time = 0
+
+        for i in range(iters):
+            print_purple(f"\n[PIPELINE] Execution {i+1}/{iters}...")
+            total_time += pipeline.run(input_image_name=input_image_name)
+
+        avg_time = total_time / iters
+        print_purple(f"\n[PIPELINE] Average execution time over {iters} runs: {avg_time} seconds.\n")
+
+if __name__ == "__main__":    
+    main(iters=10)
