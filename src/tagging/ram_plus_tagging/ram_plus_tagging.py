@@ -1,5 +1,5 @@
 import warnings
-warnings.filterwarnings("ignore", module="timm")
+warnings.filterwarnings("ignore", module="timm.models")
 
 import os
 import torch

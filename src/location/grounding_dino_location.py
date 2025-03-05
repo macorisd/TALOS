@@ -1,3 +1,11 @@
+import warnings
+warnings.filterwarnings(
+    "ignore", 
+    category=FutureWarning, 
+    module="transformers.models.grounding_dino.processing_grounding_dino", 
+    lineno=100
+)
+
 import torch
 from PIL import Image, ImageDraw, ImageFont
 from transformers import AutoProcessor, AutoModelForZeroShotObjectDetection
