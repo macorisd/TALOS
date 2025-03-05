@@ -41,19 +41,14 @@ class RamPlusTagger:
 
         if save_file:
             # Output directory for tags
-            output_tags_dir = os.path.join(
+            self.output_tags_dir = os.path.join(
                 self.script_dir, 
                 '..', 
                 'output_tags'
             )
 
             # Create the output directory if it does not exist
-            os.makedirs(output_tags_dir, exist_ok=True)
-
-            # Prepare timestamped output file
-            timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
-            output_filename = f"tags_ram_plus_{timestamp}.json"
-            self.output_file = os.path.join(output_tags_dir, output_filename)
+            os.makedirs(self.output_tags_dir, exist_ok=True)            
 
     def load_image(self, input_image_name: str) -> None:
         print(f"\n{self.STR_PREFIX} Loading input image: {input_image_name} ...", end=" ")
@@ -111,9 +106,14 @@ class RamPlusTagger:
 
         # Save tags to file
         if self.save_file:
-            with open(self.output_file, 'w', encoding='utf-8') as f:
+            # Prepare timestamped output file
+            timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
+            output_filename = f"tags_ram_plus_{timestamp}.json"
+            output_file = os.path.join(self.output_tags_dir, output_filename)
+
+            with open(output_file, 'w', encoding='utf-8') as f:
                 json.dump(tags_json, f, ensure_ascii=False, indent=4)
-            print(f"{self.STR_PREFIX} Tags saved to {self.output_file}\n")
+            print(f"{self.STR_PREFIX} Tags saved to {output_file}\n")
         else:
             print(f"{self.STR_PREFIX} Saving file is disabled. Tags were not saved.\n")
 
