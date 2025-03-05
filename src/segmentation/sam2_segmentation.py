@@ -38,25 +38,13 @@ class Sam2Segmenter:
 
         if save_files_jpg or save_files_npy:
             # Output segments directory path
-            output_segments_dir = os.path.join(
+            self.output_segments_dir = os.path.join(
                 self.script_dir, 
                 "output_segments"
             )
 
             # Create the output directory if it does not exist
-            os.makedirs(output_segments_dir, exist_ok=True)
-
-            # Prepare timestamped output files
-            timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
-
-            # Output timestamped directory path
-            self.output_timestamped_segments_dir = os.path.join(
-                output_segments_dir,
-                f"segmentation_sam2_{timestamp}"
-            )
-
-            # Create the timestamped output directory 
-            os.makedirs(self.output_timestamped_segments_dir)
+            os.makedirs(self.output_segments_dir, exist_ok=True)
         
         print("Done.\n")
                 
@@ -119,22 +107,22 @@ class Sam2Segmenter:
 
         print("Done.\n")
 
-    def build_path_npy(self, idx: int) -> str:
+    def build_path_npy(self, output_dir: str, idx: int) -> str:
         """
         Build the path for the output .npy file.
         """
         output_npy_path = os.path.join(
-            self.output_timestamped_segments_dir,
+            output_dir,
             f"segment_{idx}_mask.npy"
         )
         return output_npy_path
     
-    def build_path_jpg(self, idx: int) -> str:
+    def build_path_jpg(self, output_dir: str, idx: int) -> str:
         """
         Build the path for the output .jpg file.
         """
         output_jpg_path = os.path.join(
-            self.output_timestamped_segments_dir,
+            output_dir,
             f"segment_{idx}.jpg"
         )
         return output_jpg_path
@@ -145,8 +133,21 @@ class Sam2Segmenter:
         """
         print(f"{self.STR_PREFIX} Running SAM2 instance segmentation...\n")
 
+        if self.save_files_jpg or self.save_files_npy:
+                # Prepare timestamped output files
+                timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
+
+                # Output timestamped directory path
+                output_timestamped_segments_dir = os.path.join(
+                    self.output_segments_dir,
+                    f"segmentation_sam2_{timestamp}"
+                )
+
+                # Create the timestamped output directory 
+                os.makedirs(output_timestamped_segments_dir)
+
         # Iterate over each instance in the input_bbox_location
-        for i, instance in enumerate(self.input_bbox_location):                      
+        for i, instance in enumerate(self.input_bbox_location):
             bbox = instance.get("bbox", {})
             
             # Extract bounding box coordinates
@@ -165,7 +166,7 @@ class Sam2Segmenter:
 
             # Get the best mask (the one with the highest score)
             best_mask_index = np.argmax(scores)
-            best_mask = masks[best_mask_index]            
+            best_mask = masks[best_mask_index]
 
             # Save the segmented image if save_files_jpg is True
             if self.save_files_jpg:
@@ -203,13 +204,13 @@ class Sam2Segmenter:
                 cv2.putText(overlayed_image, label, (text_x, text_y), font, font_scale, color, thickness)
 
                 # Save the overlayed image
-                output_image_path = self.build_path_jpg(idx=i)
+                output_image_path = self.build_path_jpg(output_dir=output_timestamped_segments_dir, idx=i)
                 cv2.imwrite(output_image_path, cv2.cvtColor(overlayed_image, cv2.COLOR_RGB2BGR))
                 print(f"{self.STR_PREFIX} Segmented image for instance {i} saved at: {output_image_path}")
 
             # Save the segmentation results to a JSON file if save_files_npy is True
             if self.save_files_npy:
-                output_npy_path = self.build_path_npy(idx=i)
+                output_npy_path = self.build_path_npy(output_dir=output_timestamped_segments_dir, idx=i)
                 np.save(output_npy_path, best_mask)
                 print(f"{self.STR_PREFIX} Segmented mask for instance {i} saved at: {output_npy_path}")
     
