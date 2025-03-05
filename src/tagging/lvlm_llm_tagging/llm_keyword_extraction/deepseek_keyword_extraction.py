@@ -35,7 +35,7 @@ class DeepseekKeywordExtractor:
 
         if save_file:
             # Output tags directory path
-            output_tags_dir = os.path.join(
+            self.output_tags_dir = os.path.join(
                 self.script_dir,
                 "..",
                 "..",
@@ -43,12 +43,7 @@ class DeepseekKeywordExtractor:
             )
 
             # Create the output directory if it does not exist
-            os.makedirs(output_tags_dir, exist_ok=True)
-
-            # Prepare timestamped output file
-            timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
-            output_filename = f"tags_deepseek_{timestamp}.json"
-            self.output_file = os.path.join(output_tags_dir, output_filename)
+            os.makedirs(self.output_tags_dir, exist_ok=True)
         
         print("Done.\n")
 
@@ -175,10 +170,15 @@ class DeepseekKeywordExtractor:
             raise TimeoutError(f"{self.STR_PREFIX} Timeout of {self.timeout} seconds reached without receiving a correct answer format.\n")
 
         if self.save_file:
-            with open(self.output_file, "w", encoding="utf-8") as f:
+            # Prepare timestamped output file
+            timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
+            output_filename = f"tags_deepseek_{timestamp}.json"
+            output_file = os.path.join(self.output_tags_dir, output_filename)
+
+            with open(output_file, "w", encoding="utf-8") as f:
                 json.dump(correct_json, f, ensure_ascii=False, indent=4)
 
-            print(f"{self.STR_PREFIX} DeepSeek answer substring saved to: {self.output_file}\n")
+            print(f"{self.STR_PREFIX} DeepSeek answer substring saved to: {output_file}\n")
 
         print(f"{self.STR_PREFIX} Final answer substring:\n\n", json.dumps(correct_json, indent=4) + "\n")
         return correct_json
