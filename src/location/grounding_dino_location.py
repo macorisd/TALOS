@@ -164,15 +164,11 @@ class GroundingDinoLocator:
                 (abs(bbox1['x_max'] - bbox2['x_max']) <= padding) and
                 (abs(bbox1['y_max'] - bbox2['y_max']) <= padding))
 
-        def bbox_area(bbox):
-            return (bbox['x_max'] - bbox['x_min']) * (bbox['y_max'] - bbox['y_min'])
-
-        def bbox_center(bbox):
-            return ((bbox['x_min'] + bbox['x_max']) / 2, (bbox['y_min'] + bbox['y_max']) / 2)
-
-        def is_center_inside(center, bbox):
-            return (bbox['x_min'] <= center[0] <= bbox['x_max']) and \
-                (bbox['y_min'] <= center[1] <= bbox['y_max'])
+        def is_bbox_contained(bbox1, bbox2, padding):        
+            return (bbox1['x_min'] >= bbox2['x_min'] - padding and
+                    bbox1['y_min'] >= bbox2['y_min'] - padding and
+                    bbox1['x_max'] <= bbox2['x_max'] + padding and
+                    bbox1['y_max'] <= bbox2['y_max'] + padding)
 
         # 1. Discard practically equal bounding boxes with lower score
         i = 0
@@ -181,13 +177,13 @@ class GroundingDinoLocator:
             while j < len(results_json):
                 if is_similar_bbox(results_json[i]['bbox'], results_json[j]['bbox'], padding):
                     if results_json[i]['score'] > results_json[j]['score']:
-                        results_json.pop(j)
                         if verbose:
                             print(f"{self.STR_PREFIX} Discarded: {results_json[j]['label']} with score {results_json[j]['score']} [1]")
+                        results_json.pop(j)
                     else:
-                        results_json.pop(i)
                         if verbose:
                             print(f"{self.STR_PREFIX} Discarded: {results_json[i]['label']} with score {results_json[i]['score']} [1]")
+                        results_json.pop(i)
                         i -= 1
                         break
                 else:
@@ -206,26 +202,23 @@ class GroundingDinoLocator:
                 print(f"{self.STR_PREFIX} Discarded: {result['label']} with score {result['score']} [2]")
         results_json = filtered_results
 
-        # 3. Discard bounding boxes with the same label and center contained in another
+        # 3. Discard bounding boxes with the same label and one fully contained in the other (discards the bigger one)
         i = 0
         while i < len(results_json):
             j = i + 1
             while j < len(results_json):
                 if results_json[i]['label'] == results_json[j]['label']:
-                    center_i = bbox_center(results_json[i]['bbox'])
-                    center_j = bbox_center(results_json[j]['bbox'])
-                    if is_center_inside(center_i, results_json[j]['bbox']) or is_center_inside(center_j, results_json[i]['bbox']):
-                        if bbox_area(results_json[i]['bbox']) < bbox_area(results_json[j]['bbox']):
-                            results_json.pop(i)
-                            if verbose:
-                                print(f"{self.STR_PREFIX} Discarded: {results_json[i]['label']} with score {results_json[i]['score']} [3]")
-                            i -= 1
-                            break
-                        else:
-                            results_json.pop(j)
-                            if verbose:
-                                print(f"{self.STR_PREFIX} Discarded: {results_json[j]['label']} with score {results_json[j]['score']} [3]")
-                            continue
+                    if is_bbox_contained(results_json[i]['bbox'], results_json[j]['bbox'], padding):
+                        if verbose:
+                            print(f"{self.STR_PREFIX} Discarded: {results_json[j]['label']} with score {results_json[j]['score']} [3]")
+                        results_json.pop(j)
+                        continue
+                    elif is_bbox_contained(results_json[j]['bbox'], results_json[i]['bbox'], padding):
+                        if verbose:
+                            print(f"{self.STR_PREFIX} Discarded: {results_json[i]['label']} with score {results_json[i]['score']} [3]")
+                        results_json.pop(i)
+                        i -= 1
+                        break
                 j += 1
             i += 1
 
@@ -256,7 +249,7 @@ class GroundingDinoLocator:
             
             # Draw the label and score
             text = f"{label}: {score:.2f}"
-            draw.text((x_min, y_min - 20), text, fill="red", font=font)
+            draw.text((x_min, y_min), text, fill="red", font=font)
 
         return image
     
@@ -288,7 +281,7 @@ class GroundingDinoLocator:
         # Filter the results based on the confidence threshold
         results_json = self.filter_confidence(results_json, threshold=self.score_threshold)
 
-        # results_json = self.filter_bbox(results_json, self.input_image.width, self.input_image.height, verbose=True)
+        results_json = self.filter_bbox(results_json, self.input_image.width, self.input_image.height, verbose=True)
 
         print(f"{self.STR_PREFIX} JSON results:\n\n{json.dumps(results_json, indent=4)}\n")
 
