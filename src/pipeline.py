@@ -112,7 +112,8 @@ def main(iters: int = 1):
         save_files=True
     )
 
-    input_image_name = "desk.jpg"
+    # input_image_name = "desk.jpg"
+    input_image_name = ["desk.jpg", "279.jpg", "603.jpg", "963.jpg", "1108.jpg", "1281.jpg", "1514.jpg", "1729.jpg", "1871.jpg", "2421.jpg"]
 
     # One iteration
     if iters <= 1:
@@ -124,10 +125,11 @@ def main(iters: int = 1):
 
         for i in range(iters):
             print_purple(f"\n[PIPELINE] Execution {i+1}/{iters}...")
-            total_time += pipeline.run(input_image_name=input_image_name)
+            # total_time += pipeline.run(input_image_name=input_image_name)
+            total_time += pipeline.run(input_image_name=input_image_name[i])
 
         avg_time = total_time / iters
         print_purple(f"\n[PIPELINE] Average execution time over {iters} runs: {avg_time} seconds.\n")
 
 if __name__ == "__main__":    
-    main(iters=10)
+    main(10)

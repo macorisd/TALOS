@@ -1,26 +1,89 @@
-Te voy a pasar una descripción de una imagen, generada por el LVLM LLaVA. Tu tarea es decirme únicamente los objetos que existen en la imagen según la descripción textual. Tu respuesta será en formato JSON (luego te adjunto un ejemplo), y concretamente me dirás las palabras clave de los objetos de la imagen. El ejemplo es el siguiente:
+Te voy a enviar una descripción de una imagen, generada por el LVLM LLaVA. Tu tarea es decirme únicamente los objetos que existen en la imagen según la descripción textual. Tu respuesta será en formato JSON (luego te adjunto un ejemplo), y concretamente me dirás las palabras clave (categorías) de los objetos de la imagen.
 
-Imagina que te paso una descripción como la siguiente:
+El formato de tu respuesta debe ser estrictamente en JSON. Es muy importante que respetes el formato que te voy a explicar, puesto que usaré tu respuesta directamente en un pipeline automatizado que requiere ese formato. El formato del JSON con las detecciones de categorías de objetos que analices debe ser así:
+
+"{
+	"1": "table",
+	"2": "dog",
+	"3": "grass",
+	"4": "shoe",
+	"5": "",
+	...
+	"n": ""
+}"
+
+Siempre debes seguir este formato de numeración y etiqueta semántica. A estas categorías u objetos detectados que escribirás, les llamaremos "etiquetas".
+
+A continuación, primero te explicaré unas reglas muy estrictas y claras que debes seguir siempre para tu respuesta, y después te proporcionaré un ejemplo práctico para que compruebes cómo debes hacer tu tarea.
+
+Las 10 reglas estrictas para determinar qué etiquetas de objetos debes incluir a partir de la descripción textual de la imagen son las siguientes:
+
+1. Excluir habitaciones completas. No debes escribir, por ejemplo, "kitchen", "room" o "space" como etiquetas, puesto que no son objetos. Tu misión es concretar elementos que veas en determinados espacios, no el espacio en sí.
+
+2. Si en la descripción hay suelos o paredes, simplemente di "floor" o "wall". Si, por ejemplo, hay tiles en el suelo, no digas "tile", "tiles" o "tiled floor", di simplemente "floor". Si hay ladrillos en la pared, no digas "brick wall", di "wall".
+
+3. Las etiquetas deben estar en singular. No digas "pair of shoes", di "shoe". No digas "group of people", di "person".
+
+4. Debes ser lo suficientemente general: evita incluir colores o características muy específicas en las etiquetas. No digas "red sofa", di "sofa". No digas "wooden desk", di "desk". No digas "acoustic guitar", di "guitar". No digas "sport bag", di "bag".
+
+5. Debes ser lo suficientemente concreto: por ejemplo, si hay una fruta etiquetada como un tipo específico de fruta, escribe ese tipo como etiqueta. Por ejemplo, si hay una manzana, di "apple", no "fruit". Si hay un violín, di "violin", no "instrument". Si hay un gato, di "cat", no "animal".
+
+6. Evita términos genéricos en las etiquetas, como "item" o "object". Si no hay un objeto claramente identificado, no lo tengas en cuenta ni lo incluyas en tu respuesta.
+
+7. No repitas etiquetas exactamente iguales. Si la descripción de la imagen dice que hay tres perros, no escribas "dog" tres veces. No puede haber varias ocurrencias de la misma etiqueta, indícalo sólo una vez.
+
+8. Evita sinónimos. No debes etiquetar tanto "TV" como "television", elige el más genérico ("television"). No pongas "shoe" y "trainers", elige el más genérico ("shoe").
+
+9. Si en la descripción de la imagen hay una duda para un objeto concreto (por ejemplo, si dice que encima de una cama hay "lo que parece ser una bolsa o una chaqueta"), debes incluir todos los posibles objetos mencionados ("bag", "jacket").
+
+10. Si la descripción de la imagen indica que no se ha detectado claramente ningún objeto, devuelve un JSON vacío, no hay problema.
+
+
+Estas han sido las 10 reglas que debes tener en cuenta siempre para el etiquetado de objetos en JSON a partir de una descripción textual. Ahora te escribiré dos ejemplos de lo que deberías hacer en casos reales:
+
+
+EJEMPLO 1
+
+Imagina que te envío una descripción como la siguiente:
 
 "The image shows an indoor scene featuring a small, low wooden table or shelf against a wall with beige tiles. On top of the table, there are several items including a red envelope, some papers, and possibly books or magazines. The bottom shelf of the table appears to contain more items, but they're not clearly visible from this angle.
 
 In front of the table, on the floor, there is a pair of shoes with black soles and white laces, indicating that someone might have recently removed them. The room has curtains that are partially open, allowing light in from outside. There doesn't seem to be any text or distinctive branding visible in this image. The style of the photograph is casual, capturing an everyday setting without any particular artistic intent."
 
-Tu respuesta debería detectar los objetos principales de esta escena, y ponerlos estrictamente en formato JSON, sin decir nada más:
+Tu respuesta debería ser así, teniendo en cuenta el formato y las reglas antes indicadas:
 
 "{
-	"1" : "wooden table",
+	"1" : "table",
 	"2" : "shelf",
 	"3" : "wall",
-	"4" : "beige tiles",
+	"4" : "envelope",
 	"5" : "papers",
-	"6" : "books",
-	"7" : "magazines",
+	"6" : "book",
+	"7" : "magazine",
 	"8" : "floor",
-	"9" : "shoes",
-	"10" : "curtains",
-	"11" : "wooden table",
-	
+	"9" : "shoe",
+	"10" : "curtain"
 }"
 
-Es importantísimo que respetes el formato JSON igual al que te he pasado. Escribe cada objeto en minúsculas. No escribas sinónimos, evita repetir objetos. Hago hincapié en la importancia de estos aspectos porque usaré tu respuesta directamente en un pipeline automatizado. No debes saltarte el formato ni mis indicaciones.
+
+EJEMPLO 2
+
+Imagina que te envío una descripción como la siguiente:
+
+"The image shows an indoor scene with a focus on two main objects: a guitar and a bed. The guitar is positioned to the left of the frame, leaning against what appears to be a wall or a stand. It's a dreadnought-style acoustic guitar with visible wood tones typical of such instruments.
+
+To the right, there is a single bed with a dark-colored mattress and bedding. The bed appears unoccupied, and it takes up most of the right side of the image. There are no people in the picture, giving the impression of an empty or quiet room.
+
+In the foreground, there's a small pile of clothes, possibly discarded, which adds a lived-in feel to the space. The floor includes various shades of brown and beige. There are no texts visible in this image, and the style appears to be a candid or unposed photograph, likely taken without much artistic intent, perhaps as a snapshot of daily life."
+
+Tu respuesta debería ser así, teniendo en cuenta el formato y las reglas antes indicadas:
+
+"{
+	"1" : "guitar",
+	"2" : "bed",
+	"3" : "wall",
+	"4" : "stand",
+	"5" : "mattress",
+	"6" : "pile of clothes",
+	"7" : "floor"
+}"

@@ -281,6 +281,7 @@ class GroundingDinoLocator:
         # Filter the results based on the confidence threshold
         results_json = self.filter_confidence(results_json, threshold=self.score_threshold)
 
+        # Filter the results based on bounding box properties
         results_json = self.filter_bbox(results_json, self.input_image.width, self.input_image.height, verbose=True)
 
         print(f"{self.STR_PREFIX} JSON results:\n\n{json.dumps(results_json, indent=4)}\n")
