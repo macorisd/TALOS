@@ -2,6 +2,7 @@
     # src/tagging/lvlm_llm_tagging/lvlm_description/output_descriptions
     # src/tagging/output_tags
     # src/location/output_location
+    # src/segmentation/output_segments
 
 import os
 import shutil

@@ -12,6 +12,7 @@ from transformers import AutoProcessor, AutoModelForZeroShotObjectDetection
 import os
 import time
 import json
+import math
 
 class GroundingDinoLocator:
     """
@@ -154,7 +155,81 @@ class GroundingDinoLocator:
         Filters the results based on the confidence threshold.
         """
         filtered_results = [result for result in results if result["score"] > threshold]
-        return filtered_results
+        return filtered_results        
+
+    def filter_bbox(self, results_json: dict, image_width, image_height, padding: float = 10, ratio: float = 0.9 , verbose: bool = False):
+        def is_similar_bbox(bbox1, bbox2, padding):
+            return (abs(bbox1['x_min'] - bbox2['x_min']) <= padding and
+                (abs(bbox1['y_min'] - bbox2['y_min']) <= padding) and
+                (abs(bbox1['x_max'] - bbox2['x_max']) <= padding) and
+                (abs(bbox1['y_max'] - bbox2['y_max']) <= padding))
+
+        def bbox_area(bbox):
+            return (bbox['x_max'] - bbox['x_min']) * (bbox['y_max'] - bbox['y_min'])
+
+        def bbox_center(bbox):
+            return ((bbox['x_min'] + bbox['x_max']) / 2, (bbox['y_min'] + bbox['y_max']) / 2)
+
+        def is_center_inside(center, bbox):
+            return (bbox['x_min'] <= center[0] <= bbox['x_max']) and \
+                (bbox['y_min'] <= center[1] <= bbox['y_max'])
+
+        # 1. Discard practically equal bounding boxes with lower score
+        i = 0
+        while i < len(results_json):
+            j = i + 1
+            while j < len(results_json):
+                if is_similar_bbox(results_json[i]['bbox'], results_json[j]['bbox'], padding):
+                    if results_json[i]['score'] > results_json[j]['score']:
+                        results_json.pop(j)
+                        if verbose:
+                            print(f"{self.STR_PREFIX} Discarded: {results_json[j]['label']} with score {results_json[j]['score']} [1]")
+                    else:
+                        results_json.pop(i)
+                        if verbose:
+                            print(f"{self.STR_PREFIX} Discarded: {results_json[i]['label']} with score {results_json[i]['score']} [1]")
+                        i -= 1
+                        break
+                else:
+                    j += 1
+            i += 1
+
+        # 2. Discard bounding boxes that are too large
+        filtered_results = []
+        for result in results_json:
+            width = result['bbox']['x_max'] - result['bbox']['x_min']
+            height = result['bbox']['y_max'] - result['bbox']['y_min']
+
+            if not (width >= image_width * ratio and height >= image_height * ratio):
+                filtered_results.append(result)
+            elif verbose:
+                print(f"{self.STR_PREFIX} Discarded: {result['label']} with score {result['score']} [2]")
+        results_json = filtered_results
+
+        # 3. Discard bounding boxes with the same label and center contained in another
+        i = 0
+        while i < len(results_json):
+            j = i + 1
+            while j < len(results_json):
+                if results_json[i]['label'] == results_json[j]['label']:
+                    center_i = bbox_center(results_json[i]['bbox'])
+                    center_j = bbox_center(results_json[j]['bbox'])
+                    if is_center_inside(center_i, results_json[j]['bbox']) or is_center_inside(center_j, results_json[i]['bbox']):
+                        if bbox_area(results_json[i]['bbox']) < bbox_area(results_json[j]['bbox']):
+                            results_json.pop(i)
+                            if verbose:
+                                print(f"{self.STR_PREFIX} Discarded: {results_json[i]['label']} with score {results_json[i]['score']} [3]")
+                            i -= 1
+                            break
+                        else:
+                            results_json.pop(j)
+                            if verbose:
+                                print(f"{self.STR_PREFIX} Discarded: {results_json[j]['label']} with score {results_json[j]['score']} [3]")
+                            continue
+                j += 1
+            i += 1
+
+        return results_json
     
     def draw_bounding_boxes(self, results: dict) -> Image:
         """
@@ -212,6 +287,8 @@ class GroundingDinoLocator:
 
         # Filter the results based on the confidence threshold
         results_json = self.filter_confidence(results_json, threshold=self.score_threshold)
+
+        # results_json = self.filter_bbox(results_json, self.input_image.width, self.input_image.height, verbose=True)
 
         print(f"{self.STR_PREFIX} JSON results:\n\n{json.dumps(results_json, indent=4)}\n")
 
