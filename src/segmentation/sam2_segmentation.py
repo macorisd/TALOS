@@ -19,7 +19,7 @@ class Sam2Segmenter:
         self,        
         sam2_model_name: str = "facebook/sam2-hiera-large",
         save_files_jpg: bool = True,
-        save_files_npy: bool = True,        
+        save_files_npy: bool = False,        
         timeout: int = 120  # Timeout in seconds
     ):
         """
@@ -174,12 +174,20 @@ class Sam2Segmenter:
                 timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
 
                 # Output timestamped directory path
-                output_timestamped_segments_dir = os.path.join(
+                base_output_timestamped_segments_dir = os.path.join(
                     self.output_segments_dir,
                     f"segmentation_sam2_{timestamp}"
                 )
 
-                # Create the timestamped output directory 
+                # Ensure the output directory is unique
+                output_timestamped_segments_dir = base_output_timestamped_segments_dir
+                counter = 1
+
+                while os.path.exists(output_timestamped_segments_dir):
+                    output_timestamped_segments_dir = f"{base_output_timestamped_segments_dir}_{counter}"
+                    counter += 1
+
+                # Create the unique timestamped output directory 
                 os.makedirs(output_timestamped_segments_dir)
 
         # Iterate over each instance in the input_bbox_location
