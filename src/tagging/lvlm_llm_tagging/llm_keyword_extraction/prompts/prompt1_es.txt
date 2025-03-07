@@ -87,3 +87,5 @@ Tu respuesta debería ser así, teniendo en cuenta el formato y las reglas antes
 	"6" : "pile of clothes",
 	"7" : "floor"
 }"
+
+La explicación de tu tarea ha terminado. Ahora, siguiendo todas las indicaciones anteriores, debes producir la respuesta para este texto de entrada:

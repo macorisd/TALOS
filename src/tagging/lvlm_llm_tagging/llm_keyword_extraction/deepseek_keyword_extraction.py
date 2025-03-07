@@ -13,7 +13,8 @@ class DeepseekKeywordExtractor:
 
     def __init__(
         self,
-        deepseek_model_name: str = "deepseek-r1:14b",        
+        deepseek_model_name: str = "deepseek-r1:32b",
+        enhance_output: bool = True,  # Whether to enhance the output with an additional prompt
         save_file: bool = True,  # Whether to save the classification results to a file
         timeout: int = 120  # Timeout in seconds
     ):
@@ -25,13 +26,20 @@ class DeepseekKeywordExtractor:
 
         self.script_dir = os.path.dirname(os.path.abspath(__file__))
         self.deepseek_model_name = deepseek_model_name
+        self.enhance_output = enhance_output
         self.save_file = save_file
         self.timeout = timeout
 
-        # Load prompt from prompt.txt
-        prompt_path = os.path.join(self.script_dir, "prompt.txt")
-        with open(prompt_path, "r", encoding="utf-8") as f:
-            self.prompt = f.read()
+        # Load first prompt from prompt1.txt
+        prompt1_path = os.path.join(self.script_dir, "prompts", "prompt1.txt")
+        with open(prompt1_path, "r", encoding="utf-8") as f:
+            self.prompt1 = f.read()
+
+        # If enhance_output is True, load the second prompt from prompt2.txt
+        if enhance_output:
+            prompt2_path = os.path.join(self.script_dir, "prompts", "prompt2.txt")
+            with open(prompt2_path, "r", encoding="utf-8") as f:
+                self.prompt2 = f.read()
 
         if save_file:
             # Output tags directory path
@@ -80,14 +88,32 @@ class DeepseekKeywordExtractor:
                 self.input_description = f.read()
 
         print("Done.\n")
-        
+
     def remove_thoughts(self, text: str) -> str:
         """
-        Removes the <think></think> part of the answer.
+        Removes the <think></think> part of the response.
         """
         return text.split("</think>")[1]
 
-    def correct_answer_format(self, text: str) -> dict:
+    def chat_deepseek(self, prompt: str) -> str:
+        response = ollama.chat(
+                model=self.deepseek_model_name,
+                messages=[
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ]
+            )
+        
+        response_content = response["message"]["content"]
+
+        # Remove the <think></think> part of the response
+        response_content = self.remove_thoughts(response_content)
+
+        return response_content
+
+    def correct_response_format(self, text: str) -> dict:
         """
         Checks if there is a substring within the given text that starts with '{' and ends with '}'
         and follows the exact format:
@@ -133,6 +159,30 @@ class DeepseekKeywordExtractor:
                 return None
 
         return parsed_data
+    
+    def filter_response(self, response: str) -> dict:
+        """
+        Additional DeepSeek prompt to enhance the keyword extraction.
+        """
+        print(f"{self.STR_PREFIX} Enhancing the output with an additional prompt...", end=" ")
+
+        prompt = self.prompt2 + "\n\n" + response
+
+        while True:
+            # Chat with DeepSeek using the second prompt
+            deepseek_response = self.chat_deepseek(prompt=prompt)
+
+            print(f"DeepSeek response:\n\n", deepseek_response + "\n")
+
+            # Check if the response is in the correct format
+            correct_json = self.correct_response_format(deepseek_response)
+
+            if correct_json is not None:
+                break
+            else:
+                print(f"{self.STR_PREFIX} The response is not in the correct format. Trying again...\n")
+        return correct_json
+
 
     def run(self) -> dict:
         """
@@ -142,32 +192,26 @@ class DeepseekKeywordExtractor:
 
         start_time = time.time()
         correct_json = None
+        prompt = self.prompt1 + "\n" + self.input_description
+
         while time.time() - start_time < self.timeout:
-            response = ollama.chat(
-                model=self.deepseek_model_name,
-                messages=[
-                    {
-                        "role": "user",
-                        "content": self.prompt + "\n" + self.input_description
-                    }
-                ]
-            )
+            # Chat with DeepSeek using the first prompt
+            deepseek_response = self.chat_deepseek(prompt=prompt)
 
-            deepseek_answer = response["message"]["content"]
+            print(f"DeepSeek response:\n\n", deepseek_response + "\n")
 
-            print(f"DeepSeek answer:\n\n", deepseek_answer + "\n")
+            # Check if the response is in the correct format
+            correct_json = self.correct_response_format(deepseek_response)
 
-            # Remove the <think></think> part of the answer
-            deepseek_answer = self.remove_thoughts(deepseek_answer)            
-
-            # Check if the answer is in the correct format
-            correct_json = self.correct_answer_format(deepseek_answer)
             if correct_json is not None:
+                # Filter the response to improve results if enhance_output is True and the response has at least one element
+                if self.enhance_output and len(correct_json) > 0:
+                    correct_json = self.filter_response(deepseek_response)
                 break
             else:
-                print(f"{self.STR_PREFIX} The answer is not in the correct format. Trying again...\n")
+                print(f"{self.STR_PREFIX} The response is not in the correct format. Trying again...\n")
         else:
-            raise TimeoutError(f"{self.STR_PREFIX} Timeout of {self.timeout} seconds reached without receiving a correct answer format.\n")
+            raise TimeoutError(f"{self.STR_PREFIX} Timeout of {self.timeout} seconds reached without receiving a correct response format.\n")
 
         if self.save_file:
             # Prepare timestamped output file
@@ -178,9 +222,9 @@ class DeepseekKeywordExtractor:
             with open(output_file, "w", encoding="utf-8") as f:
                 json.dump(correct_json, f, ensure_ascii=False, indent=4)
 
-            print(f"{self.STR_PREFIX} DeepSeek answer substring saved to: {output_file}\n")
+            print(f"{self.STR_PREFIX} DeepSeek response substring saved to: {output_file}\n")
 
-        print(f"{self.STR_PREFIX} Final answer substring:\n\n", json.dumps(correct_json, indent=4) + "\n")
+        print(f"{self.STR_PREFIX} Final response substring:\n\n", json.dumps(correct_json, indent=4) + "\n")
         return correct_json
 
 def main():    
