@@ -170,7 +170,7 @@ class Sam2Segmenter:
         print(f"{self.STR_PREFIX} Running SAM2 instance segmentation...\n")
 
         if self.save_files_jpg or self.save_files_npy:
-                # Prepare timestamped output files
+                # Prepare timestamp
                 timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
 
                 # Output timestamped directory path

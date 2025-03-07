@@ -13,10 +13,10 @@ class DeepseekKeywordExtractor:
 
     def __init__(
         self,
-        deepseek_model_name: str = "deepseek-r1:32b",
+        deepseek_model_name: str = "deepseek-r1:14b",
         enhance_output: bool = True,  # Whether to enhance the output with an additional prompt
         save_file: bool = True,  # Whether to save the classification results to a file
-        timeout: int = 120  # Timeout in seconds
+        timeout: int = 1200  # Timeout in seconds
     ):
         """
         Initializes the paths, sets the timeout, and creates the classification directory.
@@ -188,7 +188,7 @@ class DeepseekKeywordExtractor:
         """
         Main workflow # TODO
         """
-        print(f"{self.STR_PREFIX} Running DeepSeek keyword extraction...", end=" ")        
+        print(f"{self.STR_PREFIX} Running DeepSeek keyword extraction...", end=" ", flush=True)        
 
         start_time = time.time()
         correct_json = None
