@@ -14,7 +14,7 @@ class DeepseekKeywordExtractor:
     def __init__(
         self,
         deepseek_model_name: str = "deepseek-r1:14b",
-        enhance_output: bool = True,  # Whether to enhance the output with an additional prompt
+        enhance_output: bool = False,  # Whether to enhance the output with an additional prompt
         save_file: bool = True,  # Whether to save the classification results to a file
         timeout: int = 1200  # Timeout in seconds
     ):
@@ -29,6 +29,9 @@ class DeepseekKeywordExtractor:
         self.enhance_output = enhance_output
         self.save_file = save_file
         self.timeout = timeout
+
+        self.input_description = []
+        self.iters = 1
 
         # Load first prompt from prompt1.txt
         prompt1_path = os.path.join(self.script_dir, "prompts", "prompt1.txt")
@@ -55,39 +58,56 @@ class DeepseekKeywordExtractor:
         
         print("Done.\n")
 
-    def load_description(self, pipeline_description: str = None) -> None:
-        print(f"{self.STR_PREFIX} Loading input description...", end=" ")
+    def load_description(self, pipeline_description: list[str] = None) -> None:
+        print(f"{self.STR_PREFIX} Loading input description(s)...", end=" ")
 
         # If pipeline_description is provided, use it
         if pipeline_description is not None:
             self.input_description = pipeline_description
+            self.iters = len(pipeline_description)
+            print(f"Loaded {self.iters} descriptions.")
+            return
 
-        # Otherwise, read the most recent .txt file from output_descriptions
-        else:
-            # Input descriptions directory path
-            descriptions_dir = os.path.join(
-                self.script_dir,
-                "..",
-                "lvlm_description",
-                "output_descriptions"
-            )
+        # Input descriptions parent directory
+        descriptions_parent_dir = os.path.join(
+            self.script_dir,
+            "..",
+            "lvlm_description",
+            "output_descriptions"
+        )
 
-            # Gather all .txt files in descriptions_dir
-            txt_files = [
-                os.path.join(descriptions_dir, f)
-                for f in os.listdir(descriptions_dir)
-                if f.endswith(".txt")
-            ]
-            if not txt_files:
-                raise FileNotFoundError(f"\n{self.STR_PREFIX} No .txt files found in {descriptions_dir}")
+        # Get all subdirectories inside output_descriptions
+        subdirectories = [
+            os.path.join(descriptions_parent_dir, d)
+            for d in os.listdir(descriptions_parent_dir)
+            if os.path.isdir(os.path.join(descriptions_parent_dir, d))
+        ]
 
-            # Select and read the most recently modified .txt file
-            latest_txt_path = max(txt_files, key=os.path.getmtime)
-            
-            with open(latest_txt_path, "r", encoding="utf-8") as f:
-                self.input_description = f.read()
+        if not subdirectories:
+            raise FileNotFoundError(f"\n{self.STR_PREFIX} No directories found in {descriptions_parent_dir}")
 
-        print("Done.\n")
+        # Select the most recently modified directory
+        latest_dir = max(subdirectories, key=os.path.getmtime)
+
+        # Gather all .txt files inside the selected directory
+        txt_files = [
+            os.path.join(latest_dir, f)
+            for f in os.listdir(latest_dir)
+            if f.endswith(".txt")
+        ]
+
+        if not txt_files:
+            raise FileNotFoundError(f"\n{self.STR_PREFIX} No .txt files found in {latest_dir}")
+
+        # Read all .txt files and store their content in a list
+        self.input_description = []
+        for txt_path in txt_files:
+            with open(txt_path, "r", encoding="utf-8") as f:
+                self.input_description.append(f.read())
+
+        self.iters = len(self.input_description)
+        print(f"Loaded {self.iters} descriptions.")
+
 
     def remove_thoughts(self, text: str) -> str:
         """
@@ -111,7 +131,7 @@ class DeepseekKeywordExtractor:
         # Remove the <think></think> part of the response
         response_content = self.remove_thoughts(response_content)
 
-        return response_content
+        return response_content.strip()
 
     def correct_response_format(self, text: str) -> dict:
         """
@@ -183,35 +203,59 @@ class DeepseekKeywordExtractor:
                 print(f"{self.STR_PREFIX} The response is not in the correct format. Trying again...\n")
         return correct_json
 
+    def response_fusion(self, responses: list[dict]) -> dict:
+        """
+        Merges the responses of multiple iterations into a single response,
+        ensuring unique values with numeric keys.
+        """
+        final_response = {}
+        unique_values = set()
+        index = 1
+
+        # Collect all unique values from the dictionaries
+        for response in responses:
+            for value in response.values():
+                if value not in unique_values:
+                    unique_values.add(value)
+                    final_response[str(index)] = value
+                    index += 1
+
+        return final_response
+
 
     def run(self) -> dict:
         """
         Main workflow # TODO
         """
-        print(f"{self.STR_PREFIX} Running DeepSeek keyword extraction...", end=" ", flush=True)        
+        print(f"{self.STR_PREFIX} Running DeepSeek keyword extraction...", end=" ", flush=True)
 
         start_time = time.time()
-        correct_json = None
-        prompt = self.prompt1 + "\n" + self.input_description
+        correct_json = [None] * self.iters
 
-        while time.time() - start_time < self.timeout:
-            # Chat with DeepSeek using the first prompt
-            deepseek_response = self.chat_deepseek(prompt=prompt)
+        for i in range(self.iters):
+            if self.iters > 1:
+                print(f"{self.STR_PREFIX} Iteration {i + 1}/{self.iters}...\n")
 
-            print(f"DeepSeek response:\n\n", deepseek_response + "\n")
+            prompt = self.prompt1 + "\n" + self.input_description[i]
 
-            # Check if the response is in the correct format
-            correct_json = self.correct_response_format(deepseek_response)
+            while time.time() - start_time < self.timeout:
+                # Chat with DeepSeek using the first prompt
+                deepseek_response = self.chat_deepseek(prompt=prompt)
 
-            if correct_json is not None:
-                # Filter the response to improve results if enhance_output is True and the response has at least one element
-                if self.enhance_output and len(correct_json) > 0:
-                    correct_json = self.filter_response(deepseek_response)
-                break
+                print(f"DeepSeek response:\n\n", deepseek_response + "\n")
+
+                # Check if the response is in the correct format
+                correct_json[i] = self.correct_response_format(deepseek_response)
+
+                if correct_json[i] is not None:
+                    # Filter the response to improve results if enhance_output is True and the response has at least one element
+                    if self.enhance_output and len(correct_json[i]) > 0:
+                        correct_json[i] = self.filter_response(deepseek_response)
+                    break
+                else:
+                    print(f"{self.STR_PREFIX} The response is not in the correct format. Trying again...\n")
             else:
-                print(f"{self.STR_PREFIX} The response is not in the correct format. Trying again...\n")
-        else:
-            raise TimeoutError(f"{self.STR_PREFIX} Timeout of {self.timeout} seconds reached without receiving a correct response format.\n")
+                raise TimeoutError(f"{self.STR_PREFIX} Timeout of {self.timeout} seconds reached without receiving a correct response format.\n")
 
         if self.save_file:
             # Prepare timestamped output file
@@ -219,13 +263,16 @@ class DeepseekKeywordExtractor:
             output_filename = f"tags_deepseek_{timestamp}.json"
             output_file = os.path.join(self.output_tags_dir, output_filename)
 
+            # Prepare the final JSON
+            final_json = self.response_fusion(correct_json) if self.iters > 1 else correct_json[0]
+
             with open(output_file, "w", encoding="utf-8") as f:
-                json.dump(correct_json, f, ensure_ascii=False, indent=4)
+                json.dump(final_json, f, ensure_ascii=False, indent=4)
 
             print(f"{self.STR_PREFIX} DeepSeek response substring saved to: {output_file}\n")
 
-        print(f"{self.STR_PREFIX} Final response substring:\n\n", json.dumps(correct_json, indent=4) + "\n")
-        return correct_json
+        print(f"{self.STR_PREFIX} Final response substring:\n\n", json.dumps(final_json, indent=4) + "\n")
+        return final_json
 
 def main():    
     keyword_extractor = DeepseekKeywordExtractor()
