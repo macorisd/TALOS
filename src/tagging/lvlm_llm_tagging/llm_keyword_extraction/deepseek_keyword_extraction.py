@@ -180,7 +180,7 @@ class DeepseekKeywordExtractor:
 
         return parsed_data
     
-    def filter_response(self, response: str) -> dict:
+    def enhance_response(self, response: str) -> dict:
         """
         Additional DeepSeek prompt to enhance the keyword extraction.
         """
@@ -222,6 +222,27 @@ class DeepseekKeywordExtractor:
 
         return final_response
 
+    def remove_duplicate_plurals(self, response: dict) -> dict:
+        values = list(response.values())
+
+        unique_values = {
+            word for word in values
+            if not (word.endswith('s') and word[:-1] in values)
+        }
+
+        return {k: v for k, v in response.items() if v in unique_values}
+
+    def remove_duplicates(response: dict) -> dict:
+        unique_values = set()
+        result = {}
+
+        for key, value in response.items():
+            lower_value = value.lower()
+            if lower_value not in unique_values:
+                unique_values.add(lower_value)
+                result[key] = lower_value
+
+        return result
 
     def run(self) -> dict:
         """
@@ -250,21 +271,27 @@ class DeepseekKeywordExtractor:
                 if correct_json[i] is not None:
                     # Filter the response to improve results if enhance_output is True and the response has at least one element
                     if self.enhance_output and len(correct_json[i]) > 0:
-                        correct_json[i] = self.filter_response(deepseek_response)
+                        correct_json[i] = self.enhance_response(deepseek_response)
                     break
                 else:
                     print(f"{self.STR_PREFIX} The response is not in the correct format. Trying again...\n")
             else:
                 raise TimeoutError(f"{self.STR_PREFIX} Timeout of {self.timeout} seconds reached without receiving a correct response format.\n")
 
+        # Merge the responses if there are multiple iterations
+        final_json = self.response_fusion(correct_json) if self.iters > 1 else correct_json[0]
+
+        # Remove duplicate words
+        final_json = self.remove_duplicates(final_json)
+
+        # Remove duplicate plural words
+        final_json = self.remove_duplicate_plurals(final_json)
+
         if self.save_file:
             # Prepare timestamped output file
             timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
             output_filename = f"tags_deepseek_{timestamp}.json"
             output_file = os.path.join(self.output_tags_dir, output_filename)
-
-            # Prepare the final JSON
-            final_json = self.response_fusion(correct_json) if self.iters > 1 else correct_json[0]
 
             with open(output_file, "w", encoding="utf-8") as f:
                 json.dump(final_json, f, ensure_ascii=False, indent=4)
