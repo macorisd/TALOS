@@ -31,7 +31,7 @@ class Sam2Segmenter:
         self.script_dir = os.path.dirname(os.path.abspath(__file__))        
         self.save_files_jpg = save_files_jpg
         self.save_files_npy = save_files_npy
-        self.timeout = timeout
+        self.timeout = timeout if timeout > 0 else 120
 
         # Load SAM2 predictor
         self.predictor = SAM2ImagePredictor.from_pretrained(sam2_model_name)

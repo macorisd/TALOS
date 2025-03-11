@@ -16,7 +16,7 @@ class DeepseekKeywordExtractor:
         deepseek_model_name: str = "deepseek-r1:14b",
         enhance_output: bool = False,  # Whether to enhance the output with an additional prompt
         save_file: bool = True,  # Whether to save the classification results to a file
-        timeout: int = 1200  # Timeout in seconds
+        timeout: int = 200  # Timeout in seconds
     ):
         """
         Initializes the paths, sets the timeout, and creates the classification directory.
@@ -28,7 +28,7 @@ class DeepseekKeywordExtractor:
         self.deepseek_model_name = deepseek_model_name
         self.enhance_output = enhance_output
         self.save_file = save_file
-        self.timeout = timeout
+        self.timeout = timeout if timeout > 0 else 200
 
         self.input_description = []
         self.iters = 1

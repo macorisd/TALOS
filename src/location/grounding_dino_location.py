@@ -12,7 +12,6 @@ from transformers import AutoProcessor, AutoModelForZeroShotObjectDetection
 import os
 import time
 import json
-import math
 
 class GroundingDinoLocator:
     """
@@ -35,7 +34,7 @@ class GroundingDinoLocator:
         print(f"\n{self.STR_PREFIX} Initializing Grounding DINO object locator...", end=" ")
 
         self.script_dir = os.path.dirname(os.path.abspath(__file__))
-        self.score_threshold = score_threshold
+        self.score_threshold = score_threshold if score_threshold > 0 else 0.2
         self.save_file_json = save_file_json
         self.save_file_jpg = save_file_jpg
 

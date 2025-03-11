@@ -31,7 +31,7 @@ class RamPlusTagger:
 
         self.script_dir = os.path.dirname(os.path.abspath(__file__))         
         self.save_file = save_file
-        self.timeout = timeout
+        self.timeout = timeout if timeout > 0 else 120
 
         # Load the model
         ram_plus_model_path = os.path.join(self.script_dir, 'models', ram_plus_model_name)        

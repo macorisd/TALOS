@@ -16,7 +16,7 @@ class LlavaDescriptor:
         prompt: str = "Describe the image.",
         iters: int = 1,  # Number of iterations to run the model
         save_file: bool = True,  # Whether to save the description results to a file
-        timeout: int = 1200  # Timeout in seconds
+        timeout: int = 200  # Timeout in seconds
     ):
         """
         Initialize the paths and create necessary directories.
@@ -27,9 +27,9 @@ class LlavaDescriptor:
         self.script_dir = os.path.dirname(os.path.abspath(__file__))        
         self.llava_model_name = llava_model_name        
         self.prompt = prompt
-        self.iters = iters
+        self.iters = iters if iters > 0 else 1
         self.save_file = save_file
-        self.timeout = timeout
+        self.timeout = timeout if timeout > 0 else 200
         
         if save_file:
             # Output descriptions directory path
