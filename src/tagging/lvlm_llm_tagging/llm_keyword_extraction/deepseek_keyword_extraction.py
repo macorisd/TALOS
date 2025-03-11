@@ -158,6 +158,10 @@ class DeepseekKeywordExtractor:
         # Extract the substring that includes the braces
         substring = text[start_index:end_index + 1]
 
+        # If there's a "/" character in the substring, it's not a valid JSON
+        if "/" in substring:
+            return None
+
         # Delete all "\" characters from the substring
         substring = substring.replace("\\", "")
 
