@@ -221,18 +221,8 @@ class DeepseekKeywordExtractor:
                     index += 1
 
         return final_response
-
-    def remove_duplicate_plurals(self, response: dict) -> dict:
-        values = list(response.values())
-
-        unique_values = {
-            word for word in values
-            if not (word.endswith('s') and word[:-1] in values)
-        }
-
-        return {k: v for k, v in response.items() if v in unique_values}
-
-    def remove_duplicates(response: dict) -> dict:
+    
+    def remove_duplicates(self, response: dict) -> dict:
         unique_values = set()
         result = {}
 
@@ -243,6 +233,16 @@ class DeepseekKeywordExtractor:
                 result[key] = lower_value
 
         return result
+
+    def remove_duplicate_plurals(self, response: dict) -> dict:
+        values = list(response.values())
+
+        unique_values = {
+            word for word in values
+            if not (word.endswith('s') and word[:-1] in values)
+        }
+
+        return {k: v for k, v in response.items() if v in unique_values}
 
     def run(self) -> dict:
         """
