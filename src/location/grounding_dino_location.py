@@ -156,7 +156,7 @@ class GroundingDinoLocator:
         filtered_results = [result for result in results if result["score"] > threshold]
         return filtered_results        
 
-    def filter_bbox(self, results_json: dict, image_width, image_height, padding: float = 10, ratio: float = 0.9 , verbose: bool = False):
+    def filter_bbox(self, results_json: dict, image_width, image_height, padding: float = 60, ratio: float = 0.9 , verbose: bool = False):
         def is_similar_bbox(bbox1, bbox2, padding):
             return (abs(bbox1['x_min'] - bbox2['x_min']) <= padding and
                 (abs(bbox1['y_min'] - bbox2['y_min']) <= padding) and
@@ -223,7 +223,7 @@ class GroundingDinoLocator:
 
         return results_json
     
-    def draw_bounding_boxes(self, results: dict) -> Image:
+    def draw_bounding_boxes(self, results: dict, padding: int = None) -> Image:
         """
         Draws bounding boxes around the detected objects in the image.
         """    
@@ -249,6 +249,28 @@ class GroundingDinoLocator:
             # Draw the label and score
             text = f"{label}: {score:.2f}"
             draw.text((x_min, y_min), text, fill="red", font=font)
+
+        # If padding is not None, draw a green rectangle that represents the padding for reference
+        if padding is not None:
+            _, image_height = image.size
+
+            rect_width = padding
+            rect_height = 30
+            
+            # Define the coordinates for the rectangle
+            rect_x_min = 0
+            rect_y_min = image_height - rect_height
+            rect_x_max = rect_width
+            rect_y_max = image_height
+            
+            # Draw the green rectangle
+            draw.rectangle([rect_x_min, rect_y_min, rect_x_max, rect_y_max], outline="green", fill="green", width=2)
+            
+            # Draw the "padding" text
+            text = "padding"
+            text_x = rect_x_min + 5
+            text_y = rect_y_min - 30
+            draw.text((text_x, text_y), text, fill="green", font=font)
 
         return image
     
@@ -306,7 +328,7 @@ class GroundingDinoLocator:
                 output_file_jpg = os.path.join(self.output_location_dir, output_filename_jpg)
 
                 # Draw bounding boxes around the detected objects
-                results_image = self.draw_bounding_boxes(results_json)
+                results_image = self.draw_bounding_boxes(results=results_json, padding=60)
 
                 # Save the image with bounding boxes
                 results_image.save(output_file_jpg)
