@@ -62,7 +62,7 @@ class LlavaDescriptor:
         
         print("Done.\n")
 
-    def run(self) -> str:
+    def run(self) -> list[str]:
         """
         Generates a description for the loaded image using Ollama's LLaVA model,
         and writes the description to a text file.
@@ -90,7 +90,7 @@ class LlavaDescriptor:
             # Create the unique timestamped output directory
             os.makedirs(output_timestamped_descriptions_dir)
 
-        description = [""] * self.iters
+        descriptions = [""] * self.iters
         start_time = time.time()  # Start timer for timeout
 
         for i in range(self.iters):
@@ -109,8 +109,8 @@ class LlavaDescriptor:
                         }
                     ]
                 )
-                description[i] = response["message"]["content"]
-                if description[i].strip(): # Not empty
+                descriptions[i] = response["message"]["content"]
+                if descriptions[i].strip(): # Not empty
                     break
                 else:
                     print(f"{self.STR_PREFIX} The description is empty. Trying again...\n")
@@ -118,7 +118,7 @@ class LlavaDescriptor:
                 raise TimeoutError(f"{self.STR_PREFIX} Timeout of {self.timeout} seconds reached without receiving a valid description.\n")
 
             # Print the description
-            print(f"Image description:\n\n" + description[i] + "\n")
+            print(f"Image description:\n\n" + descriptions[i] + "\n")
 
             # Save the description to a text file if saving is enabled
             if self.save_file:
@@ -126,12 +126,12 @@ class LlavaDescriptor:
                 output_file = os.path.join(output_timestamped_descriptions_dir, output_filename)
 
                 with open(output_file, "w", encoding="utf-8") as f:
-                    f.write(description[i])
+                    f.write(descriptions[i])
                 print(f"{self.STR_PREFIX} Description saved to: {output_file}\n")
             else:
                 print(f"{self.STR_PREFIX} Saving file is disabled. Description was not saved.\n")
 
-        return description
+        return descriptions
 
 
 def main():

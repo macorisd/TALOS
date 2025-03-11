@@ -65,7 +65,7 @@ class DeepseekKeywordExtractor:
         if pipeline_description is not None:
             self.input_description = pipeline_description
             self.iters = len(pipeline_description)
-            print(f"Loaded {self.iters} descriptions.")
+            print(f"Loaded {self.iters} description(s).\n\n")
             return
 
         # Input descriptions parent directory
@@ -227,7 +227,7 @@ class DeepseekKeywordExtractor:
         """
         Main workflow # TODO
         """
-        print(f"{self.STR_PREFIX} Running DeepSeek keyword extraction...", end=" ", flush=True)
+        print(f"{self.STR_PREFIX} Running DeepSeek keyword extraction...\n", flush=True)
 
         start_time = time.time()
         correct_json = [None] * self.iters

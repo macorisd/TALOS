@@ -36,7 +36,7 @@ class PipelineTLS:
             self.tagger_ram_plus = RamPlusTagger(save_file=save_files)
         elif tagging_method == LVLM_LLM:
             if tagging_submethods[0] == LLAVA:
-                self.descriptor_llava = LlavaDescriptor(save_file=save_files)
+                self.descriptor_llava = LlavaDescriptor(save_file=save_files, iters=3)
             if tagging_submethods[1] == DEEPSEEK:
                 self.extractor_deepseek = DeepseekKeywordExtractor(save_file=save_files)
 
@@ -60,11 +60,11 @@ class PipelineTLS:
             if self.tagging_submethods[0] == LLAVA:
                 print_green(f"{LLAVA}\n")
                 self.descriptor_llava.load_image_path(input_image_name)
-                description_str = self.descriptor_llava.run()
+                description_list = self.descriptor_llava.run()
 
             if self.tagging_submethods[1] == DEEPSEEK:
                 print_green(f"{DEEPSEEK}\n")
-                self.extractor_deepseek.load_description(description_str)
+                self.extractor_deepseek.load_description(description_list)
                 return self.extractor_deepseek.run()
         return {}
 
@@ -112,8 +112,8 @@ def main(iters: int = 1):
         save_files=True
     )
 
-    # input_image_name = "desk.jpg"
-    input_image_name = ["desk.jpg", "279.jpg", "603.jpg", "963.jpg", "1108.jpg", "1281.jpg", "1514.jpg", "1729.jpg", "1871.jpg", "2421.jpg"]
+    input_image_name = "desk.jpg"
+    # input_image_name = ["desk.jpg", "279.jpg", "603.jpg", "963.jpg", "1108.jpg", "1281.jpg", "1514.jpg", "1729.jpg", "1871.jpg", "2421.jpg"]
 
     # One iteration
     if iters <= 1:
@@ -126,10 +126,10 @@ def main(iters: int = 1):
         for i in range(iters):
             print_purple(f"\n[PIPELINE] Execution {i+1}/{iters}...")
             # total_time += pipeline.run(input_image_name=input_image_name)
-            total_time += pipeline.run(input_image_name=input_image_name[i])
+            total_time += pipeline.run(input_image_name=input_image_name)
 
         avg_time = total_time / iters
         print_purple(f"\n[PIPELINE] Average execution time over {iters} runs: {avg_time} seconds.\n")
 
 if __name__ == "__main__":    
-    main(10)
+    main(1)
