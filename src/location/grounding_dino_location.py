@@ -156,7 +156,7 @@ class GroundingDinoLocator:
         filtered_results = [result for result in results if result["score"] > threshold]
         return filtered_results        
 
-    def filter_bbox(self, results_json: dict, image_width, image_height, padding: float = 60, ratio: float = 0.9 , verbose: bool = False):
+    def filter_bbox(self, results_json: dict, image_width, image_height, padding: float = 30, ratio: float = 0.9 , verbose: bool = False):
         def is_similar_bbox(bbox1, bbox2, padding):
             return (abs(bbox1['x_min'] - bbox2['x_min']) <= padding and
                 (abs(bbox1['y_min'] - bbox2['y_min']) <= padding) and
@@ -328,7 +328,7 @@ class GroundingDinoLocator:
                 output_file_jpg = os.path.join(self.output_location_dir, output_filename_jpg)
 
                 # Draw bounding boxes around the detected objects
-                results_image = self.draw_bounding_boxes(results=results_json, padding=60)
+                results_image = self.draw_bounding_boxes(results=results_json, padding=30)
 
                 # Save the image with bounding boxes
                 results_image.save(output_file_jpg)
