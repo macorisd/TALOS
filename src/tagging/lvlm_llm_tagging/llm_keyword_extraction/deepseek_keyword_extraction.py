@@ -148,7 +148,7 @@ class DeepseekKeywordExtractor:
         If the format is correct, returns the JSON substring. Otherwise, returns None.
         """
         # Find indices of the first '{' and the last '}'
-        start_index = text.find('{')
+        start_index = text.rfind('{')
         end_index = text.rfind('}')
 
         # If we can't find a proper pair of braces, return None
@@ -156,7 +156,10 @@ class DeepseekKeywordExtractor:
             return None
 
         # Extract the substring that includes the braces
-        substring = text[start_index:end_index + 1]        
+        substring = text[start_index:end_index + 1]
+
+        # Delete all "\" characters from the substring
+        substring = substring.replace("\\", "")
 
         # Attempt to parse the substring as JSON
         try:
@@ -166,7 +169,7 @@ class DeepseekKeywordExtractor:
 
         # The parsed data must be a dictionary with at least one item
         if not isinstance(parsed_data, dict):
-            return None                
+            return None
 
         # Check each key-value pair in the dictionary
         for key, value in parsed_data.items():
