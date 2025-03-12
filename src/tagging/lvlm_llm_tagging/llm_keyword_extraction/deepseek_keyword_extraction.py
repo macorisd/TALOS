@@ -22,7 +22,7 @@ class DeepseekKeywordExtractor:
         Initializes the paths, sets the timeout, and creates the classification directory.
         """
 
-        print(f"\n{self.STR_PREFIX} Initializing DeepSeek keyword extractor...", end=" ")
+        print(f"\n{self.STR_PREFIX} Initializing DeepSeek keyword extractor...", end=" ", flush=True)
 
         self.script_dir = os.path.dirname(os.path.abspath(__file__))
         self.deepseek_model_name = deepseek_model_name
@@ -59,7 +59,7 @@ class DeepseekKeywordExtractor:
         print("Done.\n")
 
     def load_description(self, pipeline_description: list[str] = None) -> None:
-        print(f"{self.STR_PREFIX} Loading input description(s)...", end=" ")
+        print(f"{self.STR_PREFIX} Loading input description(s)...", end=" ", flush=True)
 
         # If pipeline_description is provided, use it
         if pipeline_description is not None:
@@ -191,7 +191,7 @@ class DeepseekKeywordExtractor:
         """
         Additional DeepSeek prompt to enhance the keyword extraction.
         """
-        print(f"{self.STR_PREFIX} Enhancing the output with an additional prompt...", end=" ")
+        print(f"{self.STR_PREFIX} Enhancing the output with an additional prompt...", end=" ", flush=True)
 
         prompt = self.prompt2 + "\n\n" + response
 
@@ -215,6 +215,8 @@ class DeepseekKeywordExtractor:
         Merges the responses of multiple iterations into a single response,
         ensuring unique values with numeric keys.
         """
+        print(f"{self.STR_PREFIX} {self.iters} iterations completed. Merging the responses...", end=" ", flush=True)
+
         final_response = {}
         unique_values = set()
         index = 1
@@ -227,28 +229,87 @@ class DeepseekKeywordExtractor:
                     final_response[str(index)] = value
                     index += 1
 
+        print("Done.\n")
+
         return final_response
     
     def remove_duplicates(self, response: dict) -> dict:
+        print(f"{self.STR_PREFIX} Removing duplicate words...\n", flush=True)
+
+        # Set to store unique values
         unique_values = set()
         result = {}
-
+        
         for key, value in response.items():
-            lower_value = value.lower()
-            if lower_value not in unique_values:
-                unique_values.add(lower_value)
-                result[key] = lower_value
+            # Check if the value is already in the unique_values set
+            if value not in unique_values:
+                # If not, add it to the set and include it in the result
+                unique_values.add(value)
+                result[key] = value
+            else:
+                # If it is a duplicate, print a message
+                print(f"Discarded duplicate word: {value}\n")
 
         return result
+    
+    def remove_redundant_substrings(self, response: dict) -> dict:
+        values = list(response.values())
+        
+        # Set to store values that are substrings of other values
+        redundant_values = set()
+        
+        # Compare each value with every other value
+        for i in range(len(values)):
+            for j in range(len(values)):
+                if i != j and values[i] in values[j]:
+                    print(f"{self.STR_PREFIX} Discarded redundant substring: {values[j]} (contains '{values[i]}')\n")
+                    redundant_values.add(values[j])
+        
+        # Build the result dictionary, excluding redundant values
+        return {k: v for k, v in response.items() if v not in redundant_values}
 
     def remove_duplicate_plurals(self, response: dict) -> dict:
-        values = list(response.values())
+        print(f"{self.STR_PREFIX} Removing duplicate plural words...\n", flush=True)
 
-        unique_values = {
-            word for word in values
-            if not (word.endswith('s') and word[:-1] in values)
-        }
-
+        # Step 1: Collect all individual words from all values
+        all_words = set()
+        for value in response.values():
+            all_words.update(value.split())
+        
+        unique_values = set()
+        
+        # Step 2: Process each value in the dictionary
+        for value in response.values():
+            words_in_value = value.split()
+            filtered_words = []
+            
+            for word in words_in_value:
+                original_word = word
+                keep_word = True
+                
+                # Check if removing "es" results in a word that exists in all_words
+                if original_word.endswith("es"):
+                    singular_es = original_word[:-2]
+                    if singular_es in all_words:
+                        print(f"{self.STR_PREFIX} Discarded plural word: {original_word}\n")
+                        keep_word = False
+                
+                # If "es" was not removed, check if removing "s" results in a word that exists in all_words
+                if keep_word and original_word.endswith("s"):
+                    singular_s = original_word[:-1]
+                    if singular_s in all_words:
+                        print(f"{self.STR_PREFIX} Discarded plural word: {original_word}\n")
+                        keep_word = False
+                
+                if keep_word:
+                    filtered_words.append(original_word)
+            
+            # Reconstruct the filtered value
+            filtered_value = ' '.join(filtered_words)
+            if filtered_value:
+                unique_values.add(filtered_value)
+        
+        # Keep only the entries whose original value is in unique_values
         return {k: v for k, v in response.items() if v in unique_values}
 
     def run(self) -> dict:
@@ -286,10 +347,20 @@ class DeepseekKeywordExtractor:
                 raise TimeoutError(f"{self.STR_PREFIX} Timeout of {self.timeout} seconds reached without receiving a correct response format.\n")
 
         # Merge the responses if there are multiple iterations
-        final_json = self.response_fusion(correct_json) if self.iters > 1 else correct_json[0]
+        if self.iters > 1:
+            final_json = self.response_fusion(correct_json)
+        # Otherwise, use the single response
+        else:
+            final_json = correct_json[0]
+
+        # Convert the final response to lowercase
+        final_json = {k: v.lower() for k, v in final_json.items()}
 
         # Remove duplicate words
         final_json = self.remove_duplicates(final_json)
+
+        # Remove words that contain a substring that is also in the dictionary
+        final_json = self.remove_redundant_substrings(final_json)
 
         # Remove duplicate plural words
         final_json = self.remove_duplicate_plurals(final_json)
