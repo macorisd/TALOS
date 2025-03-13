@@ -8,7 +8,7 @@ class LlavaDescriptor:
     A class to describe an image using Ollama's LLaVA model.
     """
 
-    STR_PREFIX = "[TAGGING | DESCRIPTION | LLAVA]"
+    STR_PREFIX = "\n[TAGGING | DESCRIPTION | LLAVA]"
 
     def __init__(
         self,        
@@ -22,7 +22,7 @@ class LlavaDescriptor:
         Initialize the paths and create necessary directories.
         """
 
-        print(f"\n{self.STR_PREFIX} Initializing LLaVA image descriptor...", end=" ")        
+        print(f"{self.STR_PREFIX} Initializing LLaVA image descriptor...", end=" ")        
 
         self.script_dir = os.path.dirname(os.path.abspath(__file__))        
         self.llava_model_name = llava_model_name        
@@ -41,7 +41,7 @@ class LlavaDescriptor:
             # Create the output directory if it does not exist
             os.makedirs(self.output_descriptions_dir, exist_ok=True)
         
-        print("Done.\n")
+        print("Done.")
 
     def load_image_path(self, input_image_name: str) -> None:
         print(f"{self.STR_PREFIX} Loading input image: {input_image_name}...", end=" ")
@@ -58,16 +58,16 @@ class LlavaDescriptor:
         
         # Check if the image exists
         if not os.path.isfile(self.input_image_path):
-            raise FileNotFoundError(f"{self.STR_PREFIX} The image {self.input_image_name} was not found.\n")
+            raise FileNotFoundError(f"{self.STR_PREFIX} The image {self.input_image_name} was not found.")
         
-        print("Done.\n")
+        print("Done.")
 
     def run(self) -> list[str]:
         """
         Generates a description for the loaded image using Ollama's LLaVA model,
         and writes the description to a text file.
         """
-        print(f"{self.STR_PREFIX} Running LLaVA image descriptor...\n", flush=True)
+        print(f"{self.STR_PREFIX} Running LLaVA image descriptor...", flush=True)
 
         if self.save_file:
             # Prepare timestamp
@@ -95,7 +95,7 @@ class LlavaDescriptor:
 
         for i in range(self.iters):
             if self.iters > 1:
-                print(f"{self.STR_PREFIX} Iteration {i + 1}/{self.iters}...\n")
+                print(f"{self.STR_PREFIX} Iteration {i + 1}/{self.iters}...")
 
             # Describe the image
             while time.time() - start_time < self.timeout:
@@ -113,12 +113,12 @@ class LlavaDescriptor:
                 if descriptions[i].strip(): # Not empty
                     break
                 else:
-                    print(f"{self.STR_PREFIX} The description is empty. Trying again...\n")
+                    print(f"{self.STR_PREFIX} The description is empty. Trying again...")
             else:
-                raise TimeoutError(f"{self.STR_PREFIX} Timeout of {self.timeout} seconds reached without receiving a valid description.\n")
+                raise TimeoutError(f"{self.STR_PREFIX} Timeout of {self.timeout} seconds reached without receiving a valid description.")
 
             # Print the description
-            print(f"Image description:\n\n" + descriptions[i] + "\n")
+            print(f"{self.STR_PREFIX} Image description:\n\n" + descriptions[i])
 
             # Save the description to a text file if saving is enabled
             if self.save_file:
@@ -127,15 +127,15 @@ class LlavaDescriptor:
 
                 with open(output_file, "w", encoding="utf-8") as f:
                     f.write(descriptions[i])
-                print(f"{self.STR_PREFIX} Description saved to: {output_file}\n")
+                print(f"{self.STR_PREFIX} Description saved to: {output_file}")
             else:
-                print(f"{self.STR_PREFIX} Saving file is disabled. Description was not saved.\n")
+                print(f"{self.STR_PREFIX} Saving file is disabled. Description was not saved.")
 
         return descriptions
 
 
 def main():
-    descriptor = LlavaDescriptor(iters=1)
+    descriptor = LlavaDescriptor(iters=5)
     descriptor.load_image_path("desk.jpg")
     descriptor.run()
 

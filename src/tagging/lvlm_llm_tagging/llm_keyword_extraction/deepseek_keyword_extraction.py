@@ -9,7 +9,7 @@ class DeepseekKeywordExtractor:
     A class to extract keywords from an image description using the DeepSeek model.
     """
 
-    STR_PREFIX = "[TAGGING | KEYWORD EXTRACTION | DEEPSEEK]"
+    STR_PREFIX = "\n[TAGGING | KEYWORD EXTRACTION | DEEPSEEK]"
 
     def __init__(
         self,
@@ -22,7 +22,7 @@ class DeepseekKeywordExtractor:
         Initializes the paths, sets the timeout, and creates the classification directory.
         """
 
-        print(f"\n{self.STR_PREFIX} Initializing DeepSeek keyword extractor...", end=" ", flush=True)
+        print(f"{self.STR_PREFIX} Initializing DeepSeek keyword extractor...", end=" ", flush=True)
 
         self.script_dir = os.path.dirname(os.path.abspath(__file__))
         self.deepseek_model_name = deepseek_model_name
@@ -56,7 +56,7 @@ class DeepseekKeywordExtractor:
             # Create the output directory if it does not exist
             os.makedirs(self.output_tags_dir, exist_ok=True)
         
-        print("Done.\n")
+        print("Done.")
 
     def load_description(self, pipeline_description: list[str] = None) -> None:
         print(f"{self.STR_PREFIX} Loading input description(s)...", end=" ", flush=True)
@@ -65,7 +65,7 @@ class DeepseekKeywordExtractor:
         if pipeline_description is not None:
             self.input_description = pipeline_description
             self.iters = len(pipeline_description)
-            print(f"Loaded {self.iters} description(s).\n\n")
+            print(f"Loaded {self.iters} description(s).")
             return
 
         # Input descriptions parent directory
@@ -84,7 +84,7 @@ class DeepseekKeywordExtractor:
         ]
 
         if not subdirectories:
-            raise FileNotFoundError(f"\n{self.STR_PREFIX} No directories found in {descriptions_parent_dir}")
+            raise FileNotFoundError(f"{self.STR_PREFIX} No directories found in {descriptions_parent_dir}")
 
         # Select the most recently modified directory
         latest_dir = max(subdirectories, key=os.path.getmtime)
@@ -97,7 +97,7 @@ class DeepseekKeywordExtractor:
         ]
 
         if not txt_files:
-            raise FileNotFoundError(f"\n{self.STR_PREFIX} No .txt files found in {latest_dir}")
+            raise FileNotFoundError(f"{self.STR_PREFIX} No .txt files found in {latest_dir}")
 
         # Read all .txt files and store their content in a list
         self.input_description = []
@@ -199,7 +199,7 @@ class DeepseekKeywordExtractor:
             # Chat with DeepSeek using the second prompt
             deepseek_response = self.chat_deepseek(prompt=prompt)
 
-            print(f"DeepSeek response:\n\n", deepseek_response + "\n")
+            print(f"{self.STR_PREFIX} DeepSeek response:\n\n", deepseek_response)
 
             # Check if the response is in the correct format
             correct_json = self.correct_response_format(deepseek_response)
@@ -207,7 +207,7 @@ class DeepseekKeywordExtractor:
             if correct_json is not None:
                 break
             else:
-                print(f"{self.STR_PREFIX} The response is not in the correct format. Trying again...\n")
+                print(f"{self.STR_PREFIX} The response is not in the correct format. Trying again...")
         return correct_json
 
     def response_fusion(self, responses: list[dict]) -> dict:
@@ -229,12 +229,14 @@ class DeepseekKeywordExtractor:
                     final_response[str(index)] = value
                     index += 1
 
-        print("Done.\n")
+        print("Done.")
+
+        print(f"{self.STR_PREFIX} Merged response substring:\n\n", json.dumps(final_response, indent=4))
 
         return final_response
     
     def remove_duplicates(self, response: dict) -> dict:
-        print(f"{self.STR_PREFIX} Removing duplicate words...\n", flush=True)
+        print(f"{self.STR_PREFIX} Removing duplicate words...", flush=True)
 
         # Set to store unique values
         unique_values = set()
@@ -248,11 +250,13 @@ class DeepseekKeywordExtractor:
                 result[key] = value
             else:
                 # If it is a duplicate, print a message
-                print(f"Discarded duplicate word: {value}\n")
+                print(f"{self.STR_PREFIX} Discarded duplicate word: {value}")
 
         return result
     
     def remove_redundant_substrings(self, response: dict) -> dict:
+        print(f"{self.STR_PREFIX} Removing redundant substrings...", flush=True)
+        
         values = list(response.values())
         
         # Set to store values that are substrings of other values
@@ -262,14 +266,14 @@ class DeepseekKeywordExtractor:
         for i in range(len(values)):
             for j in range(len(values)):
                 if i != j and values[i] in values[j]:
-                    print(f"{self.STR_PREFIX} Discarded redundant substring: {values[j]} (contains '{values[i]}')\n")
+                    print(f"{self.STR_PREFIX} Discarded redundant substring: {values[j]} (contains '{values[i]}')")
                     redundant_values.add(values[j])
         
         # Build the result dictionary, excluding redundant values
         return {k: v for k, v in response.items() if v not in redundant_values}
 
     def remove_duplicate_plurals(self, response: dict) -> dict:
-        print(f"{self.STR_PREFIX} Removing duplicate plural words...\n", flush=True)
+        print(f"{self.STR_PREFIX} Removing duplicate plural words...", flush=True)
 
         # Step 1: Collect all individual words from all values
         all_words = set()
@@ -291,14 +295,14 @@ class DeepseekKeywordExtractor:
                 if original_word.endswith("es"):
                     singular_es = original_word[:-2]
                     if singular_es in all_words:
-                        print(f"{self.STR_PREFIX} Discarded plural word: {original_word}\n")
+                        print(f"{self.STR_PREFIX} Discarded plural word: {original_word}")
                         keep_word = False
                 
                 # If "es" was not removed, check if removing "s" results in a word that exists in all_words
                 if keep_word and original_word.endswith("s"):
                     singular_s = original_word[:-1]
                     if singular_s in all_words:
-                        print(f"{self.STR_PREFIX} Discarded plural word: {original_word}\n")
+                        print(f"{self.STR_PREFIX} Discarded plural word: {original_word}")
                         keep_word = False
                 
                 if keep_word:
@@ -316,14 +320,14 @@ class DeepseekKeywordExtractor:
         """
         Main workflow # TODO
         """
-        print(f"{self.STR_PREFIX} Running DeepSeek keyword extraction...\n", flush=True)
+        print(f"{self.STR_PREFIX} Running DeepSeek keyword extraction...", flush=True)
 
         start_time = time.time()
         correct_json = [None] * self.iters
 
         for i in range(self.iters):
             if self.iters > 1:
-                print(f"{self.STR_PREFIX} Iteration {i + 1}/{self.iters}...\n")
+                print(f"{self.STR_PREFIX} Iteration {i + 1}/{self.iters}...")
 
             prompt = self.prompt1 + "\n" + self.input_description[i]
 
@@ -331,7 +335,7 @@ class DeepseekKeywordExtractor:
                 # Chat with DeepSeek using the first prompt
                 deepseek_response = self.chat_deepseek(prompt=prompt)
 
-                print(f"DeepSeek response:\n\n", deepseek_response + "\n")
+                print(f"{self.STR_PREFIX} DeepSeek response:\n\n", deepseek_response + "\n")
 
                 # Check if the response is in the correct format
                 correct_json[i] = self.correct_response_format(deepseek_response)
@@ -342,9 +346,9 @@ class DeepseekKeywordExtractor:
                         correct_json[i] = self.enhance_response(deepseek_response)
                     break
                 else:
-                    print(f"{self.STR_PREFIX} The response is not in the correct format. Trying again...\n")
+                    print(f"{self.STR_PREFIX} The response is not in the correct format. Trying again...")
             else:
-                raise TimeoutError(f"{self.STR_PREFIX} Timeout of {self.timeout} seconds reached without receiving a correct response format.\n")
+                raise TimeoutError(f"{self.STR_PREFIX} Timeout of {self.timeout} seconds reached without receiving a correct response format.")
 
         # Merge the responses if there are multiple iterations
         if self.iters > 1:
@@ -374,9 +378,9 @@ class DeepseekKeywordExtractor:
             with open(output_file, "w", encoding="utf-8") as f:
                 json.dump(final_json, f, ensure_ascii=False, indent=4)
 
-            print(f"{self.STR_PREFIX} DeepSeek response substring saved to: {output_file}\n")
+            print(f"{self.STR_PREFIX} DeepSeek response substring saved to: {output_file}")
 
-        print(f"{self.STR_PREFIX} Final response substring:\n\n", json.dumps(final_json, indent=4) + "\n")
+        print(f"{self.STR_PREFIX} Final response substring:\n\n", json.dumps(final_json, indent=4))
         return final_json
 
 def main():    

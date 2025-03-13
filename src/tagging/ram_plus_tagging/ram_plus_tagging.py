@@ -15,7 +15,7 @@ class RamPlusTagger:
     A class to extract tags from an image using the Recognize Anything Plus (RAM++) model.
     """
 
-    STR_PREFIX = "[TAGGING | RAM++]"
+    STR_PREFIX = "\n[TAGGING | RAM++]"
 
     def __init__(
         self,        
@@ -27,7 +27,7 @@ class RamPlusTagger:
         """
         Initialize RAM++ tagger.
         """
-        print(f"\n{self.STR_PREFIX} Initializing RAM++ tagger...\n")        
+        print(f"{self.STR_PREFIX} Initializing RAM++ tagger...", end=" ", flush=True)
 
         self.script_dir = os.path.dirname(os.path.abspath(__file__))         
         self.save_file = save_file
@@ -48,10 +48,12 @@ class RamPlusTagger:
             )
 
             # Create the output directory if it does not exist
-            os.makedirs(self.output_tags_dir, exist_ok=True)            
+            os.makedirs(self.output_tags_dir, exist_ok=True)   
+
+        print("Done.")         
 
     def load_image(self, input_image_name: str) -> None:
-        print(f"\n{self.STR_PREFIX} Loading input image: {input_image_name} ...", end=" ")
+        print(f"{self.STR_PREFIX} Loading input image: {input_image_name} ...", end=" ", flush=True)
 
         # Input image path
         image_path = os.path.join(
@@ -66,9 +68,9 @@ class RamPlusTagger:
         if os.path.isfile(image_path):
             self.image = self.transform(Image.open(image_path)).unsqueeze(0).to(self.device)
         else:
-            raise FileNotFoundError(f"{self.STR_PREFIX} The image '{input_image_name}' was not found at {image_path}.\n")
+            raise FileNotFoundError(f"{self.STR_PREFIX} The image '{input_image_name}' was not found at {image_path}.")
         
-        print("Done.\n")
+        print("Done.")
 
     def ram_tags_to_json(self, tags: str) -> dict:
         """
@@ -97,12 +99,12 @@ class RamPlusTagger:
                 if res and res[0].strip():
                     tags = res[0]
                     break
-                print(f"{self.STR_PREFIX} No valid tags generated. Retrying...\n")
+                print(f"{self.STR_PREFIX} No valid tags generated. Retrying...")
         else:
-            raise TimeoutError(f"{self.STR_PREFIX} Timeout of {self.timeout} seconds reached without receiving valid tags.\n")
+            raise TimeoutError(f"{self.STR_PREFIX} Timeout of {self.timeout} seconds reached without receiving valid tags.")
 
         tags_json = self.ram_tags_to_json(tags)
-        print(f"{self.STR_PREFIX} Image tags: {tags}\n")
+        print(f"{self.STR_PREFIX} Image tags: {tags}")
 
         # Save tags to file
         if self.save_file:
@@ -113,9 +115,9 @@ class RamPlusTagger:
 
             with open(output_file, 'w', encoding='utf-8') as f:
                 json.dump(tags_json, f, ensure_ascii=False, indent=4)
-            print(f"{self.STR_PREFIX} Tags saved to {output_file}\n")
+            print(f"{self.STR_PREFIX} Tags saved to {output_file}")
         else:
-            print(f"{self.STR_PREFIX} Saving file is disabled. Tags were not saved.\n")
+            print(f"{self.STR_PREFIX} Saving file is disabled. Tags were not saved.")
 
         return tags_json
 

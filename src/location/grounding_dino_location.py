@@ -18,7 +18,7 @@ class GroundingDinoLocator:
     A class to locate objects in an image using the Grounding Dino model.
     """
 
-    STR_PREFIX = "[LOCATION | GDINO]"
+    STR_PREFIX = "\n[LOCATION | GDINO]"
 
     def __init__(
             self,
@@ -31,7 +31,7 @@ class GroundingDinoLocator:
         TODO
         """
 
-        print(f"\n{self.STR_PREFIX} Initializing Grounding DINO object locator...", end=" ")
+        print(f"{self.STR_PREFIX} Initializing Grounding DINO object locator...", end=" ")
 
         self.script_dir = os.path.dirname(os.path.abspath(__file__))
         self.score_threshold = score_threshold if score_threshold > 0 else 0.2
@@ -53,7 +53,7 @@ class GroundingDinoLocator:
             # Create the output directory if it does not exist
             os.makedirs(self.output_location_dir, exist_ok=True)
         
-        print("Done.\n")
+        print("Done.")
 
     def load_image(self, input_image_name: str) -> None:
         print(f"{self.STR_PREFIX} Loading input image: {input_image_name}...", end=" ")
@@ -70,9 +70,9 @@ class GroundingDinoLocator:
         if os.path.isfile(input_image_path):
             self.input_image = Image.open(input_image_path)
         else:
-            raise FileNotFoundError(f"{self.STR_PREFIX} The image {input_image_name} was not found at {input_image_path}.\n")
+            raise FileNotFoundError(f"{self.STR_PREFIX} The image {input_image_name} was not found at {input_image_path}.")
         
-        print("Done.\n")
+        print("Done.")
     
     def load_tags(self, pipeline_tags: dict = None) -> None:
         print(f"{self.STR_PREFIX} Loading input tags...", end=" ")
@@ -98,20 +98,20 @@ class GroundingDinoLocator:
                 if f.endswith(".json")
             ]
             if not json_files:
-                raise FileNotFoundError(f"{self.STR_PREFIX} No .json files found in {input_tags_dir}\n")
+                raise FileNotFoundError(f"{self.STR_PREFIX} No .json files found in {input_tags_dir}")
 
             # Select the most recently modified .json file
             latest_json_path = max(json_files, key=os.path.getmtime)
             
             # Extract the filename
             filename = os.path.basename(latest_json_path)
-            print("Most recent .json file:", filename, end="... ")
+            print("Most recent .json file: ", filename, end="... ")
             
             # Read the content of the file
             with open(latest_json_path, "r", encoding="utf-8") as f:
                 self.input_tags = json.load(f)
 
-        print("Done.\n")        
+        print("Done.")        
     
     def json_to_gdino_prompt(self, tags: dict) -> str:
         """
@@ -177,11 +177,11 @@ class GroundingDinoLocator:
                 if is_similar_bbox(results_json[i]['bbox'], results_json[j]['bbox'], padding):
                     if results_json[i]['score'] > results_json[j]['score']:
                         if verbose:
-                            print(f"{self.STR_PREFIX} Discarded: {results_json[j]['label']} with score {results_json[j]['score']} [1]")
+                            print(f"{self.STR_PREFIX} Discarded: {results_json[j]['label']} with score {results_json[j]['score']} (there's a similar bbox with higher score)")
                         results_json.pop(j)
                     else:
                         if verbose:
-                            print(f"{self.STR_PREFIX} Discarded: {results_json[i]['label']} with score {results_json[i]['score']} [1]")
+                            print(f"{self.STR_PREFIX} Discarded: {results_json[i]['label']} with score {results_json[i]['score']} (there's a similar bbox with higher score)")
                         results_json.pop(i)
                         i -= 1
                         break
@@ -198,7 +198,7 @@ class GroundingDinoLocator:
             if not (width >= image_width * ratio and height >= image_height * ratio):
                 filtered_results.append(result)
             elif verbose:
-                print(f"{self.STR_PREFIX} Discarded: {result['label']} with score {result['score']} [2]")
+                print(f"{self.STR_PREFIX} Discarded: {result['label']} with score {result['score']} (bbox is too large)")
         results_json = filtered_results
 
         # 3. Discard bounding boxes with the same label and one fully contained in the other (discards the bigger one)
@@ -209,12 +209,12 @@ class GroundingDinoLocator:
                 if results_json[i]['label'] == results_json[j]['label']:
                     if is_bbox_contained(results_json[i]['bbox'], results_json[j]['bbox'], padding):
                         if verbose:
-                            print(f"{self.STR_PREFIX} Discarded: {results_json[j]['label']} with score {results_json[j]['score']} [3]")
+                            print(f"{self.STR_PREFIX} Discarded: {results_json[j]['label']} with score {results_json[j]['score']} (contained another bbox with the same label)")
                         results_json.pop(j)
                         continue
                     elif is_bbox_contained(results_json[j]['bbox'], results_json[i]['bbox'], padding):
                         if verbose:
-                            print(f"{self.STR_PREFIX} Discarded: {results_json[i]['label']} with score {results_json[i]['score']} [3]")
+                            print(f"{self.STR_PREFIX} Discarded: {results_json[i]['label']} with score {results_json[i]['score']} (contained another bbox with the same label)")
                         results_json.pop(i)
                         i -= 1
                         break
@@ -294,7 +294,7 @@ class GroundingDinoLocator:
             target_sizes=[self.input_image.size[::-1]]
         )[0]
 
-        print(f"Object detection results:\n\n{results}\n")
+        print(f"Object detection results:\n\n{results}")
 
         # Convert the results to JSON format
         results_json = self.gdino_results_to_json(results)
@@ -305,7 +305,7 @@ class GroundingDinoLocator:
         # Filter the results based on bounding box properties
         results_json = self.filter_bbox(results_json, self.input_image.width, self.input_image.height, verbose=True)
 
-        print(f"{self.STR_PREFIX} JSON results:\n\n{json.dumps(results_json, indent=4)}\n")
+        print(f"{self.STR_PREFIX} JSON results:\n\n{json.dumps(results_json, indent=4)}")
 
         # Save the results to a JSON file and/or an image file
         if self.save_file_json or self.save_file_jpg:
@@ -320,7 +320,7 @@ class GroundingDinoLocator:
                 # Save the results to a JSON file
                 with open(output_file_json, "w", encoding="utf-8") as f:
                     json.dump(results_json, f, indent=4)
-                    print(f"{self.STR_PREFIX} Object bounding box location JSON results saved to: {output_file_json}\n")
+                    print(f"{self.STR_PREFIX} Object bounding box location JSON results saved to: {output_file_json}")
 
             if self.save_file_jpg:
                 # Prepare JPG output file

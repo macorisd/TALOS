@@ -13,7 +13,7 @@ class Sam2Segmenter:
     A class to perform instance segmentation using the SAM2 model.
     """
 
-    STR_PREFIX = "[SEGMENTATION | SAM2]"
+    STR_PREFIX = "\n[SEGMENTATION | SAM2]"
 
     def __init__(
         self,        
@@ -26,7 +26,7 @@ class Sam2Segmenter:
         Initialize the paths and create necessary directories.
         """
 
-        print(f"\n{self.STR_PREFIX} Initializing SAM2 instance segmenter...", end=" ")
+        print(f"{self.STR_PREFIX} Initializing SAM2 instance segmenter...", end=" ")
 
         self.script_dir = os.path.dirname(os.path.abspath(__file__))        
         self.save_files_jpg = save_files_jpg
@@ -46,7 +46,7 @@ class Sam2Segmenter:
             # Create the output directory if it does not exist
             os.makedirs(self.output_segments_dir, exist_ok=True)
         
-        print("Done.\n")
+        print("Done.")
                 
     def load_image(self, input_image_name: str) -> None:
         print(f"{self.STR_PREFIX} Loading input image: {input_image_name}...", end=" ")
@@ -64,9 +64,9 @@ class Sam2Segmenter:
             input_image_bgr = cv2.imread(input_image_path)
             self.input_image = cv2.cvtColor(input_image_bgr, cv2.COLOR_BGR2RGB)
         else:
-            raise FileNotFoundError(f"{self.STR_PREFIX} The image {input_image_name} was not found at {input_image_path}.\n")
+            raise FileNotFoundError(f"{self.STR_PREFIX} The image {input_image_name} was not found at {input_image_path}.")
 
-        print("Done.\n")
+        print("Done.")
 
     def load_bbox_location(self, pipeline_bbox_location: dict = None) -> None:
         print(f"{self.STR_PREFIX} Loading input bounding box location information...", end=" ")
@@ -92,7 +92,7 @@ class Sam2Segmenter:
                 if f.endswith(".json")
             ]
             if not json_files:
-                raise FileNotFoundError(f"\n{self.STR_PREFIX} No .json files found in {input_bbox_location_dir}")
+                raise FileNotFoundError(f"{self.STR_PREFIX} No .json files found in {input_bbox_location_dir}")
             
             # Select the most recently modified .json file
             latest_json_path = max(json_files, key=os.path.getmtime)
@@ -105,7 +105,7 @@ class Sam2Segmenter:
             with open(latest_json_path, "r") as f:
                 self.input_bbox_location = json.load(f)
 
-        print("Done.\n")
+        print("Done.")
 
     def highlighted_segment_image(self, image, mask, label="unknown", color=(0, 255, 0), alpha=0.5):
         """
@@ -167,7 +167,7 @@ class Sam2Segmenter:
         """
         Perform instance segmentation using SAM2 and the provided bounding boxes.
         """
-        print(f"{self.STR_PREFIX} Running SAM2 instance segmentation...\n")
+        print(f"{self.STR_PREFIX} Running SAM2 instance segmentation...")
 
         if self.save_files_jpg or self.save_files_npy:
                 # Prepare timestamp
