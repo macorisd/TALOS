@@ -14,6 +14,7 @@ class DeepseekKeywordExtractor:
     def __init__(
         self,
         deepseek_model_name: str = "deepseek-r1:14b",
+        exclude_banned_words: bool = False,  # Whether to exclude banned words from the output
         enhance_output: bool = False,  # Whether to enhance the output with an additional prompt
         save_file: bool = True,  # Whether to save the classification results to a file
         timeout: int = 200  # Timeout in seconds
@@ -43,6 +44,20 @@ class DeepseekKeywordExtractor:
             prompt2_path = os.path.join(self.script_dir, "prompts", "prompt2.txt")
             with open(prompt2_path, "r", encoding="utf-8") as f:
                 self.prompt2 = f.read()
+
+        # If remove_banned_words is True, load the banned words from banned_words.json
+        if exclude_banned_words:
+            banned_words_path = os.path.join(
+                self.script_dir,
+                "..",
+                "..",
+                "banned_words.json"
+            )
+
+            with open(banned_words_path, "r", encoding="utf-8") as f:
+                self.banned_words = json.load(f)
+        else:
+            self.banned_words = None
 
         if save_file:
             # Output tags directory path
@@ -235,6 +250,20 @@ class DeepseekKeywordExtractor:
 
         return final_response
     
+    def remove_banned_words(self, response: dict) -> dict:
+        print(f"{self.STR_PREFIX} Removing banned words...", flush=True)
+
+        banned_words = set(self.banned_words)
+
+        for word in banned_words:
+            for _, value in response.items():
+                if word in value:
+                    print(f"{self.STR_PREFIX} Discarded banned word: {word}")
+                    response = {k: v for k, v in response.items() if word not in v}
+                    break
+
+        return response
+    
     def remove_duplicates(self, response: dict) -> dict:
         print(f"{self.STR_PREFIX} Removing duplicate words...", flush=True)
 
@@ -360,6 +389,10 @@ class DeepseekKeywordExtractor:
         # Convert the final response to lowercase
         final_json = {k: v.lower() for k, v in final_json.items()}
 
+        # If self.banned_words has been loaded, remove banned words from the output
+        if self.banned_words is not None:
+            final_json = self.remove_banned_words(final_json)
+
         # Remove duplicate words
         final_json = self.remove_duplicates(final_json)
 
@@ -384,7 +417,7 @@ class DeepseekKeywordExtractor:
         return final_json
 
 def main():    
-    keyword_extractor = DeepseekKeywordExtractor()
+    keyword_extractor = DeepseekKeywordExtractor(exclude_banned_words=True)
     keyword_extractor.load_description()
     keyword_extractor.run()
 
