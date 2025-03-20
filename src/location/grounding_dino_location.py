@@ -222,6 +222,28 @@ class GroundingDinoLocator:
             i += 1
 
         return results_json
+
+    def filter_labels(self, results: dict, input_tags: dict) -> dict:
+        """
+        Filters the results based on the label coincidence with the tagging stage.
+        """
+        for result in results:
+            current_label = result["label"]
+            substrings = []
+
+            # Check if the label contains any of the input tags
+            for tag in input_tags.values():
+                if tag in current_label and tag != current_label:
+                    substrings.append(tag)
+
+            if substrings:
+                # Replace the label with the shortest substring (based on the number of words and characters)
+                best_substring = min(substrings, key=lambda s: (len(s.split()), len(s)))
+                print(f"{self.STR_PREFIX} Replaced label: {current_label} with {best_substring}")
+                result["label"] = best_substring
+
+        return results
+
     
     def draw_bounding_boxes(self, results: dict, padding: int = None) -> Image:
         """
@@ -304,6 +326,9 @@ class GroundingDinoLocator:
 
         # Filter the results based on bounding box properties
         results_json = self.filter_bbox(results_json, self.input_image.width, self.input_image.height, verbose=True)
+
+        # Filter the results based on label coincidence with the tagging stage
+        results_json = self.filter_labels(results_json, self.input_tags)
 
         print(f"{self.STR_PREFIX} JSON results:\n\n{json.dumps(results_json, indent=4)}")
 
