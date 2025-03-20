@@ -266,25 +266,6 @@ class DeepseekKeywordExtractor:
                 print(f"{self.STR_PREFIX} Discarded long value: {element}")
 
         return result
-
-    def filter_duplicates(self, response: list) -> list:
-        print(f"{self.STR_PREFIX} Removing duplicate words...", flush=True)
-
-        # Set to store unique values
-        unique_values = set()
-        result = []
-
-        for element in response:
-            # Check if the element is already in the unique_values set
-            if element not in unique_values:
-                # If not, add it to the set and include it in the result
-                unique_values.add(element)
-                result.append(element)
-            else:
-                # If it is a duplicate, print a message
-                print(f"{self.STR_PREFIX} Discarded duplicate word: {element}")
-
-        return result
     
     def filter_redundant_substrings(self, response: list) -> list:
         print(f"{self.STR_PREFIX} Removing redundant substrings...", flush=True)
@@ -396,9 +377,6 @@ class DeepseekKeywordExtractor:
 
         # Remove values with more than a certain number of words
         final_json = self.filter_long_values(final_json)
-
-        # Remove duplicate words
-        final_json = self.filter_duplicates(final_json)
 
         # Remove words that contain a substring that is also in the dictionary
         final_json = self.filter_redundant_substrings(final_json)
