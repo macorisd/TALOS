@@ -48,7 +48,7 @@ class PipelineTLS:
 
         print_purple("\n[PIPELINE] All models loaded successfully.")
 
-    def tagging(self, input_image_name: str) -> dict:
+    def tagging(self, input_image_name: str) -> list:
         if self.tagging_method == RAM_PLUS:
             print_green(f"{RAM_PLUS}")
             self.tagger_ram_plus.load_image(input_image_name)
@@ -66,7 +66,7 @@ class PipelineTLS:
                 print_green(f"{DEEPSEEK}")
                 self.extractor_deepseek.load_description(description_list)
                 return self.extractor_deepseek.run()
-        return {}
+        return []
 
     def location(self, input_image_name: str, input_tags: dict) -> dict:
         if self.location_method == GROUNDING_DINO:
@@ -131,5 +131,5 @@ def main(iters: int = 1):
         avg_time = total_time / iters
         print_purple(f"\n[PIPELINE] Average execution time over {iters} runs: {avg_time} seconds.")
 
-if __name__ == "__main__":    
+if __name__ == "__main__":
     main(10)

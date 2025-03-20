@@ -74,7 +74,7 @@ class GroundingDinoLocator:
         
         print("Done.")
     
-    def load_tags(self, pipeline_tags: dict = None) -> None:
+    def load_tags(self, pipeline_tags: list = None) -> None:
         print(f"{self.STR_PREFIX} Loading input tags...", end=" ")
 
         # If pipeline_tags is provided, use it
@@ -113,15 +113,12 @@ class GroundingDinoLocator:
 
         print("Done.")        
     
-    def json_to_gdino_prompt(self, tags: dict) -> str:
+    def json_to_gdino_prompt(self, tags: list) -> str:
         """
-        Converts the tags dictionary to a Grounding DINO prompt.
+        Converts the tags list to a Grounding DINO prompt.
         """
-        # Extract the tags from the dictionary
-        tags_list = [tag for tag in tags.values()]
-        
         # Build the Grounding Dino prompt
-        prompt = ". ".join(tags_list) + "."
+        prompt = ". ".join(tags) + "."
 
         return prompt
     
@@ -223,7 +220,7 @@ class GroundingDinoLocator:
 
         return results_json
 
-    def filter_labels(self, results: dict, input_tags: dict) -> dict:
+    def filter_labels(self, results: dict, input_tags: list) -> dict:
         """
         Filters the results based on the label coincidence with the tagging stage.
         """
@@ -232,7 +229,7 @@ class GroundingDinoLocator:
             substrings = []
 
             # Check if the label contains any of the input tags
-            for tag in input_tags.values():
+            for tag in input_tags:
                 if tag in current_label and tag != current_label:
                     substrings.append(tag)
 
@@ -318,7 +315,7 @@ class GroundingDinoLocator:
 
         print(f"Object detection results:\n\n{results}")
 
-        # Convert the results to JSON format
+        # Convert the results to a JSON dict
         results_json = self.gdino_results_to_json(results)
 
         # Filter the results based on the confidence threshold
