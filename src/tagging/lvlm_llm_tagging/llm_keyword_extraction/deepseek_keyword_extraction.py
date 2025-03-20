@@ -45,7 +45,7 @@ class DeepseekKeywordExtractor:
             with open(prompt2_path, "r", encoding="utf-8") as f:
                 self.prompt2 = f.read()
 
-        # If remove_banned_words is True, load the banned words from banned_words.json
+        # If exclude_banned_words is True, load the banned words from banned_words.json
         if exclude_banned_words:
             banned_words_path = os.path.join(
                 self.script_dir,
@@ -250,7 +250,7 @@ class DeepseekKeywordExtractor:
 
         return final_response
     
-    def remove_banned_words(self, response: dict) -> dict:
+    def filter_banned_words(self, response: dict) -> dict:
         print(f"{self.STR_PREFIX} Removing banned words...", flush=True)
 
         banned_words = set(self.banned_words)
@@ -264,7 +264,7 @@ class DeepseekKeywordExtractor:
 
         return response
     
-    def remove_long_values(self, response: dict, n_words: int = 2) -> dict:
+    def filter_long_values(self, response: dict, n_words: int = 2) -> dict:
         print(f"{self.STR_PREFIX} Removing values with more than {n_words} words...", flush=True)
 
         result = {}
@@ -277,7 +277,7 @@ class DeepseekKeywordExtractor:
 
         return result
 
-    def remove_duplicates(self, response: dict) -> dict:
+    def filter_duplicates(self, response: dict) -> dict:
         print(f"{self.STR_PREFIX} Removing duplicate words...", flush=True)
 
         # Set to store unique values
@@ -296,7 +296,7 @@ class DeepseekKeywordExtractor:
 
         return result
     
-    def remove_redundant_substrings(self, response: dict) -> dict:
+    def filter_redundant_substrings(self, response: dict) -> dict:
         print(f"{self.STR_PREFIX} Removing redundant substrings...", flush=True)
         
         values = list(response.values())
@@ -314,7 +314,7 @@ class DeepseekKeywordExtractor:
         # Build the result dictionary, excluding redundant values
         return {k: v for k, v in response.items() if v not in redundant_values}
 
-    def remove_duplicate_plurals(self, response: dict) -> dict:
+    def filter_duplicate_plurals(self, response: dict) -> dict:
         print(f"{self.STR_PREFIX} Removing duplicate plural words...", flush=True)
 
         # Step 1: Collect all individual words from all values
@@ -404,19 +404,19 @@ class DeepseekKeywordExtractor:
 
         # If self.banned_words has been loaded, remove banned words from the output
         if self.banned_words is not None:
-            final_json = self.remove_banned_words(final_json)
+            final_json = self.filter_banned_words(final_json)
 
         # Remove values with more than 3 words
-        final_json = self.remove_long_values(final_json)
+        final_json = self.filter_long_values(final_json)
 
         # Remove duplicate words
-        final_json = self.remove_duplicates(final_json)
+        final_json = self.filter_duplicates(final_json)
 
         # Remove words that contain a substring that is also in the dictionary
-        final_json = self.remove_redundant_substrings(final_json)
+        final_json = self.filter_redundant_substrings(final_json)
 
         # Remove duplicate plural words
-        final_json = self.remove_duplicate_plurals(final_json)
+        final_json = self.filter_duplicate_plurals(final_json)
 
         if self.save_file:
             # Prepare timestamped output file
