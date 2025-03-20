@@ -264,6 +264,19 @@ class DeepseekKeywordExtractor:
 
         return response
     
+    def remove_long_values(self, response: dict, n_words: int = 2) -> dict:
+        print(f"{self.STR_PREFIX} Removing values with more than {n_words} words...", flush=True)
+
+        result = {}
+    
+        for key, value in response.items():
+            if isinstance(value, str) and len(value.split()) <= n_words:
+                result[key] = value
+            else:
+                print(f"{self.STR_PREFIX} Discarded long value: {value}")
+
+        return result
+
     def remove_duplicates(self, response: dict) -> dict:
         print(f"{self.STR_PREFIX} Removing duplicate words...", flush=True)
 
@@ -392,6 +405,9 @@ class DeepseekKeywordExtractor:
         # If self.banned_words has been loaded, remove banned words from the output
         if self.banned_words is not None:
             final_json = self.remove_banned_words(final_json)
+
+        # Remove values with more than 3 words
+        final_json = self.remove_long_values(final_json)
 
         # Remove duplicate words
         final_json = self.remove_duplicates(final_json)
