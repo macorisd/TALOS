@@ -24,3 +24,5 @@ for directory in directories:
                 shutil.rmtree(file_path)
         except Exception as e:
             print(f"Error deleting {file_path}: {e}")
+
+print("All output files have been deleted.")
