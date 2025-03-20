@@ -150,27 +150,22 @@ class DeepseekKeywordExtractor:
 
     def correct_response_format(self, text: str) -> dict:
         """
-        Checks if there is a substring within the given text that starts with '{' and ends with '}'
+        Checks if there is a substring within the given text that starts with '[' and ends with ']'
         and follows the exact format:
 
-        {
-            "1": "[phrase]",
-            "2": "[phrase]",
-            ...
-            "n": "[phrase]"
-        }
+        ["phrase", "phrase", "phrase", ...]
 
         If the format is correct, returns the JSON substring. Otherwise, returns None.
         """
-        # Find indices of the first '{' and the last '}'
-        start_index = text.rfind('{')
-        end_index = text.rfind('}')
+        # Find indices of the last '[' and the last ']'
+        start_index = text.rfind('[')
+        end_index = text.rfind(']')
 
-        # If we can't find a proper pair of braces, return None
+        # If we can't find a proper pair of brackets, return None
         if start_index == -1 or end_index == -1 or end_index < start_index:
             return None
 
-        # Extract the substring that includes the braces
+        # Extract the substring that includes the brackets
         substring = text[start_index:end_index + 1]
 
         # If there's a "/" character in the substring, it's not a valid JSON
@@ -186,18 +181,14 @@ class DeepseekKeywordExtractor:
         except json.JSONDecodeError:
             return None
 
-        # The parsed data must be a dictionary with at least one item
-        if not isinstance(parsed_data, dict):
+        # The parsed data must be a list
+        if not isinstance(parsed_data, list):
             return None
-
-        # Check each key-value pair in the dictionary
-        for key, value in parsed_data.items():
-            # Key must be a string representing a number
-            if not re.match(r"^\d+$", key):
-                return None
-
-            # Value must be a string
-            if not isinstance(value, str):
+        
+        # Check each element in the list
+        for element in parsed_data:
+            # Each element must be a string
+            if not isinstance(element, str):
                 return None
 
         return parsed_data
@@ -225,138 +216,135 @@ class DeepseekKeywordExtractor:
                 print(f"{self.STR_PREFIX} The response is not in the correct format. Trying again...")
         return correct_json
 
-    def response_fusion(self, responses: list[dict]) -> dict:
+    def response_fusion(self, responses: list[list]) -> list:
         """
-        Merges the responses of multiple iterations into a single response,
-        ensuring unique values with numeric keys.
+        Merges the responses of multiple iterations into a single list,
+        ensuring unique string values in order.
         """
         print(f"{self.STR_PREFIX} {self.iters} iterations completed. Merging the responses...", end=" ", flush=True)
 
-        final_response = {}
+        final_response = []
         unique_values = set()
-        index = 1
 
-        # Collect all unique values from the dictionaries
+        # Collect all unique values from the lists
         for response in responses:
-            for value in response.values():
+            for value in response:
                 if value not in unique_values:
                     unique_values.add(value)
-                    final_response[str(index)] = value
-                    index += 1
+                    final_response.append(value)
 
-        print("Done.")
-
-        print(f"{self.STR_PREFIX} Merged response substring:\n\n", json.dumps(final_response, indent=4))
+        print(f"Done. Merged response substring:\n\n", json.dumps(final_response, indent=4))
 
         return final_response
-    
-    def filter_banned_words(self, response: dict) -> dict:
+
+    def filter_banned_words(self, response: list) -> list:
         print(f"{self.STR_PREFIX} Removing banned words...", flush=True)
 
         banned_words = set(self.banned_words)
 
-        for word in banned_words:
-            for _, value in response.items():
-                if word in value:
-                    print(f"{self.STR_PREFIX} Discarded banned word: {word}")
-                    response = {k: v for k, v in response.items() if word not in v}
+        for banned_word in banned_words:
+            for element in response:
+                if banned_word in element:
+                    print(f"{self.STR_PREFIX} Discarded keyword: {element} (banned word: {banned_word})")
+                    response = [value for value in response if banned_word not in value]
                     break
 
         return response
     
-    def filter_long_values(self, response: dict, n_words: int = 2) -> dict:
+    def filter_long_values(self, response: list, n_words: int = 2) -> list:
         print(f"{self.STR_PREFIX} Removing values with more than {n_words} words...", flush=True)
 
-        result = {}
+        result = []
     
-        for key, value in response.items():
-            if isinstance(value, str) and len(value.split()) <= n_words:
-                result[key] = value
+        for element in response:
+            # Check if the element has less than or equal to n_words
+            if len(element.split()) <= n_words:
+                # If it does, include it in the result
+                result.append(element)
             else:
-                print(f"{self.STR_PREFIX} Discarded long value: {value}")
+                # If it has more than n_words, print a message
+                print(f"{self.STR_PREFIX} Discarded long value: {element}")
 
         return result
 
-    def filter_duplicates(self, response: dict) -> dict:
+    def filter_duplicates(self, response: list) -> list:
         print(f"{self.STR_PREFIX} Removing duplicate words...", flush=True)
 
         # Set to store unique values
         unique_values = set()
-        result = {}
-        
-        for key, value in response.items():
-            # Check if the value is already in the unique_values set
-            if value not in unique_values:
+        result = []
+
+        for element in response:
+            # Check if the element is already in the unique_values set
+            if element not in unique_values:
                 # If not, add it to the set and include it in the result
-                unique_values.add(value)
-                result[key] = value
+                unique_values.add(element)
+                result.append(element)
             else:
                 # If it is a duplicate, print a message
-                print(f"{self.STR_PREFIX} Discarded duplicate word: {value}")
+                print(f"{self.STR_PREFIX} Discarded duplicate word: {element}")
 
         return result
     
-    def filter_redundant_substrings(self, response: dict) -> dict:
+    def filter_redundant_substrings(self, response: list) -> list:
         print(f"{self.STR_PREFIX} Removing redundant substrings...", flush=True)
         
-        values = list(response.values())
-        
         # Set to store values that are substrings of other values
-        redundant_values = set()
+        redundant_elements = set()
         
         # Compare each value with every other value
-        for i in range(len(values)):
-            for j in range(len(values)):
-                if i != j and values[i] in values[j]:
-                    print(f"{self.STR_PREFIX} Discarded redundant substring: {values[j]} (contains '{values[i]}')")
-                    redundant_values.add(values[j])
+        for element_i in response:
+            for element_j in response:
+                if element_i != element_j and element_i in element_j:
+                    print(f"{self.STR_PREFIX} Discarded redundant substring: {element_j} (contains '{element_i}')")
+                    redundant_elements.add(element_j)
         
         # Build the result dictionary, excluding redundant values
-        return {k: v for k, v in response.items() if v not in redundant_values}
+        return [value for value in response if value not in redundant_elements]
 
-    def filter_duplicate_plurals(self, response: dict) -> dict:
+    def filter_duplicate_plurals(self, response: list) -> list:
         print(f"{self.STR_PREFIX} Removing duplicate plural words...", flush=True)
 
-        # Step 1: Collect all individual words from all values
+        # Step 1: Collect all individual words from all elements
         all_words = set()
-        for value in response.values():
-            all_words.update(value.split())
-        
-        unique_values = set()
-        
-        # Step 2: Process each value in the dictionary
-        for value in response.values():
-            words_in_value = value.split()
+        for element in response:
+            all_words.update(element.split())
+
+        unique_elements = set()
+
+        # Step 2: Process each element in the list
+        for element in response:
+            words_in_element = element.split()
             filtered_words = []
-            
-            for word in words_in_value:
+
+            for word in words_in_element:
                 original_word = word
                 keep_word = True
-                
+
                 # Check if removing "es" results in a word that exists in all_words
                 if original_word.endswith("es"):
                     singular_es = original_word[:-2]
                     if singular_es in all_words:
                         print(f"{self.STR_PREFIX} Discarded plural word: {original_word}")
                         keep_word = False
-                
+
                 # If "es" was not removed, check if removing "s" results in a word that exists in all_words
                 if keep_word and original_word.endswith("s"):
                     singular_s = original_word[:-1]
                     if singular_s in all_words:
                         print(f"{self.STR_PREFIX} Discarded plural word: {original_word}")
                         keep_word = False
-                
+
                 if keep_word:
                     filtered_words.append(original_word)
-            
-            # Reconstruct the filtered value
-            filtered_value = ' '.join(filtered_words)
-            if filtered_value:
-                unique_values.add(filtered_value)
-        
-        # Keep only the entries whose original value is in unique_values
-        return {k: v for k, v in response.items() if v in unique_values}
+
+            # Reconstruct the filtered element
+            filtered_element = ' '.join(filtered_words)
+            if filtered_element:
+                unique_elements.add(filtered_element)
+
+        return list(unique_elements)
+
 
     def run(self) -> dict:
         """
@@ -400,13 +388,13 @@ class DeepseekKeywordExtractor:
             final_json = correct_json[0]
 
         # Convert the final response to lowercase
-        final_json = {k: v.lower() for k, v in final_json.items()}
+        final_json = [element.lower() for element in final_json]
 
         # If self.banned_words has been loaded, remove banned words from the output
         if self.banned_words is not None:
             final_json = self.filter_banned_words(final_json)
 
-        # Remove values with more than 3 words
+        # Remove values with more than a certain number of words
         final_json = self.filter_long_values(final_json)
 
         # Remove duplicate words

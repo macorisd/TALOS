@@ -1,45 +1,25 @@
-Te voy a enviar una descripción de una imagen, generada por el LVLM LLaVA. Tu tarea es decirme únicamente los objetos que existen en la imagen según la descripción textual. Tu respuesta será en formato JSON (luego te adjunto un ejemplo), y concretamente me dirás las palabras clave (categorías) de los objetos de la imagen.
+Te voy a enviar una descripción textual de una imagen. Tu tarea es decirme únicamente los objetos que existen en la imagen según la descripción textual. Tu respuesta será en formato JSON (luego te adjunto un ejemplo), y concretamente me dirás las palabras clave (categorías) de los objetos de la imagen.
 
-El formato de tu respuesta debe ser estrictamente en JSON. Es muy importante que respetes el formato que te voy a explicar, puesto que usaré tu respuesta directamente en un pipeline automatizado que requiere ese formato. El formato del JSON con las detecciones de categorías de objetos que analices debe ser así:
+El formato de tu respuesta debe ser estrictamente en JSON. Es muy importante que respetes el formato que te voy a explicar, puesto que usaré tu respuesta directamente en un pipeline automatizado que requiere ese formato. El formato del JSON con las detecciones de categorías de objetos que analices debe ser así (lista con un número indeterminado de elementos):
 
-"{
-	"1": "table",
-	"2": "dog",
-	"3": "grass",
-	"4": "shoe",
-	"5": "",
-	...
-	"n": ""
-}"
+["table", "dog", "floor", "shoe"]
 
-Siempre debes seguir este formato de numeración y etiqueta semántica. A estas categorías u objetos detectados que escribirás, les llamaremos "etiquetas".
+Siempre debes seguir este formato de lista con las palabras de los objetos detectados. A estas categorías u objetos detectados que escribirás, les llamaremos "etiquetas" a partir de ahora.
 
 A continuación, primero te explicaré unas reglas muy estrictas y claras que debes seguir siempre para tu respuesta, y después te proporcionaré un ejemplo práctico para que compruebes cómo debes hacer tu tarea.
 
 Las 10 reglas estrictas para determinar qué etiquetas de objetos debes incluir a partir de la descripción textual de la imagen son las siguientes:
 
-1. Excluir habitaciones completas. No debes escribir, por ejemplo, "kitchen", "room" o "space" como etiquetas, puesto que no son objetos. Tu misión es concretar elementos que veas en determinados espacios, no el espacio en sí.
-
+1. No escribas habitaciones completas. No debes escribir, por ejemplo, "kitchen", "room" o "space" como etiquetas, puesto que no son objetos, sino espacios enteros.
 2. Si en la descripción hay suelos o paredes, simplemente di "floor" o "wall". Si, por ejemplo, hay tiles en el suelo, no digas "tile", "tiles" o "tiled floor", di simplemente "floor". Si hay ladrillos en la pared, no digas "brick wall", di "wall".
-
 3. Las etiquetas deben estar en singular. No digas "pair of shoes", di "shoe". No digas "group of people", di "person".
-
-4. Debes ser lo suficientemente general: evita incluir colores o características muy específicas en las etiquetas. No digas "red sofa", di "sofa". No digas "wooden desk", di "desk". No digas "acoustic guitar", di "guitar". No digas "sport bag", di "bag".
-
-5. Debes ser lo suficientemente concreto: por ejemplo, si hay una fruta etiquetada como un tipo específico de fruta, escribe ese tipo como etiqueta. Por ejemplo, si hay una manzana, di "apple", no "fruit". Si hay un violín, di "violin", no "instrument". Si hay un gato, di "cat", no "animal".
-
+4. Evita incluir colores o características muy específicas en las etiquetas. No digas "red sofa", di "sofa". No digas "wooden desk", di "desk". No digas "acoustic guitar", di "guitar". No digas "sport bag", di "bag".
+5. Debes ser lo suficientemente concreto: por ejemplo, si hay claramente una manzana, di "apple", no "fruit". Si hay un violín, di "violin", no "instrument". Si hay un gato, di "cat", no "animal".
 6. Evita términos genéricos en las etiquetas, como "item" o "object". Si no hay un objeto claramente identificado, no lo tengas en cuenta ni lo incluyas en tu respuesta.
+7. Si en la descripción de la imagen hay una duda para un objeto concreto (por ejemplo, si dice que encima de una cama hay "lo que parece ser una bolsa o una chaqueta"), debes incluir todos los posibles objetos mencionados ("bag", "jacket").
+8. Si la descripción de la imagen indica que no se ha detectado claramente ningún objeto, devuelve un JSON vacío, no hay problema.
 
-7. No repitas etiquetas exactamente iguales. Si la descripción de la imagen dice que hay tres perros, no escribas "dog" tres veces. No puede haber varias ocurrencias de la misma etiqueta, indícalo sólo una vez.
-
-8. Evita sinónimos. No debes etiquetar tanto "TV" como "television", elige el más genérico ("television"). No pongas "shoe" y "trainers", elige el más genérico ("shoe").
-
-9. Si en la descripción de la imagen hay una duda para un objeto concreto (por ejemplo, si dice que encima de una cama hay "lo que parece ser una bolsa o una chaqueta"), debes incluir todos los posibles objetos mencionados ("bag", "jacket").
-
-10. Si la descripción de la imagen indica que no se ha detectado claramente ningún objeto, devuelve un JSON vacío, no hay problema.
-
-
-Estas han sido las 10 reglas que debes tener en cuenta siempre para el etiquetado de objetos en JSON a partir de una descripción textual. Ahora te escribiré dos ejemplos de lo que deberías hacer en casos reales:
+Estas han sido las 8 reglas que debes tener en cuenta siempre para el etiquetado de objetos en JSON a partir de una descripción textual. Ahora te escribiré dos ejemplos de lo que deberías hacer en casos reales:
 
 
 EJEMPLO 1
@@ -52,18 +32,7 @@ In front of the table, on the floor, there is a pair of shoes with black soles a
 
 Tu respuesta debería ser así, teniendo en cuenta el formato y las reglas antes indicadas:
 
-"{
-	"1" : "table",
-	"2" : "shelf",
-	"3" : "wall",
-	"4" : "envelope",
-	"5" : "papers",
-	"6" : "book",
-	"7" : "magazine",
-	"8" : "floor",
-	"9" : "shoe",
-	"10" : "curtain"
-}"
+["table", "shelf", "wall", "envelope", "papers", "book", "magazine", "floor", "shoe", "curtain"]
 
 
 EJEMPLO 2
@@ -78,14 +47,7 @@ In the foreground, there's a small pile of clothes, possibly discarded, which ad
 
 Tu respuesta debería ser así, teniendo en cuenta el formato y las reglas antes indicadas:
 
-"{
-	"1" : "guitar",
-	"2" : "bed",
-	"3" : "wall",
-	"4" : "stand",
-	"5" : "mattress",
-	"6" : "pile of clothes",
-	"7" : "floor"
-}"
+["guitar", "bed", "wall", "stand", "mattress", "pile of clothes",  "floor"]
 
-La explicación de tu tarea ha terminado. Ahora, siguiendo todas las indicaciones anteriores, debes producir la respuesta para este texto de entrada:
+
+La explicación de tu tarea ha terminado. Ahora, siguiendo todas las indicaciones anteriores, debes producir la respuesta para el siguiente texto de entrada:
