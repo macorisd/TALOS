@@ -238,14 +238,14 @@ class DeepseekKeywordExtractor:
 
         return final_response
 
-    def filter_banned_words(self, response: list) -> list:
+    def filter_banned_words(self, response: list, ban_exact_word: bool = False) -> list:
         print(f"{self.STR_PREFIX} Removing banned words...", flush=True)
 
         banned_words = set(self.banned_words)
 
         for banned_word in banned_words:
             for element in response:
-                if banned_word in element:
+                if (ban_exact_word and banned_word == element) or (not ban_exact_word and banned_word in element):
                     print(f"{self.STR_PREFIX} Discarded keyword: {element} (banned word: {banned_word})")
                     response = [value for value in response if banned_word not in value]
                     break
