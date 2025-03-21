@@ -20,7 +20,10 @@ output_*
 
 # Images and datasets
 *.jpg
-datasets/
+#datasets/
+estructura.json
+lvis_v1_val_filtered.json
+lvis_v1_val.json
 
 # Model Checkpoints
 *.pth
