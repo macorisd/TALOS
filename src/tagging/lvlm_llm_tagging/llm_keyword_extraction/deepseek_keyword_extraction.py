@@ -172,8 +172,9 @@ class DeepseekKeywordExtractor:
         if "/" in substring:
             return None
 
-        # Delete all "\" characters from the substring
+        # Delete all backslashes and underscores from the substring
         substring = substring.replace("\\", "")
+        substring = substring.replace("_", " ")
 
         # Attempt to parse the substring as JSON
         try:
