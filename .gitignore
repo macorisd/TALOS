@@ -18,6 +18,10 @@ venvs/
 *.jpg
 output_*
 
+# Images and datasets
+*.jpg
+datasets/
+
 # Model Checkpoints
 *.pth
 *.pt
