@@ -72,20 +72,17 @@ class RamPlusTagger:
         
         print("Done.")
 
-    def ram_tags_to_json(self, tags: str) -> dict:
+    def ram_tags_to_list(self, tags: str) -> list:
         """
-        Convert RAM++ tags to JSON format.
+        Convert RAM++ tags to a list.
         """
         # Split the tags by the pipe character and strip any extra whitespace
         tags = tags.split('|')
         tags = [tag.strip() for tag in tags]
         
-        # Create a dictionary with numbered keys
-        tags_dict = {str(i+1): tag for i, tag in enumerate(tags)}
-        
-        return tags_dict
+        return tags
 
-    def run(self) -> dict:
+    def run(self) -> list:
         """
         Generate tags from the input image.
         """
@@ -103,7 +100,7 @@ class RamPlusTagger:
         else:
             raise TimeoutError(f"{self.STR_PREFIX} Timeout of {self.timeout} seconds reached without receiving valid tags.")
 
-        tags_json = self.ram_tags_to_json(tags)
+        tags_list = self.ram_tags_to_list(tags)
         print(f"{self.STR_PREFIX} Image tags: {tags}")
 
         # Save tags to file
@@ -114,12 +111,12 @@ class RamPlusTagger:
             output_file = os.path.join(self.output_tags_dir, output_filename)
 
             with open(output_file, 'w', encoding='utf-8') as f:
-                json.dump(tags_json, f, ensure_ascii=False, indent=4)
+                json.dump(tags_list, f, ensure_ascii=False, indent=4)
             print(f"{self.STR_PREFIX} Tags saved to {output_file}")
         else:
             print(f"{self.STR_PREFIX} Saving file is disabled. Tags were not saved.")
 
-        return tags_json
+        return tags_list
 
 
 def main():
