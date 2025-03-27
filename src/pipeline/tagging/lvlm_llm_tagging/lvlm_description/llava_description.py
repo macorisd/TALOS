@@ -135,7 +135,7 @@ class LlavaDescriptor:
 
 
 def main():
-    descriptor = LlavaDescriptor(iters=5)
+    descriptor = LlavaDescriptor(iters=1)
     descriptor.load_image_path("desk.jpg")
     descriptor.run()
 

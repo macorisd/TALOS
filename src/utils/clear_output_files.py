@@ -8,10 +8,10 @@ import os
 import shutil
 
 directories = [
-    "src/tagging/lvlm_llm_tagging/lvlm_description/output_descriptions",
-    "src/tagging/output_tags",
-    "src/location/output_location",
-    "src/segmentation/output_segments"
+    "src/pipeline/tagging/lvlm_llm_tagging/lvlm_description/output_descriptions",
+    "src/pipeline/tagging/output_tags",
+    "src/pipeline/location/output_location",
+    "src/pipeline/segmentation/output_segments"
 ]
 
 for directory in directories:

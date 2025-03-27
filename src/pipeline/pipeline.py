@@ -36,7 +36,7 @@ class PipelineTLS:
             self.tagger_ram_plus = RamPlusTagger(save_file=save_files)
         elif tagging_method == LVLM_LLM:
             if tagging_submethods[0] == LLAVA:
-                self.descriptor_llava = LlavaDescriptor(save_file=save_files, iters=3)
+                self.descriptor_llava = LlavaDescriptor(save_file=save_files, iters=1)
             if tagging_submethods[1] == DEEPSEEK:
                 self.extractor_deepseek = DeepseekKeywordExtractor(save_file=save_files)
 
@@ -132,4 +132,4 @@ def main(iters: int = 1):
         print_purple(f"\n[PIPELINE] Average execution time over {iters} runs: {avg_time} seconds.")
 
 if __name__ == "__main__":
-    main(10)
+    main(2)
