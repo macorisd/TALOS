@@ -12,18 +12,17 @@ venvs/
 # Visual Studio Code
 .vscode/
 
-# Logs, Images and Output Files
+# Logs and Output Files
 *.log
 *.out
-*.jpg
 output_*
 
-# Images and datasets
+# Images and Datasets
 *.jpg
-#datasets/
-estructura.json
-lvis_v1_val_filtered.json
-lvis_v1_val.json
+*.png
+*.jpeg
+raw_data.json
+formatted_data.json
 
 # Model Checkpoints
 *.pth
