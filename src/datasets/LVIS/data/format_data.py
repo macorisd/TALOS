@@ -1,3 +1,7 @@
+# LVIS dataset formatting script.
+# https://www.lvisdataset.org/dataset
+# Last downloaded in March 2025, please check if the format is still the same.
+
 import os
 import json
 from collections import defaultdict
