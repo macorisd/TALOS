@@ -1,0 +1,1 @@
+Input images for the pipeline should be stored in this directory.
