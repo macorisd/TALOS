@@ -1,1 +1,3 @@
-Input images for the pipeline should be stored in this directory.
+This directory should contain the **input images** for the pipeline.
+
+**Format**: jpg images

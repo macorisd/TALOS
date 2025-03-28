@@ -1,28 +1,29 @@
-# Delete all the files in the following directories:
-    # src/tagging/lvlm_llm_tagging/lvlm_description/output_descriptions
-    # src/tagging/output_tags
-    # src/location/output_location
-    # src/segmentation/output_segments
-
 import os
 import shutil
+from pathlib import Path
+
+base_path = Path(__file__).resolve().parent.parent
 
 directories = [
-    "src/pipeline/tagging/lvlm_llm_tagging/lvlm_description/output_descriptions",
-    "src/pipeline/tagging/output_tags",
-    "src/pipeline/location/output_location",
-    "src/pipeline/segmentation/output_segments"
+    base_path / "pipeline" / "tagging" / "lvlm_llm_tagging" / "lvlm_description" / "output_descriptions",
+    base_path / "pipeline" / "tagging" / "output_tags",
+    base_path / "pipeline" / "location" / "output_location",
+    base_path / "pipeline" / "output_segments"
 ]
 
 for directory in directories:
     for filename in os.listdir(directory):
-        file_path = os.path.join(directory, filename)
+        file_path = directory / filename
+
+        if filename == "INFO.md":
+            continue
+
         try:
-            if os.path.isfile(file_path):
-                os.remove(file_path)
-            elif os.path.isdir(file_path):
+            if file_path.is_file():
+                file_path.unlink()
+            elif file_path.is_dir():
                 shutil.rmtree(file_path)
         except Exception as e:
             print(f"Error deleting {file_path}: {e}")
 
-print("All output files have been deleted.")
+print("All output files (except INFO.md) have been deleted.")

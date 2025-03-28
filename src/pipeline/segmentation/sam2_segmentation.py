@@ -39,7 +39,8 @@ class Sam2Segmenter:
         if save_files_jpg or save_files_npy:
             # Output segments directory path
             self.output_segments_dir = os.path.join(
-                self.script_dir, 
+                self.script_dir,
+                "..",
                 "output_segments"
             )
 

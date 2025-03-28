@@ -15,7 +15,10 @@ venvs/
 # Logs and Output Files
 *.log
 *.out
-output_*
+description_*
+tags_*
+segmentation_*
+location_*
 
 # Images and Datasets
 *.jpg
