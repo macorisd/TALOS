@@ -1,11 +1,11 @@
 import time
 from utils.print_utils import print_green, print_purple
 
-from tagging.ram_plus_tagging.ram_plus_tagging import RamPlusTagger
-from tagging.lvlm_llm_tagging.lvlm_description.llava_description import LlavaDescriptor
-from tagging.lvlm_llm_tagging.llm_keyword_extraction.deepseek_keyword_extraction import DeepseekKeywordExtractor
-from location.grounding_dino_location import GroundingDinoLocator
-from segmentation.sam2_segmentation import Sam2Segmenter
+from tagging import RamPlusTagger
+from tagging import LlavaDescriptor
+from tagging import DeepseekKeywordExtractor
+from location import GroundingDinoLocator
+from segmentation import Sam2Segmenter
 
 RAM_PLUS = "\n[PIPELINE | TAGGING | RAM++]"
 LVLM_LLM = "\n[PIPELINE | TAGGING | DESCRIPTION & KEYWORD EXTRACTION]"
