@@ -1,7 +1,7 @@
-This directory should contain the LVIS dataset's JPG images.
+This directory should contain the **LVIS dataset's JPG images**.
 
-You can download this dataset here: https://www.lvisdataset.org/dataset (Validation set)
+You can **download** this dataset here: https://www.lvisdataset.org/dataset (Validation set)
 
-(Last downloaded in March 2025, please check if the format is still the same.)
+_(Last downloaded in March 2025, please check if the format is still the same.)_
 
-After downloading the dataset's images, please run the 'rename_images.py' script before running 'data/format_data.py'.
+After downloading the dataset's images, please run the 'images/rename_images.py' script before running 'data/format_data.py'.

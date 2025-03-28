@@ -17,6 +17,9 @@ with open(json_path, 'r', encoding='utf-8') as f:
     data = json.load(f)
 print("Done", flush=True)
 
+# Create a mapping from image_id to (width, height)
+image_dimensions = {img["id"]: (img["width"], img["height"]) for img in data.get("images", [])}
+
 # 'categories': merge 'name' and 'synonyms' into 'labels' without duplicates
 print("Merging 'name' and 'synonyms' into 'labels'...", end=" ", flush=True)
 category_map = {}
@@ -33,8 +36,17 @@ print("Done", flush=True)
 # Transform annotations into the new format
 print("Transforming annotations...", end=" ", flush=True)
 image_detections = defaultdict(list)
+image_metadata = {}
+
 for annotation in data.get('annotations', []):
-    image_name = f"{annotation.pop('image_id')}.jpg"
+    image_id = annotation.pop('image_id')
+    image_name = f"{image_id}.jpg"
+    
+    # Store width and height for each image
+    if image_name not in image_metadata:
+        width, height = image_dimensions.get(image_id, (None, None))
+        image_metadata[image_name] = {"width": width, "height": height}
+
     detection = {
         "id": len(image_detections[image_name]) + 1,
         "labels": category_map.get(annotation.pop('category_id'), []),
@@ -45,7 +57,12 @@ for annotation in data.get('annotations', []):
 
 # Build final JSON structure
 formatted_data = [
-    {"image_name": image_name, "detections": detections}
+    {
+        "image_name": image_name,
+        "width": image_metadata[image_name]["width"],
+        "height": image_metadata[image_name]["height"],
+        "detections": detections
+    }
     for image_name, detections in image_detections.items()
 ]
 print("Done", flush=True)
