@@ -1,5 +1,5 @@
 import time
-from utils.print_utils import print_green, print_purple
+from utils import print_green, print_purple
 
 from tagging import RamPlusTagger
 from tagging import LlavaDescriptor
