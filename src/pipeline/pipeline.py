@@ -41,7 +41,7 @@ class PipelineTLS:
                 self.extractor_deepseek = DeepseekKeywordExtractor(save_file=save_files)
 
         if location_method == GROUNDING_DINO:
-            self.locator_gdino = GroundingDinoLocator(save_file_jpg=save_files, save_file_json=save_files)
+            self.locator_gdino = GroundingDinoLocator(save_file_jpg=save_files, save_file_json=save_files, score_threshold=0.4)
         
         if segmentation_method == SAM2:
             self.segmenter_sam2 = Sam2Segmenter()
@@ -112,8 +112,9 @@ def main(iters: int = 1):
         save_files=True
     )
 
-    # input_image_name = "desk.jpg"
-    input_image_name = ["desk.jpg", "279.jpg", "603.jpg", "963.jpg", "1108.jpg", "1281.jpg", "1514.jpg", "1729.jpg", "1871.jpg", "2421.jpg"]
+    input_image_name = "guitar.jpg"
+    # input_image_name = ["desk.jpg", "279.jpg", "603.jpg", "963.jpg", "1108.jpg", "1281.jpg", "1514.jpg", "1729.jpg", "1871.jpg", "2421.jpg"]
+    # input_image_name = ["drone.jpg", "piano.jpg", "tent.jpg"]
 
     # One iteration
     if iters <= 1:
@@ -125,11 +126,11 @@ def main(iters: int = 1):
 
         for i in range(iters):
             print_purple(f"\n[PIPELINE] Execution {i+1}/{iters}...")
-            # total_time += pipeline.run(input_image_name=input_image_name)
-            total_time += pipeline.run(input_image_name=input_image_name[i])
+            total_time += pipeline.run(input_image_name=input_image_name)
+            # total_time += pipeline.run(input_image_name=input_image_name[i])
 
         avg_time = total_time / iters
         print_purple(f"\n[PIPELINE] Average execution time over {iters} runs: {avg_time} seconds.")
 
 if __name__ == "__main__":
-    main(2)
+    main(4)

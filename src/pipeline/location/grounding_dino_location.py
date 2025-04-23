@@ -248,7 +248,7 @@ class GroundingDinoLocator:
         """    
         image = self.input_image.copy()
         draw = ImageDraw.Draw(image)        
-        font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 20)
+        font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 40)
 
         # Draw bounding boxes for each detected object
         for obj in results:
@@ -263,14 +263,14 @@ class GroundingDinoLocator:
             y_max = int(bbox.get("y_max", 0))
             
             # Draw the bounding box
-            draw.rectangle([x_min, y_min, x_max, y_max], outline="red", width=3)
+            draw.rectangle([x_min, y_min, x_max, y_max], outline="red", width=7)
             
             # Draw the label and score
             text = f"{label}: {score:.2f}"
-            draw.text((x_min, y_min), text, fill="red", font=font)
+            draw.text((x_min+7, y_min+7), text, fill="red", font=font)
 
         # If padding is not None, draw a green rectangle that represents the padding for reference
-        if padding is not None:
+        if padding is not None and False:
             _, image_height = image.size
 
             rect_width = padding
@@ -365,7 +365,7 @@ def main():
     locator = GroundingDinoLocator(        
         score_threshold=0
     )
-    locator.load_image("desk.jpg")
+    locator.load_image("963.jpg")
     locator.load_tags()
     locator.run()
 
