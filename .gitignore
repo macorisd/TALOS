@@ -20,12 +20,13 @@ tags_*
 segmentation_*
 location_*
 
-# Images and Datasets
+# Images, Datasets and Evaluation
 *.jpg
 *.png
 *.jpeg
 raw_data.json
 formatted_data.json
+*.npz
 
 # Model Checkpoints
 *.pth
