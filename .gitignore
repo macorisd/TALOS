@@ -15,10 +15,12 @@ venvs/
 # Logs and Output Files
 *.log
 *.out
-description_*
-tags_*
-segmentation_*
-location_*
+**/tagging_output/*
+!**/tagging_output/*.md
+**/location_output/*
+!**/location_output/*.md
+**/segmentation_output/*
+!**/segmentation_output/*.md
 
 # Images, Datasets and Evaluation
 *.jpg
@@ -26,6 +28,7 @@ location_*
 *.jpeg
 raw_data.json
 formatted_data.json
+final_data.json
 *.npz
 
 # Model Checkpoints
@@ -33,4 +36,4 @@ formatted_data.json
 *.pt
 
 # External repositories
-external-repos/
+external-repos/*
