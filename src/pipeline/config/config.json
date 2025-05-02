@@ -1,0 +1,36 @@
+{
+    "pipeline": {
+        "tagging": ["llava", "deepseek"],
+        "location": "grounding_dino",
+        "segmentation": "sam2"
+    },
+    "general_config": {
+        "save_files": true
+    },
+    "tagging": {
+        "direct_tagging": {
+            "timeout": 120
+        },
+        "lvlm_llm_tagging": {
+            "lvlm": {
+                "timeout": 120,
+                "iters": 1
+            },
+            "llm": {
+                "timeout": 120,
+                "exclude_banned_words": true,
+                "banned_words": [
+                    "room",
+                    "tile"
+                ],
+                "enhance_output": false
+            }
+        }
+    },
+    "location": {
+        "timeout": 60
+    },
+    "segmentation": {
+        "timeout": 60
+    }
+}

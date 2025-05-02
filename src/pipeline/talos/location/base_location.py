@@ -1,0 +1,303 @@
+from abc import abstractmethod
+import json
+import os
+import time
+from typing import Dict, List
+from PIL import Image, ImageDraw, ImageFont
+
+from strategy.strategy import ILocationStrategy
+from config.config import (
+    config,
+    SAVE_FILES
+)
+from config.paths import (
+    INPUT_IMAGES_DIR,
+    OUTPUT_TAGS_DIR,
+    OUTPUT_LOCATION_DIR
+)
+
+
+class BaseLocator(ILocationStrategy):
+    """
+    [Location]
+    
+    Base class for Location implementations.
+    """
+
+    def __init__(
+        self,
+        score_threshold: float = 0.2
+    ):
+        """
+        Initialize the base locator.
+        """
+        # Variables
+        self.score_threshold = score_threshold
+
+        if config.get(SAVE_FILES):
+            # Create output directory if it does not exist
+            os.makedirs(OUTPUT_LOCATION_DIR, exist_ok=True)
+
+    def load_inputs(self, input_image_name: str, input_tags: List[str] = None) -> None:
+        """
+        Load the Location inputs.
+        """
+        # Load the input image
+        self.load_image(input_image_name)
+
+        # Load the input tags
+        self.load_tags(input_tags)
+
+    # Override
+    def load_image(self, input_image_name: str) -> None:
+        """
+        Load the input image.
+        """
+        print(f"{self.STR_PREFIX} Loading input image: {input_image_name}...", end=" ", flush=True)
+
+        # Input image path
+        input_image_path = os.path.join(INPUT_IMAGES_DIR, input_image_name)
+
+        # Load input image
+        if os.path.isfile(input_image_path):
+            self.input_image = Image.open(input_image_path)
+        else:
+            raise FileNotFoundError(f"{self.STR_PREFIX} The image {input_image_name} was not found at {input_image_path}.")
+        
+        print("Done.")
+
+
+    # Override
+    def load_tags(self, input_tags: List[str] = None) -> None:
+        """
+        Load the input tags (output from the Tagging stage).
+        """
+        print(f"{self.STR_PREFIX} Loading input tags...", end=" ", flush=True)
+
+        # If input_tags is provided, use it
+        if input_tags is not None:
+            self.input_tags = input_tags
+        
+        # Otherwise, read the most recent .json file from output_tags
+        else:
+            # Gather all .json files in the output tags directory
+            json_files = [
+                os.path.join(OUTPUT_TAGS_DIR, f)
+                for f in os.listdir(OUTPUT_TAGS_DIR)
+                if f.endswith(".json")
+            ]
+            if not json_files:
+                raise FileNotFoundError(f"{self.STR_PREFIX} No .json files found in {input_tags_dir}")
+
+            # Select the most recently modified .json file
+            latest_json_path = max(json_files, key=os.path.getmtime)
+            
+            # Extract the filename
+            filename = os.path.basename(latest_json_path)
+            print("Most recent .json file: ", filename, end="... ")
+            
+            # Read the content of the file
+            with open(latest_json_path, "r", encoding="utf-8") as f:
+                self.input_tags = json.load(f)
+
+        print("Done.")
+
+
+    def filter_confidence(self, results: Dict, threshold: float) -> Dict:
+        """
+        Filters the results based on the confidence threshold.
+        """
+        filtered_results = [result for result in results if result["score"] > threshold]
+        return filtered_results        
+
+
+    def filter_bbox(self, results_json: dict, image_width, image_height, padding: float = 30, ratio: float = 0.9 , verbose: bool = False):
+        def is_similar_bbox(bbox1, bbox2, padding):
+            return (abs(bbox1['x_min'] - bbox2['x_min']) <= padding and
+                (abs(bbox1['y_min'] - bbox2['y_min']) <= padding) and
+                (abs(bbox1['x_max'] - bbox2['x_max']) <= padding) and
+                (abs(bbox1['y_max'] - bbox2['y_max']) <= padding))
+
+        def is_bbox_contained(bbox1, bbox2, padding):        
+            return (bbox1['x_min'] >= bbox2['x_min'] - padding and
+                    bbox1['y_min'] >= bbox2['y_min'] - padding and
+                    bbox1['x_max'] <= bbox2['x_max'] + padding and
+                    bbox1['y_max'] <= bbox2['y_max'] + padding)
+
+        # 1. Discard practically equal bounding boxes with lower score
+        i = 0
+        while i < len(results_json):
+            j = i + 1
+            while j < len(results_json):
+                if is_similar_bbox(results_json[i]['bbox'], results_json[j]['bbox'], padding):
+                    if results_json[i]['score'] > results_json[j]['score']:
+                        if verbose:
+                            print(f"{self.STR_PREFIX} Discarded: {results_json[j]['label']} with score {results_json[j]['score']} (there's a similar bbox with higher score)")
+                        results_json.pop(j)
+                    else:
+                        if verbose:
+                            print(f"{self.STR_PREFIX} Discarded: {results_json[i]['label']} with score {results_json[i]['score']} (there's a similar bbox with higher score)")
+                        results_json.pop(i)
+                        i -= 1
+                        break
+                else:
+                    j += 1
+            i += 1
+
+        # 2. Discard bounding boxes that are too large
+        filtered_results = []
+        for result in results_json:
+            width = result['bbox']['x_max'] - result['bbox']['x_min']
+            height = result['bbox']['y_max'] - result['bbox']['y_min']
+
+            if not (width >= image_width * ratio and height >= image_height * ratio):
+                filtered_results.append(result)
+            elif verbose:
+                print(f"{self.STR_PREFIX} Discarded: {result['label']} with score {result['score']} (bbox is too large)")
+        results_json = filtered_results
+
+        # 3. Discard bounding boxes with the same label and one fully contained in the other (discards the bigger one)
+        i = 0
+        while i < len(results_json):
+            j = i + 1
+            while j < len(results_json):
+                if results_json[i]['label'] == results_json[j]['label']:
+                    if is_bbox_contained(results_json[i]['bbox'], results_json[j]['bbox'], padding):
+                        if verbose:
+                            print(f"{self.STR_PREFIX} Discarded: {results_json[j]['label']} with score {results_json[j]['score']} (contained another bbox with the same label)")
+                        results_json.pop(j)
+                        continue
+                    elif is_bbox_contained(results_json[j]['bbox'], results_json[i]['bbox'], padding):
+                        if verbose:
+                            print(f"{self.STR_PREFIX} Discarded: {results_json[i]['label']} with score {results_json[i]['score']} (contained another bbox with the same label)")
+                        results_json.pop(i)
+                        i -= 1
+                        break
+                j += 1
+            i += 1
+
+        return results_json
+
+
+    def filter_labels(self, results: Dict, input_tags: List[str]) -> dict:
+        """
+        Filters the results based on the label coincidence with the tagging stage.
+        """
+        for result in results:
+            current_label = result["label"]
+            substrings = []
+
+            # Check if the label contains any of the input tags
+            for tag in input_tags:
+                if tag in current_label and tag != current_label:
+                    substrings.append(tag)
+
+            if substrings:
+                # Replace the label with the shortest substring (based on the number of words and characters)
+                best_substring = min(substrings, key=lambda s: (len(s.split()), len(s)))
+                print(f"{self.STR_PREFIX} Replaced label: {current_label} with {best_substring}")
+                result["label"] = best_substring
+
+        return results
+
+    
+    def draw_bounding_boxes(self, results: Dict, padding: int = None) -> Image:
+        """
+        Draws bounding boxes around the detected objects in the image.
+        """    
+        image = self.input_image.copy()
+        draw = ImageDraw.Draw(image)        
+        font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 40)
+
+        # Draw bounding boxes for each detected object
+        for obj in results:
+            label = obj.get("label", "unknown")
+            score = obj.get("score", 0.0)
+            bbox = obj.get("bbox", {})
+            
+            # Extract bounding box coordinates
+            x_min = int(bbox.get("x_min", 0))
+            y_min = int(bbox.get("y_min", 0))
+            x_max = int(bbox.get("x_max", 0))
+            y_max = int(bbox.get("y_max", 0))
+            
+            # Draw the bounding box
+            draw.rectangle([x_min, y_min, x_max, y_max], outline="red", width=7)
+            
+            # Draw the label and score
+            text = f"{label}: {score:.2f}"
+            draw.text((x_min+7, y_min+7), text, fill="red", font=font)
+
+        # If padding is not None, draw a green rectangle that represents the padding for reference
+        if padding is not None:
+            _, image_height = image.size
+
+            rect_width = padding
+            rect_height = 30
+            
+            # Define the coordinates for the rectangle
+            rect_x_min = 0
+            rect_y_min = image_height - rect_height
+            rect_x_max = rect_width
+            rect_y_max = image_height
+            
+            # Draw the green rectangle
+            draw.rectangle([rect_x_min, rect_y_min, rect_x_max, rect_y_max], outline="green", fill="green", width=2)
+            
+            # Draw the "padding" text
+            text = "padding"
+            text_x = rect_x_min + 5
+            text_y = rect_y_min - 30
+            draw.text((text_x, text_y), text, fill="green", font=font)
+
+        return image
+
+
+    @abstractmethod
+    def execute(self) -> List[Dict]:
+        pass
+
+    def save_outputs(self, location: Dict) -> None:
+        if config.get(SAVE_FILES):
+            timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
+            self.save_location_json(location, timestamp)
+            self.save_location_image(location, timestamp)
+        else:
+            print(f"{self.STR_PREFIX} Saving file is disabled. Location output was not saved.")
+
+
+    def save_location_json(self, location: Dict, timestamp: str) -> None:
+        if config.get(SAVE_FILES):
+            # Prepare JSON output file
+            output_filename = f"location_{self.ALIAS}_{timestamp}.json"
+            output_file = os.path.join(OUTPUT_LOCATION_DIR, output_filename)
+
+            # Save the results to a JSON file
+            with open(output_file, "w", encoding="utf-8") as f:
+                json.dump(location, f, indent=4)
+            
+            print(f"{self.STR_PREFIX} Bounding box instance location JSON results saved to: {output_file}")
+
+
+    def save_location_image(self, location: Dict, timestamp: str) -> None:
+        if config.get(SAVE_FILES):
+            # Prepare JPG output file
+            output_filename = f"location_{self.ALIAS}_{timestamp}.jpg"
+            output_file = os.path.join(OUTPUT_LOCATION_DIR, output_filename)
+
+            # Draw bounding boxes around the detected objects
+            results_image = self.draw_bounding_boxes(results=location, padding=30)
+
+            # Save the image with bounding boxes
+            results_image.save(output_file)
+            print(f"{self.STR_PREFIX} Bounding box location image saved to: {output_file}")
+    
+
+    @abstractmethod
+    def json_to_model_prompt(self, tags: List[str]) -> str:
+        pass
+
+
+    @abstractmethod
+    def model_results_to_json(self, results: Dict) -> Dict:
+        pass

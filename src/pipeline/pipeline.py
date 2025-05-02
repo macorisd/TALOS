@@ -1,136 +1,88 @@
 import time
-from utils import print_green, print_purple
+from typing import List, Tuple, Union
 
-from tagging import RamPlusTagger
-from tagging import LlavaDescriptor
-from tagging import DeepseekKeywordExtractor
-from location import GroundingDinoLocator
-from segmentation import Sam2Segmenter
+from config.config import (
+    ConfigSingleton,
+    PIPELINE_TAGGING,
+    PIPELINE_LOCATION,
+    PIPELINE_SEGMENTATION
+)
+from utils.print_utils import print_purple
+from factory.factory import StrategyFactory
 
-RAM_PLUS = "\n[PIPELINE | TAGGING | RAM++]"
-LVLM_LLM = "\n[PIPELINE | TAGGING | DESCRIPTION & KEYWORD EXTRACTION]"
-LLAVA = "\n[PIPELINE | TAGGING | DESCRIPTION | LLAVA]"
-DEEPSEEK = "\n[PIPELINE | TAGGING | KEYWORD EXTRACTION | DEEPSEEK]"
-GROUNDING_DINO = "\n[PIPELINE | LOCATION | GDINO]"
-SAM2 = "\n[PIPELINE | SEGMENTATION | SAM2]"
 
-class PipelineTLS:
-    def __init__(
-            self,
-            tagging_method: str,
-            tagging_submethods: str,
-            location_method: str,
-            segmentation_method: str,
-            save_files: bool = False
-        ):
+class PipelineTALOS:
+    def __init__(self):
+        print_purple("\n[PIPELINE] Loading configuration parameters...")
+        tagging_method, location_method, segmentation_method = self.load_config()
+
         print_purple("\n[PIPELINE] Loading models...")
-
-        self.tagging_method = tagging_method
-        self.tagging_submethods = tagging_submethods
-        self.location_method = location_method
-        self.segmentation_method = segmentation_method
-        self.save_files = save_files
-
-        # Initialize models
-        if tagging_method == RAM_PLUS:
-            self.tagger_ram_plus = RamPlusTagger(save_file=save_files)
-        elif tagging_method == LVLM_LLM:
-            if tagging_submethods[0] == LLAVA:
-                self.descriptor_llava = LlavaDescriptor(save_file=save_files, iters=1)
-            if tagging_submethods[1] == DEEPSEEK:
-                self.extractor_deepseek = DeepseekKeywordExtractor(save_file=save_files)
-
-        if location_method == GROUNDING_DINO:
-            self.locator_gdino = GroundingDinoLocator(save_file_jpg=save_files, save_file_json=save_files, score_threshold=0.4)
         
-        if segmentation_method == SAM2:
-            self.segmenter_sam2 = Sam2Segmenter()
-
+        self.tagging_strategy = StrategyFactory.create_tagging_strategy(tagging_method)
+        self.location_strategy = StrategyFactory.create_location_strategy(location_method)
+        self.segmentation_strategy = StrategyFactory.create_segmentation_strategy(segmentation_method)
+        
         print_purple("\n[PIPELINE] All models loaded successfully.")
+    
+    def load_config(self) -> Tuple[str, str, str]:
+        self.config = ConfigSingleton()
 
-    def tagging(self, input_image_name: str) -> list:
-        if self.tagging_method == RAM_PLUS:
-            print_green(f"{RAM_PLUS}")
-            self.tagger_ram_plus.load_image(input_image_name)
-            return self.tagger_ram_plus.run()
-                
-        elif self.tagging_method == LVLM_LLM:
-            print_green(f"{LVLM_LLM}")
+        return (
+            self.config.get(PIPELINE_TAGGING),
+            self.config.get(PIPELINE_LOCATION),
+            self.config.get(PIPELINE_SEGMENTATION)
+        )
 
-            if self.tagging_submethods[0] == LLAVA:
-                print_green(f"{LLAVA}")
-                self.descriptor_llava.load_image_path(input_image_name)
-                description_list = self.descriptor_llava.run()
 
-            if self.tagging_submethods[1] == DEEPSEEK:
-                print_green(f"{DEEPSEEK}")
-                self.extractor_deepseek.load_description(description_list)
-                return self.extractor_deepseek.run()
-        return []
+    def run(self, input_image_names: Union[str, List[str]], iters: int = 1) -> float:
+        if isinstance(input_image_names, str):
+            input_image_names = [input_image_names]
 
-    def location(self, input_image_name: str, input_tags: dict) -> dict:
-        if self.location_method == GROUNDING_DINO:
-            print_green(f"{GROUNDING_DINO}")
-            self.locator_gdino.load_image(input_image_name)
-            self.locator_gdino.load_tags(input_tags)
-            return self.locator_gdino.run()
-        return {}
+        total_time = 0
+        total_runs = iters * len(input_image_names)
 
-    def segmentation(self, input_image_name: str, input_bbox_location: dict):
-        if self.segmentation_method == SAM2:
-            print_green(f"{SAM2}")
-            self.segmenter_sam2.load_image(input_image_name)
-            self.segmenter_sam2.load_bbox_location(input_bbox_location)
-            self.segmenter_sam2.run()
+        for i in range(iters):
+            if iters > 1:
+                print_purple(f"\n[PIPELINE] Iteration {i + 1}/{iters}")
+            for image_name in input_image_names:
+                start_time = time.time()
+                print_purple(f"\n[PIPELINE] Running pipeline for image: {image_name}...")
 
-    def run(self, input_image_name: str) -> float:
-        start_time = time.time()
-        print_purple("\n[PIPELINE] Starting pipeline execution...")
+                # Tagging
+                self.tagging_strategy.load_inputs(image_name)
+                tags = self.tagging_strategy.execute()
+                self.tagging_strategy.save_outputs(tags)
 
-        tagging_output = self.tagging(input_image_name)
-        location_output = self.location(input_image_name, tagging_output)
-        self.segmentation(input_image_name, location_output)
+                # Location
+                self.location_strategy.load_inputs(image_name, tags)
+                locations = self.location_strategy.execute()
+                self.location_strategy.save_outputs(locations)
 
-        end_time = time.time()
-        total_time = end_time - start_time
+                # Segmentation
+                self.segmentation_strategy.load_inputs(image_name, locations)
+                segmentation_info, all_masks = self.segmentation_strategy.execute()
+                self.segmentation_strategy.save_outputs(segmentation_info, all_masks)
 
-        print_purple(f"\n[PIPELINE] Pipeline execution completed in {total_time} seconds.")
+                # Calculate execution time
+                elapsed = time.time() - start_time
+                total_time += elapsed
+                print_purple(f"\n[PIPELINE] Finished in {elapsed:.2f} seconds.")
+
+        if total_runs > 1:
+            average_time = total_time / total_runs
+            print_purple(f"\n[PIPELINE] Average execution time: {average_time:.2f} seconds.")
+
+        print_purple("\n[PIPELINE] All images processed successfully.")
         return total_time
 
 
-def main(iters: int = 1):
-    tagging_method = LVLM_LLM
-    tagging_submethods = (LLAVA, DEEPSEEK)
-    location_method = GROUNDING_DINO
-    segmentation_method = SAM2
+def main(input_image_names: Union[str, List[str]], iters: int = 1):
+    if not input_image_names:
+        raise ValueError("\n[PIPELINE] No input image names provided. Please provide a list of image names.")
 
-    pipeline = PipelineTLS(
-        tagging_method=tagging_method,
-        tagging_submethods=tagging_submethods,
-        location_method=location_method,
-        segmentation_method=segmentation_method,
-        save_files=True
-    )
+    pipeline = PipelineTALOS()
+    pipeline.run(input_image_names, iters=iters)
 
-    input_image_name = "guitar.jpg"
-    # input_image_name = ["desk.jpg", "279.jpg", "603.jpg", "963.jpg", "1108.jpg", "1281.jpg", "1514.jpg", "1729.jpg", "1871.jpg", "2421.jpg"]
-    # input_image_name = ["drone.jpg", "piano.jpg", "tent.jpg"]
-
-    # One iteration
-    if iters <= 1:
-        pipeline.run(input_image_name=input_image_name)
-    
-    # Multiple iterations, to measure the average execution time
-    else:
-        total_time = 0
-
-        for i in range(iters):
-            print_purple(f"\n[PIPELINE] Execution {i+1}/{iters}...")
-            total_time += pipeline.run(input_image_name=input_image_name)
-            # total_time += pipeline.run(input_image_name=input_image_name[i])
-
-        avg_time = total_time / iters
-        print_purple(f"\n[PIPELINE] Average execution time over {iters} runs: {avg_time} seconds.")
 
 if __name__ == "__main__":
-    main(4)
+    main(input_image_names=["desk.jpg"], iters=1)

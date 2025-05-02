@@ -5,17 +5,16 @@ from pathlib import Path
 base_path = Path(__file__).resolve().parent.parent
 
 directories = [
-    base_path / "pipeline" / "tagging" / "lvlm_llm_tagging" / "lvlm_description" / "output_descriptions",
-    base_path / "pipeline" / "tagging" / "output_tags",
-    base_path / "pipeline" / "location" / "output_location",
-    base_path / "pipeline" / "output_segments"
+    base_path / "pipeline" / "output" / "tagging_output",
+    base_path / "pipeline" / "output" / "location_output",
+    base_path / "pipeline" / "output" / "segmentation_output"
 ]
 
 for directory in directories:
     for filename in os.listdir(directory):
         file_path = directory / filename
 
-        if filename == "INFO.md":
+        if filename.endswith(".md"):
             continue
 
         try:
