@@ -3,14 +3,14 @@ import os
 import time
 from typing import List
 
-from strategy.strategy import ITaggingLvlmStrategy
-from config.config import (
+from pipeline.strategy.strategy import ITaggingLvlmStrategy
+from pipeline.config.config import (
     config,
     SAVE_FILES,
     TAGGING_LVLM_ITERS,
     TAGGING_LVLM_TIMEOUT
 )
-from config.paths import (
+from pipeline.config.paths import (
     INPUT_IMAGES_DIR,
     OUTPUT_DESCRIPTIONS_DIR
 )

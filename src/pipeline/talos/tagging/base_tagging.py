@@ -4,12 +4,12 @@ import os
 import time
 from typing import List
 
-from strategy.strategy import ITaggingStrategy
-from config.config import (
+from pipeline.strategy.strategy import ITaggingStrategy
+from pipeline.config.config import (
     config,
     SAVE_FILES
 )
-from config.paths import OUTPUT_TAGS_DIR
+from pipeline.config.paths import OUTPUT_TAGS_DIR
 
 
 class BaseTagger(ITaggingStrategy):

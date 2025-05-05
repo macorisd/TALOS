@@ -43,6 +43,17 @@ OUTPUT_SEGMENTATION_DIR = os.path.join(
 
 CONFIG_DIR = script_dir
 
+TAGGING_DIRECT_LVLM_PROMPT = os.path.join(
+    script_dir,
+    "..",
+    "talos",
+    "tagging",
+    "direct_lvlm_tagging",
+    "prompts",
+    "prompt.txt"
+)
+
+
 TAGGING_LLM_PROMPTS_DIR = os.path.join(
     script_dir,
     "..",

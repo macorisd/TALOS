@@ -8,7 +8,7 @@ You must always follow this list format with the words for the detected objects.
 
 Next, I will first explain very strict and clear rules that you must always follow for your response, and then I will provide a practical example so you can see how to perform your task.
 
-The 10 strict rules to determine which object labels you must include based on the textual description of the image are the following:
+The 8 strict rules to determine which object labels you must include based on the textual description of the image are the following:
 
 1. Do not write entire rooms. You must not write, for example, "kitchen," "room," or "space" as labels, since these are not objects but entire spaces.
 2. If the description mentions floors or walls, simply say "floor" or "wall." For example, if there are tiles on the floor, do not say "tile," "tiles," or "tiled floor"; just say "floor." If there are bricks on the wall, do not say "brick wall"; just say "wall."

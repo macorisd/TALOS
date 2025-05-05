@@ -2,12 +2,13 @@ import json
 import os
 from typing import Any
 
-from config.paths import CONFIG_DIR
+from pipeline.config.paths import CONFIG_DIR
 
 # Available models for the TALOS pipeline
 
 # Tagging models
 RAM_PLUS = "ram_plus"
+QWEN = "qwen"
 LLAVA = "llava"
 DEEPSEEK = "deepseek"
 
@@ -30,6 +31,11 @@ SAVE_FILES = "SAVE_FILES"
 
 # Tagging configuration keys
 TAGGING_DIRECT_TIMEOUT = "TAGGING_DIRECT_TIMEOUT"
+
+TAGGING_DIRECT_LVLM_TIMEOUT = "TAGGING_DIRECT_LVLM_TIMEOUT"
+TAGGING_DIRECT_LVLM_ITERS = "TAGGING_DIRECT_LVLM_ITERS"
+TAGGING_DIRECT_LVLM_EXCLUDE_BANNED_WORDS = "TAGGING_DIRECT_LVLM_EXCLUDE_BANNED_WORDS"
+TAGGING_DIRECT_LVLM_BANNED_WORDS = "TAGGING_DIRECT_LVLM_BANNED_WORDS"
 
 TAGGING_LVLM_TIMEOUT = "TAGGING_LVLM_TIMEOUT"
 TAGGING_LVLM_ITERS = "TAGGING_LVLM_ITERS"
@@ -57,6 +63,10 @@ CONFIG_PATHS = {
     SAVE_FILES: ["general_config", "save_files"],
     # Tagging configuration
     TAGGING_DIRECT_TIMEOUT: ["tagging", "direct_tagging", "timeout"],
+    TAGGING_DIRECT_LVLM_TIMEOUT: ["tagging", "direct_lvlm_tagging", "timeout"],
+    TAGGING_DIRECT_LVLM_ITERS: ["tagging", "direct_lvlm_tagging", "iters"],
+    TAGGING_DIRECT_LVLM_EXCLUDE_BANNED_WORDS: ["tagging", "direct_lvlm_tagging", "exclude_banned_words"],
+    TAGGING_DIRECT_LVLM_BANNED_WORDS: ["tagging", "direct_lvlm_tagging", "banned_words"],
     TAGGING_LVLM_TIMEOUT: ["tagging", "lvlm_llm_tagging", "lvlm", "timeout"],
     TAGGING_LVLM_ITERS: ["tagging", "lvlm_llm_tagging", "lvlm", "iters"],
     TAGGING_LLM_TIMEOUT: ["tagging", "lvlm_llm_tagging", "llm", "timeout"],

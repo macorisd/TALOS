@@ -1,0 +1,51 @@
+I'm going to send you an image. Your task is to tell me only the objects that exist in the image. Your response must be in JSON format (I’ll show you an example below), and specifically, you must tell me the keywords (categories) of the objects in the image.
+
+The format of your response must strictly be JSON. It is very important that you respect the format I’m about to explain, because I will use your response directly in an automated pipeline that requires this exact format. The JSON format with the object category detections must look like this (a list with an undetermined number of elements):
+
+["table", "dog", "floor", "shoe"]
+
+You must always follow this list format with the words of the detected objects. From now on, we will refer to these detected categories or objects as "labels".
+
+Below, I’ll first explain 7 strict and clear rules you must always follow when producing your response, and then I’ll provide a practical example so you understand exactly how to perform the task.
+
+The 7 strict rules to determine which object labels to include from a textual image description are:
+
+1. Do not write entire rooms. For example, do not use "kitchen", "room", or "space" as labels, since these refer to whole areas, not objects.
+2. If there are floors or walls, just say "floor" or "wall". For instance, if there are tiles on the floor, do not say "tile", "tiles", or "tiled floor" — just say "floor". If the wall is made of bricks, say "wall", not "brick wall".
+3. Labels must be singular. Do not say "pair of shoes", say "shoe". Do not say "group of people", say "person".
+4. Avoid including colors or highly specific characteristics. Do not say "red sofa", say "sofa". Do not say "wooden desk", say "desk". Do not say "acoustic guitar", say "guitar". Do not say "sport bag", say "bag".
+5. Be specific enough. For example, if there is clearly an apple, say "apple", not "fruit". If there is a violin, say "violin", not "instrument". If there is a cat, say "cat", not "animal".
+6. Avoid generic terms like "item" or "object". If an object is not clearly identified, do not include it in your response.
+7. If the description indicates that no objects are clearly detected, return an empty JSON list. That is completely acceptable.
+
+These are the 7 rules you must always follow for object labeling in JSON based on a textual description.
+
+Now I’ll provide two real-world examples:
+
+EXAMPLE 1
+
+Imagine I send you an image that could be described like this:
+
+"The image shows an indoor scene featuring a small, low wooden table or shelf against a wall with beige tiles. On top of the table, there are several items including a red envelope, some papers, and possibly books or magazines. The bottom shelf of the table appears to contain more items, but they're not clearly visible from this angle.
+
+In front of the table, on the floor, there is a pair of shoes with black soles and white laces, indicating that someone might have recently removed them. The room has curtains that are partially open, allowing light in from outside. There doesn't seem to be any text or distinctive branding visible in this image. The style of the photograph is casual, capturing an everyday setting without any particular artistic intent."
+
+Your response should be (following the format and rules above):
+
+["table", "shelf", "wall", "envelope", "papers", "book", "magazine", "floor", "shoe", "curtain"]
+
+EXAMPLE 2
+
+Now imagine I send you an image that could be described like this:
+
+"The image shows an indoor scene with a focus on two main objects: a guitar and a bed. The guitar is positioned to the left of the frame, leaning against what appears to be a wall or a stand. It's a dreadnought-style acoustic guitar with visible wood tones typical of such instruments.
+
+To the right, there is a single bed with a dark-colored mattress and bedding. The bed appears unoccupied, and it takes up most of the right side of the image. There are no people in the picture, giving the impression of an empty or quiet room.
+
+In the foreground, there's a small pile of clothes, possibly discarded, which adds a lived-in feel to the space. The floor includes various shades of brown and beige. There are no texts visible in this image, and the style appears to be a candid or unposed photograph, likely taken without much artistic intent, perhaps as a snapshot of daily life."
+
+Your response should be:
+
+["guitar", "bed", "wall", "stand", "mattress", "pile of clothes", "floor"]
+
+The task explanation is now complete. From this point on, following all the instructions above, you must produce the response for the image I will attach.

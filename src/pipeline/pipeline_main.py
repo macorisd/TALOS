@@ -1,14 +1,14 @@
 import time
 from typing import List, Tuple, Union
 
-from config.config import (
+from pipeline.config.config import (
     ConfigSingleton,
     PIPELINE_TAGGING,
     PIPELINE_LOCATION,
     PIPELINE_SEGMENTATION
 )
 from utils.print_utils import print_purple
-from factory.factory import StrategyFactory
+from pipeline.factory.factory import StrategyFactory
 
 
 class PipelineTALOS:

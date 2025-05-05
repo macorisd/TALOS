@@ -1,7 +1,7 @@
 from typing import List
 import ollama
 
-from talos.tagging.lvlm_llm_tagging.lvlm_image_description.base_image_description import BaseLvlmImageDescriptor
+from pipeline.talos.tagging.lvlm_llm_tagging.lvlm_image_description.base_image_description import BaseLvlmImageDescriptor
 
 class LlavaImageDescriptor(BaseLvlmImageDescriptor):
     """

@@ -5,12 +5,12 @@ import time
 from typing import Dict, List
 from PIL import Image, ImageDraw, ImageFont
 
-from strategy.strategy import ILocationStrategy
-from config.config import (
+from pipeline.strategy.strategy import ILocationStrategy
+from pipeline.config.config import (
     config,
     SAVE_FILES
 )
-from config.paths import (
+from pipeline.config.paths import (
     INPUT_IMAGES_DIR,
     OUTPUT_TAGS_DIR,
     OUTPUT_LOCATION_DIR

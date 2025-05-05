@@ -7,12 +7,12 @@ import cv2
 import numpy as np
 import time
 
-from strategy.strategy import ISegmentationStrategy
-from config.config import (
+from pipeline.strategy.strategy import ISegmentationStrategy
+from pipeline.config.config import (
     config,
     SAVE_FILES
 )
-from config.paths import (
+from pipeline.config.paths import (
     INPUT_IMAGES_DIR,
     OUTPUT_LOCATION_DIR,
     OUTPUT_SEGMENTATION_DIR

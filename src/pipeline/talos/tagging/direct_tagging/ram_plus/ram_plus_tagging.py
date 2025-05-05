@@ -11,9 +11,9 @@ from ram.models import ram_plus
 from ram import inference_ram as inference
 from ram import get_transform
 
-from talos.tagging.base_tagging import BaseTagger
-from config.paths import INPUT_IMAGES_DIR
-from config.config import (
+from pipeline.talos.tagging.base_tagging import BaseTagger
+from pipeline.config.paths import INPUT_IMAGES_DIR
+from pipeline.config.config import (
     config,
     TAGGING_DIRECT_TIMEOUT
 )

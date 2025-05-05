@@ -4,7 +4,7 @@ import numpy as np
 
 from sam2.sam2_image_predictor import SAM2ImagePredictor
 
-from talos.segmentation.base_segmentation import BaseSegmenter
+from pipeline.talos.segmentation.base_segmentation import BaseSegmenter
 
 class Sam2Segmenter(BaseSegmenter):
     """

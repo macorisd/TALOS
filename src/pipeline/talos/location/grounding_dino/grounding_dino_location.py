@@ -12,7 +12,7 @@ warnings.filterwarnings(
 
 from transformers import AutoProcessor, AutoModelForZeroShotObjectDetection
 
-from talos.location.base_location import BaseLocator
+from pipeline.talos.location.base_location import BaseLocator
 
 class GroundingDinoLocator(BaseLocator):
     """

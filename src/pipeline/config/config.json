@@ -1,6 +1,6 @@
 {
     "pipeline": {
-        "tagging": ["llava", "deepseek"],
+        "tagging": "qwen",
         "location": "grounding_dino",
         "segmentation": "sam2"
     },
@@ -10,6 +10,15 @@
     "tagging": {
         "direct_tagging": {
             "timeout": 120
+        },
+        "direct_lvlm_tagging": {
+            "timeout": 120,
+            "iters": 1,
+            "exclude_banned_words": true,
+            "banned_words": [
+                "room",
+                "tile"
+            ]
         },
         "lvlm_llm_tagging": {
             "lvlm": {

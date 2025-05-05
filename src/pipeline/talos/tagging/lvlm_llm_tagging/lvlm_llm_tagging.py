@@ -1,12 +1,12 @@
 from typing import List
 
-from talos.tagging.base_tagging import BaseTagger
-from strategy.strategy import (
+from pipeline.talos.tagging.base_tagging import BaseTagger
+from pipeline.strategy.strategy import (
     ITaggingLvlmStrategy,
     ITaggingLlmStrategy
 )
-from talos.tagging.lvlm_llm_tagging.llm_keyword_extraction.deepseek.deepseek_keyword_extraction import DeepseekKeywordExtractor
-from talos.tagging.lvlm_llm_tagging.lvlm_image_description.llava.llava_image_description import LlavaImageDescriptor
+from pipeline.talos.tagging.lvlm_llm_tagging.llm_keyword_extraction.deepseek.deepseek_keyword_extraction import DeepseekKeywordExtractor
+from pipeline.talos.tagging.lvlm_llm_tagging.lvlm_image_description.llava.llava_image_description import LlavaImageDescriptor
 
 class LvlmLlmTagger(BaseTagger):
     """
