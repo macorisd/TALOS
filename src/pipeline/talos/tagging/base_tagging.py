@@ -53,7 +53,7 @@ class BaseTagger(ITaggingStrategy):
     def save_tags(self, tags: List[str], timestamp: str) -> None:
         if config.get(SAVE_FILES):
             # Prepare timestamped output file
-            output_filename = f"tags_{self.ALIAS}_{timestamp}.json"
+            output_filename = f"tags_{timestamp}_{self.ALIAS}.json"
             output_file = os.path.join(OUTPUT_TAGS_DIR, output_filename)
 
             with open(output_file, 'w', encoding='utf-8') as f:

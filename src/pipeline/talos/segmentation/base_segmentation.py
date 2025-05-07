@@ -156,7 +156,7 @@ class BaseSegmenter(ISegmentationStrategy):
             # Output timestamped directory path
             base_output_timestamped_dir = os.path.join(
                 OUTPUT_SEGMENTATION_DIR,
-                f"segmentation_{self.ALIAS}_{timestamp}"
+                f"segmentation_{timestamp}_{self.ALIAS}"
             )
 
             # Ensure the output directory is unique

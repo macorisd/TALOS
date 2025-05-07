@@ -1,7 +1,8 @@
 from typing import List
+import subprocess
 import ollama
 
-from talos.tagging.lvlm_llm_tagging.llm_keyword_extraction.base_keyword_extraction import BaseLlmKeywordExtractor
+from pipeline.talos.tagging.lvlm_llm_tagging.llm_keyword_extraction.base_keyword_extraction import BaseLlmKeywordExtractor
 
 class DeepseekKeywordExtractor(BaseLlmKeywordExtractor):
     """
@@ -78,6 +79,7 @@ def main():
     keyword_extractor.load_inputs()
 
     tags = keyword_extractor.execute()
+    subprocess.run(["ollama", "stop", keyword_extractor.deepseek_model_name])
 
     keyword_extractor.save_outputs(tags)
 

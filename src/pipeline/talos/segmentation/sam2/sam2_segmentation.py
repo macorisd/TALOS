@@ -29,7 +29,7 @@ class Sam2Segmenter(BaseSegmenter):
         super().__init__()
 
         # Load the model
-        self.predictor = SAM2ImagePredictor.from_pretrained(sam2_model_name)
+        self.predictor = SAM2ImagePredictor.from_pretrained(sam2_model_name, torch_dtype=torch.float16)
 
         print("Done.")
     
@@ -40,7 +40,7 @@ class Sam2Segmenter(BaseSegmenter):
         using the SAM2 model.
         """
         # Segmentation with SAM2
-        with torch.inference_mode(), torch.autocast("cuda", dtype=torch.bfloat16):
+        with torch.inference_mode(), torch.autocast("cuda", dtype=torch.float16):
             self.predictor.set_image(self.input_image)
             masks, scores, _ = self.predictor.predict(box=[bbox_coords])
 
@@ -58,6 +58,10 @@ class Sam2Segmenter(BaseSegmenter):
         print(f"{self.STR_PREFIX} Running instance segmentation with SAM2...", flush=True)
 
         segmentation_info, all_masks = self.execute_segmentation()
+        
+        # Clear the GPU cache
+        torch.cuda.empty_cache()
+        
         return segmentation_info, all_masks
 
     

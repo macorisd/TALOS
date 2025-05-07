@@ -1,5 +1,4 @@
 import torch
-import time
 from typing import List
 from transformers import Qwen2_5_VLForConditionalGeneration, AutoProcessor
 
@@ -35,7 +34,7 @@ class QwenTagger(BaseDirectLvlmTagger):
 
         # Load the model
         self.model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
-            qwen_model_name, torch_dtype="auto", device_map="auto"
+            qwen_model_name, torch_dtype=torch.bfloat16, device_map="auto"
         )
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.processor = AutoProcessor.from_pretrained(qwen_model_name)
@@ -50,6 +49,10 @@ class QwenTagger(BaseDirectLvlmTagger):
         print(f"{self.STR_PREFIX} Running Tagging with Qwen...", flush=True)
 
         tags = self.execute_direct_lvlm_tagging()
+
+        # Clear the GPU cache
+        torch.cuda.empty_cache()
+
         return tags
 
     # Override
@@ -79,10 +82,11 @@ class QwenTagger(BaseDirectLvlmTagger):
             padding=True,
             return_tensors="pt",
         )
-        inputs = inputs.to("cuda")
+        inputs = inputs.to(self.device)
 
         # Inference: Generation of the output
-        generated_ids = self.model.generate(**inputs, max_new_tokens=512, temperature=self.temperature)
+        with torch.no_grad():
+            generated_ids = self.model.generate(**inputs, max_new_tokens=512, temperature=self.temperature)
         generated_ids_trimmed = [
             out_ids[len(in_ids) :] for in_ids, out_ids in zip(inputs.input_ids, generated_ids)
         ]

@@ -1,4 +1,5 @@
 from typing import List
+import subprocess
 import ollama
 
 from pipeline.talos.tagging.lvlm_llm_tagging.lvlm_image_description.base_image_description import BaseLvlmImageDescriptor
@@ -72,6 +73,7 @@ def main():
     image_descriptor.load_inputs(input_image_name)
 
     descriptions = image_descriptor.execute()
+    subprocess.run(["ollama", "stop", image_descriptor.llava_model_name])
 
     image_descriptor.save_outputs(descriptions)
 

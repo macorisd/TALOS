@@ -269,7 +269,7 @@ class BaseLocator(ILocationStrategy):
     def save_location_json(self, location: Dict, timestamp: str) -> None:
         if config.get(SAVE_FILES):
             # Prepare JSON output file
-            output_filename = f"location_{self.ALIAS}_{timestamp}.json"
+            output_filename = f"location_{timestamp}_{self.ALIAS}.json"
             output_file = os.path.join(OUTPUT_LOCATION_DIR, output_filename)
 
             # Save the results to a JSON file
@@ -282,7 +282,7 @@ class BaseLocator(ILocationStrategy):
     def save_location_image(self, location: Dict, timestamp: str) -> None:
         if config.get(SAVE_FILES):
             # Prepare JPG output file
-            output_filename = f"location_{self.ALIAS}_{timestamp}.jpg"
+            output_filename = f"location_{timestamp}_{self.ALIAS}.jpg"
             output_file = os.path.join(OUTPUT_LOCATION_DIR, output_filename)
 
             # Draw bounding boxes around the detected objects

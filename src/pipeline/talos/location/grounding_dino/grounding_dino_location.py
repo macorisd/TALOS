@@ -119,6 +119,9 @@ class GroundingDinoLocator(BaseLocator):
 
         print(f"{self.STR_PREFIX} JSON results:\n\n{json.dumps(results_json, indent=4)}")
 
+        # Clear the GPU cache
+        torch.cuda.empty_cache()
+
         return results_json
     
 

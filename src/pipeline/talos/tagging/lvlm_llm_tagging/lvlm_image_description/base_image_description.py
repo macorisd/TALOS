@@ -73,7 +73,7 @@ class BaseLvlmImageDescriptor(ITaggingLvlmStrategy):
             # Output timestamped directory path
             base_output_timestamped_dir = os.path.join(
                 OUTPUT_DESCRIPTIONS_DIR,
-                f"description_{self.ALIAS}_{timestamp}"
+                f"description_{timestamp}_{self.ALIAS}"
             )
 
             # Ensure the output directory is unique
