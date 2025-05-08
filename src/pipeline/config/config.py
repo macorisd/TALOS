@@ -30,8 +30,6 @@ PIPELINE_SEGMENTATION = "PIPELINE_SEGMENTATION"
 SAVE_FILES = "SAVE_FILES"
 
 # Tagging configuration keys
-TAGGING_DIRECT_TIMEOUT = "TAGGING_DIRECT_TIMEOUT"
-
 TAGGING_DIRECT_LVLM_TIMEOUT = "TAGGING_DIRECT_LVLM_TIMEOUT"
 TAGGING_DIRECT_LVLM_ITERS = "TAGGING_DIRECT_LVLM_ITERS"
 TAGGING_DIRECT_LVLM_EXCLUDE_BANNED_WORDS = "TAGGING_DIRECT_LVLM_EXCLUDE_BANNED_WORDS"
@@ -46,10 +44,10 @@ TAGGING_LLM_BANNED_WORDS = "TAGGING_LLM_BANNED_WORDS"
 TAGGING_LLM_ENHANCE_OUTPUT = "TAGGING_LLM_ENHANCE_OUTPUT"
 
 # Location configuration keys
-LOCATION_TIMEOUT = "LOCATION_TIMEOUT"
+# None for now
 
 # Segmentation configuration keys
-SEGMENTATION_TIMEOUT = "SEGMENTATION_TIMEOUT"
+# None for now
 
 
 # Configuration paths in the config.json file
@@ -62,7 +60,6 @@ CONFIG_PATHS = {
     # General configuration
     SAVE_FILES: ["general_config", "save_files"],
     # Tagging configuration
-    TAGGING_DIRECT_TIMEOUT: ["tagging", "direct_tagging", "timeout"],
     TAGGING_DIRECT_LVLM_TIMEOUT: ["tagging", "direct_lvlm_tagging", "timeout"],
     TAGGING_DIRECT_LVLM_ITERS: ["tagging", "direct_lvlm_tagging", "iters"],
     TAGGING_DIRECT_LVLM_EXCLUDE_BANNED_WORDS: ["tagging", "direct_lvlm_tagging", "exclude_banned_words"],
@@ -74,9 +71,9 @@ CONFIG_PATHS = {
     TAGGING_LLM_BANNED_WORDS: ["tagging", "lvlm_llm_tagging", "llm", "banned_words"],
     TAGGING_LLM_ENHANCE_OUTPUT: ["tagging", "lvlm_llm_tagging", "llm", "enhance_output"],
     # Location configuration
-    LOCATION_TIMEOUT: ["location", "timeout"],
+    # None for now
     # Segmentation configuration
-    SEGMENTATION_TIMEOUT: ["segmentation", "timeout"]
+    # None for now
 }
 
 

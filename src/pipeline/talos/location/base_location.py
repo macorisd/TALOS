@@ -216,10 +216,10 @@ class BaseLocator(ILocationStrategy):
             bbox = obj.get("bbox", {})
             
             # Extract bounding box coordinates
-            x_min = int(bbox.get("x_min", 0))
-            y_min = int(bbox.get("y_min", 0))
-            x_max = int(bbox.get("x_max", 0))
-            y_max = int(bbox.get("y_max", 0))
+            x_min = float(bbox.get("x_min", 0))
+            y_min = float(bbox.get("y_min", 0))
+            x_max = float(bbox.get("x_max", 0))
+            y_max = float(bbox.get("y_max", 0))
             
             # Draw the bounding box
             draw.rectangle([x_min, y_min, x_max, y_max], outline="red", width=7)
@@ -253,9 +253,28 @@ class BaseLocator(ILocationStrategy):
         return image
 
 
-    @abstractmethod
-    def execute(self) -> List[Dict]:
-        pass
+    def execute_location(self) -> List[Dict]:
+        # Convert the tags JSON text to a model prompt
+        text = self.json_to_model_prompt(self.input_tags)
+
+        # Subclass method to locate bounding boxes
+        results = self.locate_bboxes(text)
+
+        # Subclass method to convert the results to a JSON dict list
+        results_json = self.model_results_to_json(results)
+
+        # Filter the results based on the confidence threshold
+        results_json = self.filter_confidence(results_json, threshold=self.score_threshold)
+
+        # Filter the results based on bounding box properties
+        results_json = self.filter_bbox(results_json, self.input_image.width, self.input_image.height, verbose=True)
+
+        # Filter the results based on label coincidence with the tagging stage
+        results_json = self.filter_labels(results_json, self.input_tags)
+
+        print(f"{self.STR_PREFIX} JSON results:\n\n{json.dumps(results_json, indent=4)}")
+        
+        return results_json
 
     def save_outputs(self, location: Dict) -> None:
         if config.get(SAVE_FILES):

@@ -89,9 +89,12 @@ class GroundingDinoLocator(BaseLocator):
         """
         print(f"{self.STR_PREFIX} Running Location with Grounding DINO...", end=" ", flush=True)
 
-        # Convert the tags JSON text to a Grounding Dino prompt
-        text = self.json_to_model_prompt(self.input_tags)
+        # Parent execution method
+        results = self.execute_location()
 
+        return results
+    
+    def locate_bboxes(self, text: str) -> Dict:
         # Process and predict
         inputs = self.processor(images=self.input_image, text=text, return_tensors="pt").to(self.model.device)
         with torch.no_grad():
@@ -103,26 +106,12 @@ class GroundingDinoLocator(BaseLocator):
             target_sizes=[self.input_image.size[::-1]]
         )[0]
 
-        print(f"Object detection results:\n\n{results}")
-
-        # Convert the results to a JSON dict list
-        results_json = self.model_results_to_json(results)
-
-        # Filter the results based on the confidence threshold
-        results_json = self.filter_confidence(results_json, threshold=self.score_threshold)
-
-        # Filter the results based on bounding box properties
-        results_json = self.filter_bbox(results_json, self.input_image.width, self.input_image.height, verbose=True)
-
-        # Filter the results based on label coincidence with the tagging stage
-        results_json = self.filter_labels(results_json, self.input_tags)
-
-        print(f"{self.STR_PREFIX} JSON results:\n\n{json.dumps(results_json, indent=4)}")
-
         # Clear the GPU cache
         torch.cuda.empty_cache()
 
-        return results_json
+        print(f"Object detection results:\n\n{results}")
+
+        return results
     
 
 def main():

@@ -1,5 +1,6 @@
 from typing import List
 import subprocess
+import atexit
 import ollama
 
 from pipeline.talos.tagging.lvlm_llm_tagging.lvlm_image_description.base_image_description import BaseLvlmImageDescriptor
@@ -30,8 +31,10 @@ class LlavaImageDescriptor(BaseLvlmImageDescriptor):
         # Variables
         self.llava_model_name = llava_model_name
 
-        print("Done.")
+        # Register the cleanup function to stop the model when the object is deleted
+        atexit.register(self.stop_model)
 
+        print("Done.")
     
     # Override
     def execute(self) -> List[str]:
@@ -43,7 +46,6 @@ class LlavaImageDescriptor(BaseLvlmImageDescriptor):
         descriptions = self.execute_image_description()
         return descriptions
 
-    
     # Override
     def chat_lvlm(self) -> str:
         """
@@ -62,7 +64,15 @@ class LlavaImageDescriptor(BaseLvlmImageDescriptor):
 
         return response["message"]["content"]
     
+    def stop_model(self):
+        """
+        Stop the LLaVA model.
+        """
+        print(f"{self.STR_PREFIX} Stopping LLaVA model...")
+        subprocess.run(["ollama", "stop", self.llava_model_name])
+        print("Done.")
 
+    
 def main():
     """
     Main function to run the LLaVA image descriptor.
@@ -73,7 +83,6 @@ def main():
     image_descriptor.load_inputs(input_image_name)
 
     descriptions = image_descriptor.execute()
-    subprocess.run(["ollama", "stop", image_descriptor.llava_model_name])
 
     image_descriptor.save_outputs(descriptions)
 

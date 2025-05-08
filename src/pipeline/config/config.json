@@ -8,9 +8,7 @@
         "save_files": true
     },
     "tagging": {
-        "direct_tagging": {
-            "timeout": 120
-        },
+        "direct_tagging": {},
         "direct_lvlm_tagging": {
             "timeout": 120,
             "iters": 1,
@@ -36,10 +34,6 @@
             }
         }
     },
-    "location": {
-        "timeout": 60
-    },
-    "segmentation": {
-        "timeout": 60
-    }
+    "location": {},
+    "segmentation": {}
 }

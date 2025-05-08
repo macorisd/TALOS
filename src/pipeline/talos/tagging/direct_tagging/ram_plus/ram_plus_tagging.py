@@ -13,10 +13,6 @@ from ram import get_transform
 
 from pipeline.talos.tagging.base_tagging import BaseTagger
 from pipeline.config.paths import INPUT_IMAGES_DIR
-from pipeline.config.config import (
-    config,
-    TAGGING_DIRECT_TIMEOUT
-)
 
 class RamPlusTagger(BaseTagger):
     """
@@ -87,21 +83,12 @@ class RamPlusTagger(BaseTagger):
         Execute the RAM++ Tagging.
         """
         print(f"{self.STR_PREFIX} Running Tagging with RAM++...", flush=True)
-
-        start_time = time.time()
         tags = None
 
-        while time.time() - start_time < config.get(TAGGING_DIRECT_TIMEOUT):
-            with torch.no_grad():
-                # Generate tags
-                res = inference(self.input_image, self.model)
-                if res and res[0].strip():
-                    tags = res[0]
-                    break
-                print(f"{self.STR_PREFIX} No valid tags generated. Retrying...")
-        else:
-            raise TimeoutError(f"{self.STR_PREFIX} Timeout of {config.get(TAGGING_DIRECT_TIMEOUT)} seconds reached without receiving valid tags.")
-
+        with torch.no_grad():
+            # Generate tags
+            tags = inference(self.input_image, self.model)[0]
+        
         print(f"{self.STR_PREFIX} Image tags: {tags}")
 
         # Convert RAM++ tags to str list
