@@ -8,7 +8,10 @@ from PIL import Image, ImageDraw, ImageFont
 from pipeline.strategy.strategy import ILocationStrategy
 from pipeline.config.config import (
     config,
-    SAVE_FILES
+    SAVE_FILES,
+    LOCATION_SCORE_THRESHOLD,
+    LOCATION_PADDING_RATIO,
+    LOCATION_LARGE_BBOX_RATIO
 )
 from pipeline.config.paths import (
     INPUT_IMAGES_DIR,
@@ -24,16 +27,10 @@ class BaseLocator(ILocationStrategy):
     Base class for Location implementations.
     """
 
-    def __init__(
-        self,
-        score_threshold: float = 0.2
-    ):
+    def __init__(self):
         """
         Initialize the base locator.
         """
-        # Variables
-        self.score_threshold = score_threshold
-
         if config.get(SAVE_FILES):
             # Create output directory if it does not exist
             os.makedirs(OUTPUT_LOCATION_DIR, exist_ok=True)
@@ -103,15 +100,23 @@ class BaseLocator(ILocationStrategy):
         print("Done.")
 
 
-    def filter_confidence(self, results: Dict, threshold: float) -> Dict:
+    def filter_confidence(self, results: Dict) -> Dict:
         """
         Filters the results based on the confidence threshold.
         """
-        filtered_results = [result for result in results if result["score"] > threshold]
+        filtered_results = [result for result in results if result["score"] > config.get(LOCATION_SCORE_THRESHOLD)]
         return filtered_results        
 
 
-    def filter_bbox(self, results_json: dict, image_width, image_height, padding: float = 30, ratio: float = 0.9 , verbose: bool = False):
+    def filter_bbox(
+            self, 
+            results_json: dict,
+            image_width,
+            image_height,
+            verbose: bool = True
+    ):
+        padding = image_width * config.get(LOCATION_PADDING_RATIO)
+        
         def is_similar_bbox(bbox1, bbox2, padding):
             return (abs(bbox1['x_min'] - bbox2['x_min']) <= padding and
                 (abs(bbox1['y_min'] - bbox2['y_min']) <= padding) and
@@ -150,7 +155,8 @@ class BaseLocator(ILocationStrategy):
             width = result['bbox']['x_max'] - result['bbox']['x_min']
             height = result['bbox']['y_max'] - result['bbox']['y_min']
 
-            if not (width >= image_width * ratio and height >= image_height * ratio):
+            if not (width >= image_width * config.get(LOCATION_LARGE_BBOX_RATIO) and
+                    height >= image_height * config.get(LOCATION_LARGE_BBOX_RATIO)):
                 filtered_results.append(result)
             elif verbose:
                 print(f"{self.STR_PREFIX} Discarded: {result['label']} with score {result['score']} (bbox is too large)")
@@ -201,49 +207,56 @@ class BaseLocator(ILocationStrategy):
         return results
 
     
-    def draw_bounding_boxes(self, results: Dict, padding: int = None) -> Image:
+    def draw_bounding_boxes(
+            self,
+            results: Dict,
+            fixed_width: int = 800,
+            show_padding: bool = False
+    ) -> Image:
         """
-        Draws bounding boxes around the detected objects in the image.
-        """    
-        image = self.input_image.copy()
-        draw = ImageDraw.Draw(image)        
-        font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 40)
+        Draws bounding boxes around the detected objects in the image, scaling to a fixed width.
+        """
+        # Resize image to fixed width while maintaining aspect ratio
+        original_width, original_height = self.input_image.size
+        scale = fixed_width / original_width
+        new_height = int(original_height * scale)
+        image = self.input_image.resize((fixed_width, new_height), Image.Resampling.LANCZOS)
+
+        draw = ImageDraw.Draw(image)
+        font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 20)
 
         # Draw bounding boxes for each detected object
         for obj in results:
             label = obj.get("label", "unknown")
             score = obj.get("score", 0.0)
             bbox = obj.get("bbox", {})
-            
-            # Extract bounding box coordinates
-            x_min = float(bbox.get("x_min", 0))
-            y_min = float(bbox.get("y_min", 0))
-            x_max = float(bbox.get("x_max", 0))
-            y_max = float(bbox.get("y_max", 0))
-            
+
+            # Extract and scale bounding box coordinates
+            x_min = float(bbox.get("x_min", 0)) * scale
+            y_min = float(bbox.get("y_min", 0)) * scale
+            x_max = float(bbox.get("x_max", 0)) * scale
+            y_max = float(bbox.get("y_max", 0)) * scale
+
             # Draw the bounding box
-            draw.rectangle([x_min, y_min, x_max, y_max], outline="red", width=7)
-            
+            draw.rectangle([x_min, y_min, x_max, y_max], outline="red", width=4)
+
             # Draw the label and score
             text = f"{label}: {score:.2f}"
-            draw.text((x_min+7, y_min+7), text, fill="red", font=font)
+            draw.text((x_min + 7, y_min + 3), text, fill="red", font=font)
 
-        # If padding is not None, draw a green rectangle that represents the padding for reference
-        if padding is not None:
+        # Draw reference padding rectangle if show_padding is True
+        if show_padding:
             _, image_height = image.size
-
-            rect_width = padding
+            rect_width = float(original_width * config.get(LOCATION_PADDING_RATIO) * scale)
             rect_height = 30
-            
-            # Define the coordinates for the rectangle
+
             rect_x_min = 0
             rect_y_min = image_height - rect_height
             rect_x_max = rect_width
             rect_y_max = image_height
-            
-            # Draw the green rectangle
+
             draw.rectangle([rect_x_min, rect_y_min, rect_x_max, rect_y_max], outline="green", fill="green", width=2)
-            
+
             # Draw the "padding" text
             text = "padding"
             text_x = rect_x_min + 5
@@ -264,10 +277,10 @@ class BaseLocator(ILocationStrategy):
         results_json = self.model_results_to_json(results)
 
         # Filter the results based on the confidence threshold
-        results_json = self.filter_confidence(results_json, threshold=self.score_threshold)
+        results_json = self.filter_confidence(results_json)
 
         # Filter the results based on bounding box properties
-        results_json = self.filter_bbox(results_json, self.input_image.width, self.input_image.height, verbose=True)
+        results_json = self.filter_bbox(results_json, self.input_image.width, self.input_image.height)
 
         # Filter the results based on label coincidence with the tagging stage
         results_json = self.filter_labels(results_json, self.input_tags)
@@ -305,7 +318,7 @@ class BaseLocator(ILocationStrategy):
             output_file = os.path.join(OUTPUT_LOCATION_DIR, output_filename)
 
             # Draw bounding boxes around the detected objects
-            results_image = self.draw_bounding_boxes(results=location, padding=30)
+            results_image = self.draw_bounding_boxes(results=location, show_padding=True)
 
             # Save the image with bounding boxes
             results_image.save(output_file)

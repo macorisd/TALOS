@@ -26,8 +26,7 @@ class GroundingDinoLocator(BaseLocator):
 
     def __init__(
         self,
-        grounding_dino_model_name: str = "IDEA-Research/grounding-dino-base",
-        score_threshold: float = 0.2
+        grounding_dino_model_name: str = "IDEA-Research/grounding-dino-base"
     ):
         """
         Initialize the Grounding DINO locator.
@@ -35,7 +34,7 @@ class GroundingDinoLocator(BaseLocator):
         print(f"{self.STR_PREFIX} Initializing Grounding DINO locator...", end=" ", flush=True)
 
         # Initialize base class
-        super().__init__(score_threshold)
+        super().__init__()
 
         # Load the processor and model
         device = "cuda" if torch.cuda.is_available() else "cpu"

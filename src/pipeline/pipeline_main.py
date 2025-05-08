@@ -85,4 +85,4 @@ def main(input_image_names: Union[str, List[str]], iters: int = 1):
 
 
 if __name__ == "__main__":
-    main(input_image_names=["bike.jpg"], iters=1)
+    main(input_image_names=["stop_sign.jpg"], iters=1)

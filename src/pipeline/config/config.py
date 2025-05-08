@@ -44,7 +44,9 @@ TAGGING_LLM_BANNED_WORDS = "TAGGING_LLM_BANNED_WORDS"
 TAGGING_LLM_ENHANCE_OUTPUT = "TAGGING_LLM_ENHANCE_OUTPUT"
 
 # Location configuration keys
-# None for now
+LOCATION_SCORE_THRESHOLD = "LOCATION_SCORE_THRESHOLD"
+LOCATION_PADDING_RATIO = "LOCATION_PADDING_RATIO"
+LOCATION_LARGE_BBOX_RATIO = "LOCATION_LARGE_BBOX_RATIO"
 
 # Segmentation configuration keys
 # None for now
@@ -71,7 +73,9 @@ CONFIG_PATHS = {
     TAGGING_LLM_BANNED_WORDS: ["tagging", "lvlm_llm_tagging", "llm", "banned_words"],
     TAGGING_LLM_ENHANCE_OUTPUT: ["tagging", "lvlm_llm_tagging", "llm", "enhance_output"],
     # Location configuration
-    # None for now
+    LOCATION_SCORE_THRESHOLD: ["location", "score_threshold"],
+    LOCATION_PADDING_RATIO: ["location", "padding_ratio"],
+    LOCATION_LARGE_BBOX_RATIO: ["location", "large_bbox_ratio"],
     # Segmentation configuration
     # None for now
 }
