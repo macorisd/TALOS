@@ -34,7 +34,7 @@ class Sam2Segmenter(BaseSegmenter):
         print("Done.")
     
     # Override
-    def generate_mask(self, bbox_coords: List[int]) -> np.ndarray:
+    def generate_mask(self, bbox_coords: List[float]) -> np.ndarray:
         """
         Generate a binary mask instance for the input image and the specified bbox coordinates,
         using the SAM2 model.

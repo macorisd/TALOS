@@ -121,10 +121,10 @@ class BaseSegmenter(ISegmentationStrategy):
             bbox = instance.get("bbox", {})
 
             # Extract bounding box coordinates
-            x_min = int(bbox.get("x_min", 0))
-            y_min = int(bbox.get("y_min", 0))
-            x_max = int(bbox.get("x_max", 0))
-            y_max = int(bbox.get("y_max", 0))
+            x_min = float(bbox.get("x_min", 0))
+            y_min = float(bbox.get("y_min", 0))
+            x_max = float(bbox.get("x_max", 0))
+            y_max = float(bbox.get("y_max", 0))
 
             # Define the bounding box in the format [x_min, y_min, x_max, y_max]
             bbox_coords = [x_min, y_min, x_max, y_max]
@@ -318,5 +318,5 @@ class BaseSegmenter(ISegmentationStrategy):
         return overlayed_image
     
     @abstractmethod
-    def generate_mask(self, bbox_coords: List[int]) -> np.ndarray:
+    def generate_mask(self, bbox_coords: List[float]) -> np.ndarray:
         pass
