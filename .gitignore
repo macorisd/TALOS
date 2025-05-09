@@ -41,3 +41,4 @@ external-repos/*
 # Docs
 *.vpp.lck
 *.vpp.bak*
+!**/docs/**/*.png
