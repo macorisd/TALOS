@@ -5,7 +5,6 @@ from typing import Dict, List, Tuple
 from PIL import Image
 import cv2
 import numpy as np
-import time
 
 from pipeline.strategy.strategy import ISegmentationStrategy
 from pipeline.config.config import (
@@ -17,6 +16,7 @@ from pipeline.config.paths import (
     OUTPUT_LOCATION_DIR,
     OUTPUT_SEGMENTATION_DIR
 )
+from pipeline.common.file_saving import FileSaving
 
 class BaseSegmenter(ISegmentationStrategy):
     """
@@ -25,44 +25,16 @@ class BaseSegmenter(ISegmentationStrategy):
     Base class for segmentation strategies.
     """
 
-    STR_PREFIX = "\n[SEGMENTATION]"
-    ALIAS = "base"
-
     def __init__(self):
         """
         Initialize the base segmenter.
         """
         if config.get(SAVE_FILES):
-            # Create output directory if it does not exist
-            os.makedirs(OUTPUT_SEGMENTATION_DIR, exist_ok=True)
-            self.__create_output_directory()
-    
-    def __create_output_directory(self) -> None:
-        """
-        Create the output directory for saving the current segmentation.
-        """
-        if config.get(SAVE_FILES):
-            # Prepare timestamp
-            timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
-
-            # Output timestamped directory path
-            base_output_timestamped_dir = os.path.join(
-                OUTPUT_SEGMENTATION_DIR,
-                f"segmentation_{timestamp}_{self.ALIAS}"
+            self.output_timestamped_dir = FileSaving.create_output_directory(
+                parent_dir=OUTPUT_SEGMENTATION_DIR,
+                output_name="segmentation",
+                alias=self.ALIAS
             )
-
-            # Ensure the output directory is unique
-            output_timestamped_dir = base_output_timestamped_dir
-            counter = 1
-
-            while os.path.exists(output_timestamped_dir):
-                output_timestamped_dir = f"{base_output_timestamped_dir}_{counter}"
-                counter += 1
-            
-            self.output_timestamped_dir = output_timestamped_dir
-
-            # Create the unique timestamped output directory
-            os.makedirs(self.output_timestamped_dir)
     
     # Override from ISegmentationStrategy
     def load_inputs(self, input_image_name: str, input_location: List[Dict] = None) -> None:

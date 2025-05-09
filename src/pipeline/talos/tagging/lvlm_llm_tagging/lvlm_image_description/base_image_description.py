@@ -14,6 +14,7 @@ from pipeline.config.paths import (
     INPUT_IMAGES_DIR,
     OUTPUT_DESCRIPTIONS_DIR
 )
+from pipeline.common.file_saving import FileSaving
 
 class BaseLvlmImageDescriptor(ITaggingLvlmStrategy):
     """
@@ -33,36 +34,11 @@ class BaseLvlmImageDescriptor(ITaggingLvlmStrategy):
         self.prompt = prompt
 
         if config.get(SAVE_FILES):
-            # Create output directory if it does not exist
-            os.makedirs(OUTPUT_DESCRIPTIONS_DIR, exist_ok=True)
-            self.__create_output_directory()
-    
-    def __create_output_directory(self) -> None:
-        """
-        Create the timestamped output directory for saving current descriptions.
-        """
-        if config.get(SAVE_FILES):
-            # Prepare timestamp
-            timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
-
-            # Output timestamped directory path
-            base_output_timestamped_dir = os.path.join(
-                OUTPUT_DESCRIPTIONS_DIR,
-                f"description_{timestamp}_{self.ALIAS}"
+            self.output_timestamped_dir = FileSaving.create_output_directory(
+                parent_dir=OUTPUT_DESCRIPTIONS_DIR,
+                output_name="description",
+                alias=self.ALIAS
             )
-
-            # Ensure the output directory is unique
-            output_timestamped_dir = base_output_timestamped_dir
-            counter = 1
-
-            while os.path.exists(output_timestamped_dir):
-                output_timestamped_dir = f"{base_output_timestamped_dir}_{counter}"
-                counter += 1
-            
-            self.output_timestamped_dir = output_timestamped_dir
-
-            # Create the unique timestamped output directory
-            os.makedirs(self.output_timestamped_dir)
 
     # Override from ITaggingLvlmStrategy
     def load_inputs(self, input_image_name: str) -> None:
