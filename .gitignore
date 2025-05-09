@@ -37,3 +37,7 @@ final_data.json
 
 # External repositories
 external-repos/*
+
+# Docs
+*.vpp.lck
+*.vpp.bak*
