@@ -101,11 +101,11 @@ class ISegmentationStrategy(ABC):
     def save_detections_json(self, segmentation_info: Dict) -> None:
         pass
     @abstractmethod
-    def save_segmentation_masks(self, masks: List[np.ndarray]) -> None:
+    def save_masks_npz(self, masks: List[np.ndarray]) -> None:
         pass
     @abstractmethod
-    def save_segmentation_images(self, masks: List[np.ndarray]) -> None:
+    def save_mask_images(self, masks: List[np.ndarray]) -> None:
         pass
     @abstractmethod
-    def save_segmentation_highlighted_images(self, masks: List[np.ndarray]) -> None:
+    def save_mask_highlighted_images(self, masks: List[np.ndarray]) -> None:
         pass

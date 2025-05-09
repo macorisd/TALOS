@@ -167,13 +167,13 @@ class BaseSegmenter(ISegmentationStrategy):
             self.save_detections_json(segmentation_info)
 
             # Save segmentation masks to .npz files
-            self.save_segmentation_masks(all_masks)
+            self.save_masks_npz(all_masks)
 
             # Save segmentation masks as images
-            self.save_segmentation_images(all_masks)
+            self.save_mask_images(all_masks)
 
             # Save highlighted images with masks and labels
-            self.save_segmentation_highlighted_images(all_masks)
+            self.save_mask_highlighted_images(all_masks)
         else:
             print(f"{self.STR_PREFIX} Saving file is disabled. Segmentation output was not saved.")
     
@@ -196,7 +196,7 @@ class BaseSegmenter(ISegmentationStrategy):
             print(f"{self.STR_PREFIX} Instance detection information JSON saved to: {output_json_path}")
     
     # Override from ISegmentationStrategy
-    def save_segmentation_masks(self, masks: List[np.ndarray]) -> None:
+    def save_masks_npz(self, masks: List[np.ndarray]) -> None:
         """
         Save the segmentation masks to .npz files.
         """
@@ -220,7 +220,7 @@ class BaseSegmenter(ISegmentationStrategy):
             print(f"{self.STR_PREFIX} Segmentation mask saved to: {output_mask_path}")
 
     # Override from ISegmentationStrategy
-    def save_segmentation_images(self, masks: List[np.ndarray]) -> None:
+    def save_mask_images(self, masks: List[np.ndarray]) -> None:
         """
         Save the segmentation masks as images.
         """
@@ -245,7 +245,7 @@ class BaseSegmenter(ISegmentationStrategy):
             print(f"{self.STR_PREFIX} Segmentation mask image saved to: {output_image_path}")
     
     # Override from ISegmentationStrategy
-    def save_segmentation_highlighted_images(self, masks: List[np.ndarray]) -> None:
+    def save_mask_highlighted_images(self, masks: List[np.ndarray]) -> None:
         """
         Save the segmentation masks as images with highlighted segments.
         """
