@@ -15,7 +15,6 @@ from pipeline.config.paths import (
     OUTPUT_DESCRIPTIONS_DIR
 )
 
-
 class BaseLvlmImageDescriptor(ITaggingLvlmStrategy):
     """
     [Tagging -> LVLM + LLM -> LVLM Image Description]
@@ -36,35 +35,11 @@ class BaseLvlmImageDescriptor(ITaggingLvlmStrategy):
         if config.get(SAVE_FILES):
             # Create output directory if it does not exist
             os.makedirs(OUTPUT_DESCRIPTIONS_DIR, exist_ok=True)
-            self.create_output_directory()
-
-    def load_inputs(self, input_image_name: str) -> None:
+            self.__create_output_directory()
+    
+    def __create_output_directory(self) -> None:
         """
-        Load the LVLM Image Description inputs.
-        """
-        self.load_image(input_image_name)
-
-    # Override
-    def load_image(self, input_image_name: str) -> None:
-        """
-        Load the input image's path.
-        """
-        print(f"{self.STR_PREFIX} Loading input image: {input_image_name}...", end=" ")
-        self.input_image_path = os.path.join(INPUT_IMAGES_DIR, input_image_name)
-
-        if not os.path.isfile(self.input_image_path):
-            raise FileNotFoundError(f"{self.STR_PREFIX} The image {self.input_image_name} was not found.")
-        print("Done.")
-
-
-    @abstractmethod
-    def execute(self) -> List[str]:
-        pass
-
-
-    def create_output_directory(self) -> None:
-        """
-        Create the output directory for saving current descriptions.
+        Create the timestamped output directory for saving current descriptions.
         """
         if config.get(SAVE_FILES):
             # Prepare timestamp
@@ -88,11 +63,37 @@ class BaseLvlmImageDescriptor(ITaggingLvlmStrategy):
 
             # Create the unique timestamped output directory
             os.makedirs(self.output_timestamped_dir)
-    
+
+    # Override from ITaggingLvlmStrategy
+    def load_inputs(self, input_image_name: str) -> None:
+        """
+        Load the LVLM Image Description inputs.
+        """
+        self.load_image(input_image_name)
+
+    # Override from ITaggingLvlmStrategy
+    def load_image(self, input_image_name: str) -> None:
+        """
+        Load the input image's path.
+        """
+        print(f"{self.STR_PREFIX} Loading input image: {input_image_name}...", end=" ")
+        self.input_image_path = os.path.join(INPUT_IMAGES_DIR, input_image_name)
+
+        if not os.path.isfile(self.input_image_path):
+            raise FileNotFoundError(f"{self.STR_PREFIX} The image {self.input_image_name} was not found.")
+        print("Done.")
+
+    @abstractmethod # from ITaggingLvlmStrategy
+    def execute(self) -> List[str]:
+        raise NotImplementedError("execute method must be implemented in subclasses.")
 
     def execute_image_description(self) -> List[str]:
         """
-        Iteratively prompt the LVLM model to generate descriptions for the input image.
+        Execute the LVLM Image Description for the Tagging with LVLM + LLM.
+        
+        This method iteratively prompts the LVLM model to generate descriptions for the input image.
+
+        This method will be called by the execute method in the subclasses.
         """
         descriptions = [""] * config.get(TAGGING_LVLM_ITERS)
         start_time = time.time()  # Start timer for timeout
@@ -116,13 +117,14 @@ class BaseLvlmImageDescriptor(ITaggingLvlmStrategy):
         
         return descriptions
 
+    # Override from ITaggingLvlmStrategy
     def save_outputs(self, descriptions: List[str]) -> None:
         if config.get(SAVE_FILES):
             self.save_descriptions(descriptions)
         else:
             print(f"{self.STR_PREFIX} Saving file is disabled. Image description output was not saved.")
 
-    # Override
+    # Override from ITaggingLvlmStrategy
     def save_descriptions(self, descriptions: List[str]) -> None:
         """
         Save the generated descriptions to text files.
@@ -136,7 +138,6 @@ class BaseLvlmImageDescriptor(ITaggingLvlmStrategy):
                     f.write(descriptions[i])
                 print(f"{self.STR_PREFIX} Image description saved to: {output_file}")
 
-    
     @abstractmethod
     def chat_lvlm(self) -> str:
-        pass
+        raise NotImplementedError("chat_lvlm method must be implemented in subclasses.")

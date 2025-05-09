@@ -43,18 +43,20 @@ class BaseLlmKeywordExtractor(ITaggingLlmStrategy):
             # Create output directory if it does not exist
             os.makedirs(OUTPUT_TAGS_DIR, exist_ok=True)
 
+    # Override from ITaggingLlmStrategy
     def load_inputs(self, descriptions: List[str] = None) -> None:
         """
         Load the LLM Keyword Extraction inputs.
         """
         self.load_descriptions(descriptions)
 
+    # Override from ITaggingLlmStrategy
     def load_descriptions(self, descriptions: List[str] = None) -> None:
         """
         Load the input descriptions for keyword extraction.
 
         If 'descriptions' is provided, use it.
-        Otherwise, load the most recent descriptions from the LVLM output descriptions directory.
+        Otherwise, load the most recent descriptions from the LVLM image description's output directory.
         """
         print(f"{self.STR_PREFIX} Loading input description(s)...", end=" ", flush=True)
 
@@ -97,21 +99,11 @@ class BaseLlmKeywordExtractor(ITaggingLlmStrategy):
         self.iters = len(self.input_description)
         print(f"Loaded {self.iters} descriptions.")
 
-
-    @abstractmethod
+    @abstractmethod # from ITaggingLlmStrategy
     def execute(self) -> List[str]:
-        pass
+        raise NotImplementedError("execute method must be implemented in subclasses.")
 
-
-    def correct_response_format(self, text: str) -> List[str] | None:
-        """
-        Checks if there is a substring within the given text that starts with '[' and ends with ']'
-        and follows the exact format:
-
-        ["phrase", "phrase", "phrase", ...]
-
-        If the format is correct, returns the JSON substring as a List[str]. Otherwise, returns None.
-        """
+    def __correct_response_format(self, text: str) -> List[str] | None:
         # Find indices of the last '[' and the last ']'
         start_index = text.rfind('[')
         end_index = text.rfind(']')
@@ -149,11 +141,7 @@ class BaseLlmKeywordExtractor(ITaggingLlmStrategy):
 
         return parsed_data
 
-    
-    def enhance_response(self, response: str) -> dict:
-        """
-        Additional LLM prompt to enhance the keyword extraction.
-        """
+    def __enhance_response(self, response: str) -> dict:
         print(f"{self.STR_PREFIX} Enhancing the output with an additional prompt...", end=" ", flush=True)
 
         prompt = self.prompt2 + "\n\n" + response
@@ -165,7 +153,7 @@ class BaseLlmKeywordExtractor(ITaggingLlmStrategy):
             print(f"{self.STR_PREFIX} LLM response:\n\n", response)
 
             # Check if the response is in the correct format
-            correct_json = self.correct_response_format(response)
+            correct_json = self.__correct_response_format(response)
 
             if correct_json is not None:
                 break
@@ -173,11 +161,7 @@ class BaseLlmKeywordExtractor(ITaggingLlmStrategy):
                 print(f"{self.STR_PREFIX} The response is not in the correct format. Trying again...")
         return correct_json
 
-    def response_fusion(self, responses: List[List[str]]) -> List[str]:
-        """
-        Merges the responses of multiple iterations into a single list,
-        ensuring unique string values in order.
-        """
+    def __response_fusion(self, responses: List[List[str]]) -> List[str]:
         print(f"{self.STR_PREFIX} {self.iters} iterations completed. Merging the responses...", end=" ", flush=True)
 
         final_response = []
@@ -194,7 +178,7 @@ class BaseLlmKeywordExtractor(ITaggingLlmStrategy):
 
         return final_response
 
-    def filter_banned_words(self, response: List[str], ban_exact_word: bool = False) -> List[str]:
+    def __filter_banned_words(self, response: List[str], ban_exact_word: bool = False) -> List[str]:
         print(f"{self.STR_PREFIX} Removing banned words...", flush=True)
 
         banned_words = set(config.get(TAGGING_LLM_BANNED_WORDS))
@@ -208,7 +192,7 @@ class BaseLlmKeywordExtractor(ITaggingLlmStrategy):
 
         return response
     
-    def filter_long_values(self, response: List[str], n_words: int = 2) -> List[str]:
+    def __filter_long_values(self, response: List[str], n_words: int = 2) -> List[str]:
         print(f"{self.STR_PREFIX} Removing values with more than {n_words} words...", flush=True)
 
         result = []
@@ -224,7 +208,7 @@ class BaseLlmKeywordExtractor(ITaggingLlmStrategy):
 
         return result
     
-    def filter_redundant_substrings(self, response: List[str]) -> List[str]:
+    def __filter_redundant_substrings(self, response: List[str]) -> List[str]:
         print(f"{self.STR_PREFIX} Removing redundant substrings...", flush=True)
         
         # Set to store values that are substrings of other values
@@ -240,7 +224,7 @@ class BaseLlmKeywordExtractor(ITaggingLlmStrategy):
         # Build the result dictionary, excluding redundant values
         return [value for value in response if value not in redundant_elements]
 
-    def filter_duplicate_plurals(self, response: List[str]) -> List[str]:
+    def __filter_duplicate_plurals(self, response: List[str]) -> List[str]:
         print(f"{self.STR_PREFIX} Removing duplicate plural words...", flush=True)
 
         # Step 1: Collect all individual words from all elements
@@ -283,10 +267,13 @@ class BaseLlmKeywordExtractor(ITaggingLlmStrategy):
 
         return list(unique_elements)
 
-
     def execute_keyword_extraction(self) -> List[str]:
         """
-        Iteratively prompt the LLM model to extract keywords from the input descriptions.
+        Execute the LLM Keyword Extraction for the Tagging with LVLM + LLM.
+
+        This method iteratively prompts the LLM model to extract keywords from the input descriptions.
+
+        This method will be called by the execute method in the subclasses.
         """
         start_time = time.time()
         correct_json = [None] * self.iters
@@ -304,12 +291,12 @@ class BaseLlmKeywordExtractor(ITaggingLlmStrategy):
                 print(f"{self.STR_PREFIX} LLM response:\n\n", response + "\n")
 
                 # Check if the response is in the correct format
-                correct_json[i] = self.correct_response_format(response)
+                correct_json[i] = self.__correct_response_format(response)
 
                 if correct_json[i] is not None:
                     # Filter the response to improve results if enhance_output is True and the response has at least one element
                     if config.get(TAGGING_LLM_ENHANCE_OUTPUT) and len(correct_json[i]) > 0:
-                        correct_json[i] = self.enhance_response(response)
+                        correct_json[i] = self.__enhance_response(response)
                     break
                 else:
                     print(f"{self.STR_PREFIX} The response is not in the correct format. Trying again...")
@@ -318,7 +305,7 @@ class BaseLlmKeywordExtractor(ITaggingLlmStrategy):
 
         # Merge the responses if there are multiple iterations
         if self.iters > 1:
-            final_json = self.response_fusion(correct_json)
+            final_json = self.__response_fusion(correct_json)
         # Otherwise, use the single response
         else:
             final_json = correct_json[0]
@@ -328,20 +315,25 @@ class BaseLlmKeywordExtractor(ITaggingLlmStrategy):
 
         # If self.banned_words has been loaded, remove banned words from the output
         if config.get(TAGGING_LLM_EXCLUDE_BANNED_WORDS) and config.get(TAGGING_LLM_BANNED_WORDS) is not None:
-            final_json = self.filter_banned_words(final_json)
+            final_json = self.__filter_banned_words(final_json)
 
         # Remove values with more than a certain number of words
-        final_json = self.filter_long_values(final_json)
+        final_json = self.__filter_long_values(final_json)
 
         # Remove words that contain a substring that is also in the dictionary
-        final_json = self.filter_redundant_substrings(final_json)
+        final_json = self.__filter_redundant_substrings(final_json)
 
         # Remove duplicate plural words
-        final_json = self.filter_duplicate_plurals(final_json)
+        final_json = self.__filter_duplicate_plurals(final_json)
 
         print(f"{self.STR_PREFIX} Final response substring:\n\n", json.dumps(final_json, indent=4))
         return final_json
     
+    @abstractmethod
+    def chat_llm(self, prompt: str) -> str:
+        raise NotImplementedError("chat_llm method must be implemented in subclasses.")
+    
+    # Override from ITaggingLlmStrategy
     def save_outputs(self, tags: List[str]) -> None:
         """
         Save the generated keywords to text files.
@@ -352,6 +344,7 @@ class BaseLlmKeywordExtractor(ITaggingLlmStrategy):
         else:
             print(f"{self.STR_PREFIX} Saving file is disabled. Keyword extraction output was not saved.")
     
+    # Override from ITaggingLlmStrategy
     def save_tags(self, tags: List[str], timestamp: str) -> None:
         """
         Save the generated keywords to text files.
@@ -365,8 +358,3 @@ class BaseLlmKeywordExtractor(ITaggingLlmStrategy):
             print(f"{self.STR_PREFIX} Tags saved to: {output_file}")
         else:
             print(f"{self.STR_PREFIX} Saving file is disabled. Keyword extraction output was not saved.")
-    
-
-    @abstractmethod
-    def chat_llm(self, prompt: str) -> str:
-        pass

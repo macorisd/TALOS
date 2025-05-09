@@ -20,7 +20,7 @@ class LvlmLlmTagger(BaseTagger):
         llm_keyword_extractor: ITaggingLlmStrategy
     ):
         """
-        Initialize LVLM + LLM tagger.
+        Initialize the LVLM + LLM tagger.
         """
         # Initialize base class
         super().__init__()
@@ -34,15 +34,14 @@ class LvlmLlmTagger(BaseTagger):
         self.ALIAS = f"lvlm_llm_{self.lvlm_image_descriptor.ALIAS}_{self.llm_keyword_extractor.ALIAS}"
 
 
-    # Override
+    # Override from ITaggingStrategy -> BaseTagger
     def load_image(self, input_image_name: str) -> None:
         """
         Load the input image's path in the LVLM image descriptor.
         """
         self.lvlm_image_descriptor.load_image(input_image_name)
 
-
-    # Override
+    # Override from ITaggingStrategy -> BaseTagger
     def execute(self) -> List[str]:
         """
         Execute the LVLM + LLM Tagging: LVLM image description and LLM keyword extraction.

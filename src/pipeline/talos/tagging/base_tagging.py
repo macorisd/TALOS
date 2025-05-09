@@ -27,21 +27,26 @@ class BaseTagger(ITaggingStrategy):
             # Create output directory if it does not exist
             os.makedirs(OUTPUT_TAGS_DIR, exist_ok=True)
 
+    # Override from ITaggingStrategy
     def load_inputs(self, input_image_name: str) -> None:
         """
         Load the Tagging inputs.
         """
         self.load_image(input_image_name)
 
-    @abstractmethod
+    @abstractmethod # from ITaggingStrategy
     def load_image(self, input_image_name: str) -> None:
-        pass
+        raise NotImplementedError("load_image method must be implemented in subclasses.")
 
-    @abstractmethod
+    @abstractmethod # from ITaggingStrategy
     def execute(self) -> List[str]:
-        pass
+        raise NotImplementedError("execute method must be implemented in subclasses.")
 
+    # Override from ITaggingStrategy
     def save_outputs(self, tags: List[str]) -> None:
+        """
+        Save the Tagging outputs.
+        """
         if config.get(SAVE_FILES):
             # Prepare timestamped output file
             timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
@@ -49,8 +54,11 @@ class BaseTagger(ITaggingStrategy):
         else:
             print(f"{self.STR_PREFIX} Saving file is disabled. Tagging output was not saved.")
 
-    # Override
+    # Override from ITaggingStrategy
     def save_tags(self, tags: List[str], timestamp: str) -> None:
+        """
+        Save the Tagging output tags to a JSON file.
+        """
         if config.get(SAVE_FILES):
             # Prepare timestamped output file
             output_filename = f"tags_{timestamp}_{self.ALIAS}.json"

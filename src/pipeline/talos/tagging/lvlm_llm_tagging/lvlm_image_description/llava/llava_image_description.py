@@ -36,7 +36,7 @@ class LlavaImageDescriptor(BaseLvlmImageDescriptor):
 
         print("Done.")
     
-    # Override
+    # Override from ITaggingLvlmStrategy -> BaseLvlmImageDescriptor
     def execute(self) -> List[str]:
         """
         Execute the LVLM image description with LLaVA.
@@ -46,10 +46,12 @@ class LlavaImageDescriptor(BaseLvlmImageDescriptor):
         descriptions = self.execute_image_description()
         return descriptions
 
-    # Override
+    # Override from BaseLvlmImageDescriptor
     def chat_lvlm(self) -> str:
         """
         Generate a description for the input image using LLaVA.
+
+        This method will be called by the superclass.
         """
         response = ollama.chat(
             model=self.llava_model_name,
@@ -66,7 +68,7 @@ class LlavaImageDescriptor(BaseLvlmImageDescriptor):
     
     def stop_model(self):
         """
-        Stop the LLaVA model.
+        Stop the Ollama LLaVA model to clear it from the memory.
         """
         print(f"{self.STR_PREFIX} Stopping LLaVA model...")
         subprocess.run(["ollama", "stop", self.llava_model_name])

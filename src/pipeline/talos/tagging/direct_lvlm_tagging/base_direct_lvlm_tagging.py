@@ -33,18 +33,18 @@ class BaseDirectLvlmTagger(BaseTagger):
         # Initialize base class
         super().__init__()
 
-    # Override
+    # Override from ITaggingStrategy -> BaseTagger
     def load_inputs(self, input_image_name: str) -> None:
         """
-        Load the Tagging inputs.
+        Load the Direct LVLM Tagging inputs.
         """
-        self.load_image(input_image_name)
+        super().load_inputs(input_image_name)
         self.load_prompt()
     
-    # Override
+    # Override from ITaggingStrategy -> BaseTagger
     def load_image(self, input_image_name: str) -> None:
         """
-        Load the input image.
+        Load the input image for the Direct LVLM Tagging.
         """
         print(f"{self.STR_PREFIX} Loading input image: {input_image_name}...", end=" ", flush=True)
 
@@ -67,7 +67,11 @@ class BaseDirectLvlmTagger(BaseTagger):
         with open(TAGGING_DIRECT_LVLM_PROMPT, 'r') as file:
             self.prompt = file.read().strip()
     
-    def correct_response_format(self, text: str) -> List[str] | None:
+    @abstractmethod # from ITaggingStrategy -> BaseTagger
+    def execute(self) -> List[str]:
+        raise NotImplementedError("execute method must be implemented in subclasses.")
+    
+    def __correct_response_format(self, text: str) -> List[str] | None:
         """
         Checks if there is a substring within the given text that starts with '[' and ends with ']'
         and follows the exact format:
@@ -113,10 +117,10 @@ class BaseDirectLvlmTagger(BaseTagger):
 
         return parsed_data
 
-    def response_fusion(self, responses: List[List[str]]) -> List[str]:
+    def __response_fusion(self, responses: List[List[str]]) -> List[str]:
         """
         Merges the responses of multiple iterations into a single list,
-        ensuring unique string values in order.
+        ensuring unique string values.
         """
         print(f"{self.STR_PREFIX} {config.get(TAGGING_DIRECT_LVLM_ITERS)} iterations completed. Merging the responses...", end=" ", flush=True)
 
@@ -134,7 +138,12 @@ class BaseDirectLvlmTagger(BaseTagger):
 
         return final_response
 
-    def filter_banned_words(self, response: List[str], ban_exact_word: bool = False) -> List[str]:
+    def __filter_banned_words(self, response: List[str], ban_exact_word: bool = False) -> List[str]:
+        """
+        Remove banned words from the response.
+        - If ban_exact_word is True, only exact matches are removed.
+        - If ban_exact_word is False, any occurrence of the banned word in the string is removed.
+        """
         print(f"{self.STR_PREFIX} Removing banned words...", flush=True)
 
         banned_words = set(config.get(TAGGING_DIRECT_LVLM_BANNED_WORDS))
@@ -148,23 +157,31 @@ class BaseDirectLvlmTagger(BaseTagger):
 
         return response
     
-    def filter_long_values(self, response: List[str], n_words: int = 2) -> List[str]:
-        print(f"{self.STR_PREFIX} Removing values with more than {n_words} words...", flush=True)
+    def __filter_long_values(self, response: List[str], max_words: int = 2) -> List[str]:
+        """
+        Remove values with more than a certain number of words.
+        """
+        print(f"{self.STR_PREFIX} Removing values with more than {max_words} words...", flush=True)
 
         result = []
     
         for element in response:
-            # Check if the element has less than or equal to n_words
-            if len(element.split()) <= n_words:
+            # Check if the element has less than or equal to max_words
+            if len(element.split()) <= max_words:
                 # If it does, include it in the result
                 result.append(element)
             else:
-                # If it has more than n_words, print a message
+                # If it has more than max_words, print a message
                 print(f"{self.STR_PREFIX} Discarded long value: {element}")
 
         return result
     
-    def filter_redundant_substrings(self, response: List[str]) -> List[str]:
+    def __filter_redundant_substrings(self, response: List[str]) -> List[str]:
+        """
+        Remove redundant substrings from the response.
+        
+        A substring is considered redundant if it is contained within another string in the list.
+        """
         print(f"{self.STR_PREFIX} Removing redundant substrings...", flush=True)
         
         # Set to store values that are substrings of other values
@@ -180,7 +197,13 @@ class BaseDirectLvlmTagger(BaseTagger):
         # Build the result dictionary, excluding redundant values
         return [value for value in response if value not in redundant_elements]
 
-    def filter_duplicate_plurals(self, response: List[str]) -> List[str]:
+    def __filter_duplicate_plurals(self, response: List[str]) -> List[str]:
+        """
+        Remove duplicate plural words from the response if their 
+        singular form exists in the list.
+        
+        A word is considered plural if it ends with "s" or "es".
+        """
         print(f"{self.STR_PREFIX} Removing duplicate plural words...", flush=True)
 
         # Step 1: Collect all individual words from all elements
@@ -226,6 +249,8 @@ class BaseDirectLvlmTagger(BaseTagger):
     def execute_direct_lvlm_tagging(self) -> List[str]:
         """
         Execute the Direct Tagging with LVLM.
+
+        This method will be called by the execute method in the subclasses.
         """
         start_time = time.time()
         correct_json = [None] * config.get(TAGGING_DIRECT_LVLM_ITERS)
@@ -241,7 +266,7 @@ class BaseDirectLvlmTagger(BaseTagger):
                 print(f"{self.STR_PREFIX} LVLM response:\n\n", response + "\n")
 
                 # Check if the response is in the correct format
-                correct_json[i] = self.correct_response_format(response)
+                correct_json[i] = self.__correct_response_format(response)
 
                 if correct_json[i] is not None and len(correct_json[i]) > 0:
                     break
@@ -252,7 +277,7 @@ class BaseDirectLvlmTagger(BaseTagger):
 
         # Merge the responses if there are multiple iterations
         if config.get(TAGGING_DIRECT_LVLM_ITERS) > 1:
-            final_json = self.response_fusion(correct_json)
+            final_json = self.__response_fusion(correct_json)
         # Otherwise, use the single response
         else:
             final_json = correct_json[0]
@@ -262,24 +287,20 @@ class BaseDirectLvlmTagger(BaseTagger):
 
         # If self.banned_words has been loaded, remove banned words from the output
         if config.get(TAGGING_DIRECT_LVLM_EXCLUDE_BANNED_WORDS) and config.get(TAGGING_DIRECT_LVLM_BANNED_WORDS) is not None:
-            final_json = self.filter_banned_words(final_json)
+            final_json = self.__filter_banned_words(final_json)
 
         # Remove values with more than a certain number of words
-        final_json = self.filter_long_values(final_json)
+        final_json = self.__filter_long_values(final_json)
 
         # Remove words that contain a substring that is also in the dictionary
-        final_json = self.filter_redundant_substrings(final_json)
+        final_json = self.__filter_redundant_substrings(final_json)
 
         # Remove duplicate plural words
-        final_json = self.filter_duplicate_plurals(final_json)
+        final_json = self.__filter_duplicate_plurals(final_json)
 
         print(f"{self.STR_PREFIX} Final response substring:\n\n", json.dumps(final_json, indent=4))
         return final_json
 
-    # Override
-    def execute(self) -> List[str]:
-        pass
-
     @abstractmethod
     def chat_lvlm(self) -> str:
-        pass
+        raise NotImplementedError("chat_lvlm method must be implemented in subclasses.")

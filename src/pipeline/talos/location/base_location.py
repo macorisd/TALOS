@@ -35,6 +35,7 @@ class BaseLocator(ILocationStrategy):
             # Create output directory if it does not exist
             os.makedirs(OUTPUT_LOCATION_DIR, exist_ok=True)
 
+    # Override from ILocationStrategy
     def load_inputs(self, input_image_name: str, input_tags: List[str] = None) -> None:
         """
         Load the Location inputs.
@@ -45,10 +46,10 @@ class BaseLocator(ILocationStrategy):
         # Load the input tags
         self.load_tags(input_tags)
 
-    # Override
+    # Override from ILocationStrategy
     def load_image(self, input_image_name: str) -> None:
         """
-        Load the input image.
+        Load the input image for the Location stage.
         """
         print(f"{self.STR_PREFIX} Loading input image: {input_image_name}...", end=" ", flush=True)
 
@@ -63,11 +64,10 @@ class BaseLocator(ILocationStrategy):
         
         print("Done.")
 
-
-    # Override
+    # Override from ILocationStrategy
     def load_tags(self, input_tags: List[str] = None) -> None:
         """
-        Load the input tags (output from the Tagging stage).
+        Load the input tags (output from the Tagging stage) for the Location stage.
         """
         print(f"{self.STR_PREFIX} Loading input tags...", end=" ", flush=True)
 
@@ -99,31 +99,42 @@ class BaseLocator(ILocationStrategy):
 
         print("Done.")
 
+    @abstractmethod # from ILocationStrategy
+    def execute(self):
+        raise NotImplementedError("execute method must be implemented in subclasses.")
 
-    def filter_confidence(self, results: Dict) -> Dict:
+    def __filter_confidence(self, results: Dict) -> Dict:
         """
         Filters the results based on the confidence threshold.
         """
         filtered_results = [result for result in results if result["score"] > config.get(LOCATION_SCORE_THRESHOLD)]
         return filtered_results        
 
-
-    def filter_bbox(
+    def __filter_bbox(
             self, 
             results_json: dict,
             image_width,
             image_height,
             verbose: bool = True
     ):
+        """
+        Filters the results based on bounding box properties.
+        """
         padding = image_width * config.get(LOCATION_PADDING_RATIO)
         
-        def is_similar_bbox(bbox1, bbox2, padding):
+        def __is_similar_bbox(bbox1, bbox2, padding):
+            """
+            Check if two bounding boxes are similar based on a padding.
+            """
             return (abs(bbox1['x_min'] - bbox2['x_min']) <= padding and
                 (abs(bbox1['y_min'] - bbox2['y_min']) <= padding) and
                 (abs(bbox1['x_max'] - bbox2['x_max']) <= padding) and
                 (abs(bbox1['y_max'] - bbox2['y_max']) <= padding))
 
-        def is_bbox_contained(bbox1, bbox2, padding):        
+        def __is_bbox_contained(bbox1, bbox2, padding):
+            """
+            Check if one bounding box is contained within another with a padding.
+            """
             return (bbox1['x_min'] >= bbox2['x_min'] - padding and
                     bbox1['y_min'] >= bbox2['y_min'] - padding and
                     bbox1['x_max'] <= bbox2['x_max'] + padding and
@@ -134,7 +145,7 @@ class BaseLocator(ILocationStrategy):
         while i < len(results_json):
             j = i + 1
             while j < len(results_json):
-                if is_similar_bbox(results_json[i]['bbox'], results_json[j]['bbox'], padding):
+                if __is_similar_bbox(results_json[i]['bbox'], results_json[j]['bbox'], padding):
                     if results_json[i]['score'] > results_json[j]['score']:
                         if verbose:
                             print(f"{self.STR_PREFIX} Discarded: {results_json[j]['label']} with score {results_json[j]['score']} (there's a similar bbox with higher score)")
@@ -168,12 +179,12 @@ class BaseLocator(ILocationStrategy):
             j = i + 1
             while j < len(results_json):
                 if results_json[i]['label'] == results_json[j]['label']:
-                    if is_bbox_contained(results_json[i]['bbox'], results_json[j]['bbox'], padding):
+                    if __is_bbox_contained(results_json[i]['bbox'], results_json[j]['bbox'], padding):
                         if verbose:
                             print(f"{self.STR_PREFIX} Discarded: {results_json[j]['label']} with score {results_json[j]['score']} (contained another bbox with the same label)")
                         results_json.pop(j)
                         continue
-                    elif is_bbox_contained(results_json[j]['bbox'], results_json[i]['bbox'], padding):
+                    elif __is_bbox_contained(results_json[j]['bbox'], results_json[i]['bbox'], padding):
                         if verbose:
                             print(f"{self.STR_PREFIX} Discarded: {results_json[i]['label']} with score {results_json[i]['score']} (contained another bbox with the same label)")
                         results_json.pop(i)
@@ -185,7 +196,7 @@ class BaseLocator(ILocationStrategy):
         return results_json
 
 
-    def filter_labels(self, results: Dict, input_tags: List[str]) -> dict:
+    def __filter_labels(self, results: Dict, input_tags: List[str]) -> dict:
         """
         Filters the results based on the label coincidence with the tagging stage.
         """
@@ -206,8 +217,7 @@ class BaseLocator(ILocationStrategy):
 
         return results
 
-    
-    def draw_bounding_boxes(
+    def __draw_bounding_boxes(
             self,
             results: Dict,
             fixed_width: int = 800,
@@ -267,6 +277,11 @@ class BaseLocator(ILocationStrategy):
 
 
     def execute_location(self) -> List[Dict]:
+        """
+        Execute the Location process.
+
+        This method will be called by the execute method in the subclasses.
+        """
         # Convert the tags JSON text to a model prompt
         text = self.json_to_model_prompt(self.input_tags)
 
@@ -277,18 +292,31 @@ class BaseLocator(ILocationStrategy):
         results_json = self.model_results_to_json(results)
 
         # Filter the results based on the confidence threshold
-        results_json = self.filter_confidence(results_json)
+        results_json = self.__filter_confidence(results_json)
 
         # Filter the results based on bounding box properties
-        results_json = self.filter_bbox(results_json, self.input_image.width, self.input_image.height)
+        results_json = self.__filter_bbox(results_json, self.input_image.width, self.input_image.height)
 
         # Filter the results based on label coincidence with the tagging stage
-        results_json = self.filter_labels(results_json, self.input_tags)
+        results_json = self.__filter_labels(results_json, self.input_tags)
 
         print(f"{self.STR_PREFIX} JSON results:\n\n{json.dumps(results_json, indent=4)}")
         
         return results_json
 
+    @abstractmethod
+    def json_to_model_prompt(self, tags: List[str]) -> str:
+        raise NotImplementedError("json_to_model_prompt method must be implemented in subclasses.")
+    
+    @abstractmethod
+    def locate_bboxes(self, text: str) -> Dict:
+        raise NotImplementedError("locate_bboxes method must be implemented in subclasses.")
+
+    @abstractmethod
+    def model_results_to_json(self, results: Dict) -> Dict:
+        raise NotImplementedError("model_results_to_json method must be implemented in subclasses.")
+
+    # Override from ILocationStrategy
     def save_outputs(self, location: Dict) -> None:
         if config.get(SAVE_FILES):
             timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
@@ -297,7 +325,7 @@ class BaseLocator(ILocationStrategy):
         else:
             print(f"{self.STR_PREFIX} Saving file is disabled. Location output was not saved.")
 
-
+    # Override from ILocationStrategy
     def save_location_json(self, location: Dict, timestamp: str) -> None:
         if config.get(SAVE_FILES):
             # Prepare JSON output file
@@ -310,7 +338,7 @@ class BaseLocator(ILocationStrategy):
             
             print(f"{self.STR_PREFIX} Bounding box instance location JSON results saved to: {output_file}")
 
-
+    # Override from ILocationStrategy
     def save_location_image(self, location: Dict, timestamp: str) -> None:
         if config.get(SAVE_FILES):
             # Prepare JPG output file
@@ -318,18 +346,8 @@ class BaseLocator(ILocationStrategy):
             output_file = os.path.join(OUTPUT_LOCATION_DIR, output_filename)
 
             # Draw bounding boxes around the detected objects
-            results_image = self.draw_bounding_boxes(results=location, show_padding=True)
+            results_image = self.__draw_bounding_boxes(results=location, show_padding=True)
 
             # Save the image with bounding boxes
             results_image.save(output_file)
             print(f"{self.STR_PREFIX} Bounding box location image saved to: {output_file}")
-    
-
-    @abstractmethod
-    def json_to_model_prompt(self, tags: List[str]) -> str:
-        pass
-
-
-    @abstractmethod
-    def model_results_to_json(self, results: Dict) -> Dict:
-        pass

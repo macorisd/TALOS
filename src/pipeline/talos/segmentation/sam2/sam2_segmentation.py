@@ -1,4 +1,4 @@
-from typing import List
+from typing import Dict, List, Tuple
 import torch
 import numpy as np
 
@@ -32,8 +32,19 @@ class Sam2Segmenter(BaseSegmenter):
         self.predictor = SAM2ImagePredictor.from_pretrained(sam2_model_name, torch_dtype=torch.float16)
 
         print("Done.")
-    
-    # Override
+
+    # Override from ISegmentationStrategy -> BaseSegmenter
+    def execute(self) -> Tuple[List[Dict], List[np.ndarray]]:
+        print(f"{self.STR_PREFIX} Running instance segmentation with SAM2...", flush=True)
+
+        segmentation_info, all_masks = self.execute_segmentation()
+        
+        # Clear the GPU cache
+        torch.cuda.empty_cache()
+        
+        return segmentation_info, all_masks
+
+    # Override from BaseSegmenter
     def generate_mask(self, bbox_coords: List[float]) -> np.ndarray:
         """
         Generate a binary mask instance for the input image and the specified bbox coordinates,
@@ -52,29 +63,16 @@ class Sam2Segmenter(BaseSegmenter):
         binary_mask = (best_mask > 0.5).astype(np.uint8)
 
         return binary_mask
-    
-    # Override
-    def execute(self):
-        print(f"{self.STR_PREFIX} Running instance segmentation with SAM2...", flush=True)
 
-        segmentation_info, all_masks = self.execute_segmentation()
-        
-        # Clear the GPU cache
-        torch.cuda.empty_cache()
-        
-        return segmentation_info, all_masks
 
-    
 def main():
     """
-    Main function to run the SAM2 segmenter.
+    Main function to run the Segmentation with SAM2.
     """
     segmenter = Sam2Segmenter()
-
     segmenter.load_inputs(input_image_name="avocado.jpeg")
 
     segmentation_info, all_masks = segmenter.execute()
-
     segmenter.save_outputs(segmentation_info, all_masks)
 
 

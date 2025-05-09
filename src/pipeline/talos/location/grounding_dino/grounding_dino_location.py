@@ -1,6 +1,5 @@
 from typing import Dict, List
 import torch
-import json
 
 import warnings
 warnings.filterwarnings(
@@ -43,8 +42,7 @@ class GroundingDinoLocator(BaseLocator):
 
         print("Done.")
 
-    
-    # Override
+    # Override from BaseLocator
     def json_to_model_prompt(self, tags: List[str]) -> str:
         """
         Converts the tags list to a Grounding DINO prompt.
@@ -54,8 +52,7 @@ class GroundingDinoLocator(BaseLocator):
 
         return prompt
     
-
-    # Override
+    # Override from BaseLocator
     def model_results_to_json(self, results: Dict) -> List[Dict]:
         """
         Converts the Grounding DINO results to a JSON dict list.
@@ -80,8 +77,7 @@ class GroundingDinoLocator(BaseLocator):
         
         return result
     
-
-    # Override
+    # Override from ILocationStrategy -> BaseLocator
     def execute(self) -> List[Dict]:
         """
         Execute the Grounding DINO Location.
@@ -93,7 +89,13 @@ class GroundingDinoLocator(BaseLocator):
 
         return results
     
+    # Override from BaseLocator
     def locate_bboxes(self, text: str) -> Dict:
+        """
+        Use the Grounding DINO model to locate bounding boxes in the image.
+        
+        This method will be called by the superclass.
+        """
         # Process and predict
         inputs = self.processor(images=self.input_image, text=text, return_tensors="pt").to(self.model.device)
         with torch.no_grad():
@@ -111,11 +113,11 @@ class GroundingDinoLocator(BaseLocator):
         print(f"Object detection results:\n\n{results}")
 
         return results
-    
+
 
 def main():
     """
-    Main function to run the Grounding DINO locator.
+    Main function to run the Location with Grounding DINO.
     """
     locator = GroundingDinoLocator()
     locator.load_inputs(input_image_name="avocado.jpeg")

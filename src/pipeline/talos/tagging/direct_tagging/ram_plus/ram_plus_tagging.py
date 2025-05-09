@@ -1,6 +1,5 @@
 import os
 import torch
-import time
 from PIL import Image
 from typing import List
 
@@ -18,9 +17,8 @@ class RamPlusTagger(BaseTagger):
     """
     [Tagging -> Direct Tagging -> RAM++]
     
-    Tagging stage implementation that leverages the Recognize Anything Plus (RAM++) model.
+    Tagging stage implementation (Direct Tagging) that leverages the Recognize Anything Plus (RAM++) model.
     """
-
     STR_PREFIX = "\n[TAGGING | RAM++]" # Prefix for logging
     ALIAS = "ram_plus" # Alias for filenames
 
@@ -46,11 +44,10 @@ class RamPlusTagger(BaseTagger):
 
         print("Done.")
     
-
-    # Override
+    # Override from ITaggingStrategy -> BaseTagger
     def load_image(self, input_image_name: str) -> None:
         """
-        Load the input image for the RAM++ model.
+        Load the input image for Direct Tagging with the RAM++ model.
         """
         print(f"{self.STR_PREFIX} Loading input image: {input_image_name}...", end=" ", flush=True)
 
@@ -65,8 +62,7 @@ class RamPlusTagger(BaseTagger):
         
         print("Done.")
 
-
-    def ram_tags_to_list(self, tags: str) -> List[str]:
+    def __ram_tags_to_list(self, tags: str) -> List[str]:
         """
         Convert RAM++ tags to a list.
         """
@@ -76,13 +72,12 @@ class RamPlusTagger(BaseTagger):
         
         return tags
 
-
-    # Override
+    # Override from ITaggingStrategy -> BaseTagger
     def execute(self) -> List[str]:
         """
         Execute the RAM++ Tagging.
         """
-        print(f"{self.STR_PREFIX} Running Tagging with RAM++...", flush=True)
+        print(f"{self.STR_PREFIX} Running Direct Tagging with RAM++...", flush=True)
         tags = None
 
         with torch.no_grad():
@@ -92,14 +87,14 @@ class RamPlusTagger(BaseTagger):
         print(f"{self.STR_PREFIX} Image tags: {tags}")
 
         # Convert RAM++ tags to str list
-        tags_list = self.ram_tags_to_list(tags)
+        tags_list = self.__ram_tags_to_list(tags)
 
         return tags_list
     
 
 def main():
     """
-    Main function to run the RAM++ tagger.
+    Main function to run the Direct Tagging stage with RAM++.
     """
     tagger = RamPlusTagger()
     

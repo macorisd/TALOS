@@ -35,7 +35,7 @@ class DeepseekKeywordExtractor(BaseLlmKeywordExtractor):
 
         print("Done.")
 
-    # Override
+    # Override from ITaggingLlmStrategy -> BaseLlmKeywordExtractor
     def execute(self) -> List[str]:
         """
         Execute the LLM keyword extraction with DeepSeek.
@@ -45,14 +45,19 @@ class DeepseekKeywordExtractor(BaseLlmKeywordExtractor):
         tags = self.execute_keyword_extraction()
         return tags
     
-    def remove_thoughts(self, text: str) -> str:
+    def __remove_thoughts(self, text: str) -> str:
         """
         Removes the <think></think> part of the response.
         """
         return text.split("</think>")[1]
     
-    # Override
+    # Override from BaseLlmKeywordExtractor
     def chat_llm(self, prompt: str) -> str:
+        """
+        Prompt the DeepSeek model with the input text prompt.
+
+        This method will be called by the superclass.
+        """
         response = ollama.chat(
                 model=self.deepseek_model_name,
                 messages=[
@@ -66,13 +71,13 @@ class DeepseekKeywordExtractor(BaseLlmKeywordExtractor):
         response_content = response["message"]["content"]
 
         # Remove the <think></think> part of the response
-        response_content = self.remove_thoughts(response_content)
+        response_content = self.__remove_thoughts(response_content)
 
         return response_content.strip()
     
     def stop_model(self):
         """
-        Stop the DeepSeek model.
+        Stop the Ollama DeepSeek model to clear it from the memory.
         """
         print(f"{self.STR_PREFIX} Stopping DeepSeek model...")
         subprocess.run(["ollama", "stop", self.deepseek_model_name])

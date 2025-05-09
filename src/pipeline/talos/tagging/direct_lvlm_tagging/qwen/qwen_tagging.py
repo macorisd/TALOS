@@ -41,7 +41,7 @@ class QwenTagger(BaseDirectLvlmTagger):
 
         print("Done.")
     
-    # Override
+    # Override from ITaggingStrategy -> BaseTagger -> BaseDirectLvlmTagger
     def execute(self) -> List[str]:
         """
         Execute the Qwen Tagging.
@@ -55,8 +55,11 @@ class QwenTagger(BaseDirectLvlmTagger):
 
         return tags
 
-    # Override
+    # Override from BaseDirectLvlmTagger
     def chat_lvlm(self) -> str:
+        """
+        Prompt the Qwen model with the input image and text prompt.
+        """
         messages = [
             {
                 "role": "user",
@@ -98,7 +101,7 @@ class QwenTagger(BaseDirectLvlmTagger):
 
 def main():
     """
-    Main function to run the Qwen tagger.
+    Main function to run the Tagging stage with Qwen.
     """
     tagger = QwenTagger()
     

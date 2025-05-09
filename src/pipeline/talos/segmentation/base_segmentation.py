@@ -35,8 +35,36 @@ class BaseSegmenter(ISegmentationStrategy):
         if config.get(SAVE_FILES):
             # Create output directory if it does not exist
             os.makedirs(OUTPUT_SEGMENTATION_DIR, exist_ok=True)
-            self.create_output_directory()
+            self.__create_output_directory()
     
+    def __create_output_directory(self) -> None:
+        """
+        Create the output directory for saving the current segmentation.
+        """
+        if config.get(SAVE_FILES):
+            # Prepare timestamp
+            timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
+
+            # Output timestamped directory path
+            base_output_timestamped_dir = os.path.join(
+                OUTPUT_SEGMENTATION_DIR,
+                f"segmentation_{timestamp}_{self.ALIAS}"
+            )
+
+            # Ensure the output directory is unique
+            output_timestamped_dir = base_output_timestamped_dir
+            counter = 1
+
+            while os.path.exists(output_timestamped_dir):
+                output_timestamped_dir = f"{base_output_timestamped_dir}_{counter}"
+                counter += 1
+            
+            self.output_timestamped_dir = output_timestamped_dir
+
+            # Create the unique timestamped output directory
+            os.makedirs(self.output_timestamped_dir)
+    
+    # Override from ISegmentationStrategy
     def load_inputs(self, input_image_name: str, input_location: List[Dict] = None) -> None:
         """
         Load the Segmentation inputs.
@@ -47,10 +75,10 @@ class BaseSegmenter(ISegmentationStrategy):
         # Load the input location information
         self.load_location(input_location)
 
-    # Override
+    # Override from ISegmentationStrategy
     def load_image(self, input_image_name: str) -> None:
         """
-        Load the input image.
+        Load the input image for the Segmentation stage.
         """
         print(f"{self.STR_PREFIX} Loading input image: {input_image_name}...", end=" ", flush=True)
 
@@ -74,10 +102,10 @@ class BaseSegmenter(ISegmentationStrategy):
         
         print("Done.")
 
-    # Override
+    # Override from ISegmentationStrategy
     def load_location(self, input_location: List[Dict] = None) -> None:
         """
-        Load the input location information (output from the Location stage).
+        Load the input location information (output from the Location stage) for the Segmentation stage.
         """
         print(f"{self.STR_PREFIX} Loading input location information...", end=" ")
 
@@ -108,10 +136,18 @@ class BaseSegmenter(ISegmentationStrategy):
                 self.input_location = json.load(f)
 
         print("Done.")
+    
+    @abstractmethod
+    def execute(self) -> List[str]:
+        raise NotImplementedError("The execute method must be implemented in the subclass.")
 
     def execute_segmentation(self) -> Tuple[List[Dict], List[np.ndarray]]:
         """
-        Generate binary masks for the input image based on the bounding boxes from the input location.
+        Execute the Segmentation process.
+
+        This method generates binary masks for the input image based on the bounding boxes from the input location.
+
+        This method will be called by the execute method in the subclasses.
         """
         # List to store all masks
         all_masks = []
@@ -145,34 +181,15 @@ class BaseSegmenter(ISegmentationStrategy):
 
         return self.segmentation_info, all_masks
 
-    def create_output_directory(self) -> None:
-        """
-        Create the output directory for saving the current segmentation.
-        """
-        if config.get(SAVE_FILES):
-            # Prepare timestamp
-            timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
-
-            # Output timestamped directory path
-            base_output_timestamped_dir = os.path.join(
-                OUTPUT_SEGMENTATION_DIR,
-                f"segmentation_{timestamp}_{self.ALIAS}"
-            )
-
-            # Ensure the output directory is unique
-            output_timestamped_dir = base_output_timestamped_dir
-            counter = 1
-
-            while os.path.exists(output_timestamped_dir):
-                output_timestamped_dir = f"{base_output_timestamped_dir}_{counter}"
-                counter += 1
-            
-            self.output_timestamped_dir = output_timestamped_dir
-
-            # Create the unique timestamped output directory
-            os.makedirs(self.output_timestamped_dir)
+    @abstractmethod
+    def generate_mask(self, bbox_coords: List[float]) -> np.ndarray:
+        raise NotImplementedError("The generate_mask method must be implemented in the subclass.")
     
+    # Override from ISegmentationStrategy
     def save_outputs(self, segmentation_info: Dict, all_masks: List[np.ndarray]) -> None:
+        """
+        Save the segmentation outputs to files.
+        """
         if config.get(SAVE_FILES):
             # Save instance detection information to JSON
             self.save_detections_json(segmentation_info)
@@ -188,6 +205,7 @@ class BaseSegmenter(ISegmentationStrategy):
         else:
             print(f"{self.STR_PREFIX} Saving file is disabled. Segmentation output was not saved.")
     
+    # Override from ISegmentationStrategy
     def save_detections_json(self, segmentation_info: Dict) -> None:
         """
         Save the instance detection information to a JSON file.
@@ -205,16 +223,17 @@ class BaseSegmenter(ISegmentationStrategy):
             
             print(f"{self.STR_PREFIX} Instance detection information JSON saved to: {output_json_path}")
     
+    # Override from ISegmentationStrategy
     def save_segmentation_masks(self, masks: List[np.ndarray]) -> None:
         """
         Save the segmentation masks to .npz files.
         """
         if config.get(SAVE_FILES):
-            [self.save_segmentation_mask(mask, i+1) for i, mask in enumerate(masks)]
+            [self.__save_segmentation_mask(mask, i+1) for i, mask in enumerate(masks)]
 
-    def save_segmentation_mask(self, mask: np.ndarray, idx: int) -> None:
+    def __save_segmentation_mask(self, mask: np.ndarray, idx: int) -> None:
         """
-        Save the segmentation mask to a .npz file.
+        Save a single segmentation mask to a .npz file.
         """
         if config.get(SAVE_FILES):
             # Output mask file path
@@ -228,16 +247,17 @@ class BaseSegmenter(ISegmentationStrategy):
             
             print(f"{self.STR_PREFIX} Segmentation mask saved to: {output_mask_path}")
 
+    # Override from ISegmentationStrategy
     def save_segmentation_images(self, masks: List[np.ndarray]) -> None:
         """
         Save the segmentation masks as images.
         """
         if config.get(SAVE_FILES):
-            [self.save_segmentation_image(mask, i+1) for i, mask in enumerate(masks)]
+            [self.__save_segmentation_image(mask, i+1) for i, mask in enumerate(masks)]
     
-    def save_segmentation_image(self, mask: np.ndarray, idx: int) -> None:
+    def __save_segmentation_image(self, mask: np.ndarray, idx: int) -> None:
         """
-        Save the segmentation mask as an image.
+        Save a single segmentation mask as an image.
         """
         if config.get(SAVE_FILES):
             # Output image file path
@@ -252,6 +272,7 @@ class BaseSegmenter(ISegmentationStrategy):
             
             print(f"{self.STR_PREFIX} Segmentation mask image saved to: {output_image_path}")
     
+    # Override from ISegmentationStrategy
     def save_segmentation_highlighted_images(self, masks: List[np.ndarray]) -> None:
         """
         Save the segmentation masks as images with highlighted segments.
@@ -262,7 +283,7 @@ class BaseSegmenter(ISegmentationStrategy):
 
             for i, mask in enumerate(masks):
                 label = self.input_location[i].get("label", "unknown")
-                overlayed_image = self.highlight_image_mask(image_bgr, mask, label=label)
+                overlayed_image = self.__highlight_image_mask(image_bgr, mask, label=label)
 
                 # Output image file path
                 output_image_path = os.path.join(
@@ -275,8 +296,7 @@ class BaseSegmenter(ISegmentationStrategy):
 
                 print(f"{self.STR_PREFIX} Highlighted segmentation image saved to: {output_image_path}")
 
-    
-    def highlight_image_mask(self, image, mask, label="unknown", color=(0, 255, 0), alpha=0.5, fixed_width=800) -> np.ndarray:
+    def __highlight_image_mask(self, image, mask, label="unknown", color=(0, 255, 0), alpha=0.5, fixed_width=800) -> np.ndarray:
         """
         Overlay a segmentation mask on the image and add a label.
         The image and mask are resized to a fixed width, keeping aspect ratio, before overlaying the label.
@@ -316,7 +336,3 @@ class BaseSegmenter(ISegmentationStrategy):
         cv2.putText(overlayed_image, label, (text_x, text_y), font, font_scale, color, thickness)
 
         return overlayed_image
-    
-    @abstractmethod
-    def generate_mask(self, bbox_coords: List[float]) -> np.ndarray:
-        pass
