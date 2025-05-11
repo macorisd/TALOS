@@ -12,6 +12,7 @@ from talos.tagging.direct_tagging.ram_plus.ram_plus_tagging import RamPlusTagger
 from talos.tagging.direct_lvlm_tagging.qwen.qwen_tagging import QwenTagger
 from talos.tagging.lvlm_llm_tagging.lvlm_llm_tagging import LvlmLlmTagger
 from talos.tagging.lvlm_llm_tagging.lvlm_image_description.llava.llava_image_description import LlavaImageDescriptor
+from talos.tagging.lvlm_llm_tagging.lvlm_image_description.qwen.qwen_image_description import QwenImageDescriptor
 from talos.tagging.lvlm_llm_tagging.llm_keyword_extraction.deepseek.deepseek_keyword_extraction import DeepseekKeywordExtractor
 from talos.location.grounding_dino.grounding_dino_location import GroundingDinoLocator
 from talos.segmentation.sam2.sam2_segmentation import Sam2Segmenter
@@ -39,6 +40,8 @@ class StrategyFactory:
     def create_tagging_lvlm_strategy(lvlm_descriptor: str) -> ITaggingLvlmStrategy:
         if lvlm_descriptor == LLAVA:
             return LlavaImageDescriptor()
+        elif lvlm_descriptor == QWEN:
+            return QwenImageDescriptor()
         else:
             raise ValueError(f"Unknown LVLM descriptor for LVLM + LLM Tagging: {lvlm_descriptor}")
 

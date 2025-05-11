@@ -5,7 +5,7 @@ import time
 from typing import List
 
 from pipeline.strategy.strategy import ITaggingLlmStrategy
-from common.large_model_tagging import LargeModelForTagging
+from pipeline.common.large_model_tagging import LargeModelForTagging
 from pipeline.config.paths import (
     OUTPUT_DESCRIPTIONS_DIR,
     OUTPUT_TAGS_DIR,
