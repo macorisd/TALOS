@@ -10,7 +10,7 @@ from pipeline.config.paths import (
     TAGGING_DIRECT_LVLM_PROMPT
 )
 from pipeline.talos.tagging.base_tagging import BaseTagger
-from common.large_model_tagging import LargeModelForTagging
+from pipeline.common.large_model_tagging import LargeModelForTagging
 from pipeline.config.config import (
     config,
     TAGGING_DIRECT_LVLM_TIMEOUT,

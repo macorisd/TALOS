@@ -3,19 +3,21 @@ from strategy.strategy import *
 from config.config import (
     RAM_PLUS,
     QWEN,
+    MINICPM,
     LLAVA,
     DEEPSEEK,
     GROUNDING_DINO,
     SAM2
 )
-from talos.tagging.direct_tagging.ram_plus.ram_plus_tagging import RamPlusTagger
-from talos.tagging.direct_lvlm_tagging.qwen.qwen_tagging import QwenTagger
-from talos.tagging.lvlm_llm_tagging.lvlm_llm_tagging import LvlmLlmTagger
-from talos.tagging.lvlm_llm_tagging.lvlm_image_description.llava.llava_image_description import LlavaImageDescriptor
-from talos.tagging.lvlm_llm_tagging.lvlm_image_description.qwen.qwen_image_description import QwenImageDescriptor
-from talos.tagging.lvlm_llm_tagging.llm_keyword_extraction.deepseek.deepseek_keyword_extraction import DeepseekKeywordExtractor
-from talos.location.grounding_dino.grounding_dino_location import GroundingDinoLocator
-from talos.segmentation.sam2.sam2_segmentation import Sam2Segmenter
+from pipeline.talos.tagging.direct_tagging.ram_plus.ram_plus_tagging import RamPlusTagger
+from pipeline.talos.tagging.direct_lvlm_tagging.qwen.qwen_tagging import QwenTagger
+# from pipeline.talos.tagging.direct_lvlm_tagging.minicpm.minicpm_tagging import MiniCpmTagger
+from pipeline.talos.tagging.lvlm_llm_tagging.lvlm_llm_tagging import LvlmLlmTagger
+from pipeline.talos.tagging.lvlm_llm_tagging.lvlm_image_description.llava.llava_image_description import LlavaImageDescriptor
+from pipeline.talos.tagging.lvlm_llm_tagging.lvlm_image_description.qwen.qwen_image_description import QwenImageDescriptor
+from pipeline.talos.tagging.lvlm_llm_tagging.llm_keyword_extraction.deepseek.deepseek_keyword_extraction import DeepseekKeywordExtractor
+from pipeline.talos.location.grounding_dino.grounding_dino_location import GroundingDinoLocator
+from pipeline.talos.segmentation.sam2.sam2_segmentation import Sam2Segmenter
 
 
 class StrategyFactory:
@@ -26,6 +28,8 @@ class StrategyFactory:
                 return RamPlusTagger()
             elif method == QWEN:
                 return QwenTagger()
+            # elif method == MINICPM:
+            #     return MiniCpmTagger()
             else:
                 raise ValueError(f"Unknown direct Tagging method: {method}")
         elif isinstance(method, list) and len(method) == 2:

@@ -4,10 +4,6 @@ torchvision
 timm
 pillow
 numpy
-transformers
-scipy
-fairscale
-git+https://github.com/openai/CLIP.git
 ollama
 segment-anything
 sam2
@@ -16,5 +12,12 @@ iopath
 opencv-python
 matplotlib
 shapely
+git+https://github.com/huggingface/transformers
+scipy
+fairscale
+git+https://github.com/openai/CLIP.git
 qwen-vl-utils[decord]==0.0.8
 accelerate
+soundfile
+librosa
+torchaudio
