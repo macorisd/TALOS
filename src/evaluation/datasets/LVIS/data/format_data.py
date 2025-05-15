@@ -20,14 +20,14 @@ from PIL import Image, ImageDraw
 # Configuration
 MASK_SIZE = (256, 256)
 SAVE_IMAGES = True
-MAX_IMAGES = 1000  # Number of images to process from the dataset
+MAX_IMAGES = 25  # Number of images to process from the dataset
 SAVE_INTERMEDIATE_JSON = False
 
 # Setup paths
 script_directory = os.path.dirname(os.path.abspath(__file__)).replace('\\', '\\\\')
 input_json_path = os.path.join(script_directory, 'raw_data.json')
 formatted_json_path = os.path.join(script_directory, 'formatted_data.json')
-output_dir = os.path.join(script_directory, 'output_masks')
+output_dir = os.path.join(script_directory, 'lvis_masks')
 os.makedirs(output_dir, exist_ok=True)
 
 # Step 1: Format the LVIS dataset
@@ -45,7 +45,7 @@ category_map = {}
 for category in raw_data.get('categories', []):
     name = category.get('name', '')
     synonyms = category.get('synonyms', [])
-    labels = list(set([name] + synonyms))
+    labels = list(set([name.replace('_', ' ')] + [s.replace('_', ' ') for s in synonyms]))
     category['labels'] = labels
     category_map[category['id']] = labels
     category.pop('name', None)
@@ -138,10 +138,11 @@ for image_info in formatted_data:
             detection.pop('segmentation', None)
 
 # Save final JSON without segmentations
-final_json_path = os.path.join(script_directory, 'final_data.json')
+final_json_path = os.path.join(script_directory, 'lvis_detections.json')
 with open(final_json_path, 'w', encoding='utf-8') as f:
     json.dump(formatted_data, f, indent=2)
 
 print("All masks saved and final JSON created.")
-print(f"Formatted JSON: {formatted_json_path}")
+if SAVE_INTERMEDIATE_JSON:
+    print(f"Formatted JSON: {formatted_json_path}")
 print(f"Final JSON without segmentations: {final_json_path}")

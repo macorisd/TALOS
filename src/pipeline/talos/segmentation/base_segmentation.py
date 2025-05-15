@@ -24,17 +24,6 @@ class BaseSegmenter(ISegmentationStrategy):
 
     Base class for segmentation strategies.
     """
-
-    def __init__(self):
-        """
-        Initialize the base segmenter.
-        """
-        if config.get(SAVE_FILES):
-            self.output_timestamped_dir = FileSaving.create_output_directory(
-                parent_dir=OUTPUT_SEGMENTATION_DIR,
-                output_name="segmentation",
-                alias=self.ALIAS
-            )
     
     # Override from ISegmentationStrategy
     def load_inputs(self, input_image_name: str, input_location: List[Dict] = None) -> None:
@@ -163,6 +152,12 @@ class BaseSegmenter(ISegmentationStrategy):
         Save the segmentation outputs to files.
         """
         if config.get(SAVE_FILES):
+            self.output_timestamped_dir = FileSaving.create_output_directory(
+                parent_dir=OUTPUT_SEGMENTATION_DIR,
+                output_name="segmentation",
+                alias=self.ALIAS
+            )
+            
             # Save instance detection information to JSON
             self.save_detections_json(segmentation_info)
 

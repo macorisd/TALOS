@@ -22,14 +22,17 @@ venvs/
 **/segmentation_output/*
 !**/segmentation_output/*.md
 
-# Images, Datasets and Evaluation
+# Images and Datasets
 *.jpg
 *.png
 *.jpeg
+*.npz
+
+# Evaluation
 raw_data.json
 formatted_data.json
-final_data.json
-*.npz
+lvis_detections.json
+**/evaluation/**/talos_masks/*
 
 # Model Checkpoints
 *.pth

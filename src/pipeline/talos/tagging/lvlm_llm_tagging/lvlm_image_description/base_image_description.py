@@ -33,13 +33,6 @@ class BaseLvlmImageDescriptor(ITaggingLvlmStrategy):
         # Variables
         self.prompt = prompt
 
-        if config.get(SAVE_FILES):
-            self.output_timestamped_dir = FileSaving.create_output_directory(
-                parent_dir=OUTPUT_DESCRIPTIONS_DIR,
-                output_name="description",
-                alias=self.ALIAS
-            )
-
     # Override from ITaggingLvlmStrategy
     def load_inputs(self, input_image_name: str) -> None:
         """
@@ -96,6 +89,12 @@ class BaseLvlmImageDescriptor(ITaggingLvlmStrategy):
     # Override from ITaggingLvlmStrategy
     def save_outputs(self, descriptions: List[str]) -> None:
         if config.get(SAVE_FILES):
+            self.output_timestamped_dir = FileSaving.create_output_directory(
+                parent_dir=OUTPUT_DESCRIPTIONS_DIR,
+                output_name="description",
+                alias=self.ALIAS
+            )
+            
             self.save_descriptions(descriptions)
         else:
             print(f"{self.STR_PREFIX} Saving file is disabled. Image description output was not saved.")

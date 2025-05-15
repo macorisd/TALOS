@@ -1,6 +1,6 @@
 from typing import Union, List
-from strategy.strategy import *
-from config.config import (
+from pipeline.strategy.strategy import *
+from pipeline.config.config import (
     RAM_PLUS,
     QWEN,
     MINICPM,
