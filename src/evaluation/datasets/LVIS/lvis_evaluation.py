@@ -83,16 +83,16 @@ def add_image_metrics(
 def calculate_detection_count_score(lvis_detection_count, talos_detection_count) -> int | None:
     """
     Calculate the detection count score based on the difference between LVIS and TALOS detection counts.
+    The score ranges from 0 to 20.
+    - f(0) = 20
+    - f(15) = 1
+    - f(x) | x > 15 = 0.
     """
     if lvis_detection_count == 0 or talos_detection_count == 0:
         return None
     
     difference = abs(lvis_detection_count - talos_detection_count)
-
-    # f(0) = 25
-    # f(15) = 1
-    # f(x) | x > 15 = 0
-    return max(0, (-8 / 5 * difference) + 25)
+    return max(0, (-19 / 15 * difference) + 20)
 
 def calculate_lvis_label_coincidence_score(
     lvis_labels: List[List[str]],
@@ -100,6 +100,7 @@ def calculate_lvis_label_coincidence_score(
 ) -> Tuple[float | None, List[Tuple[str, str]]]:
     """
     Calculate the label coincidence score based on the number of LVIS labels that are present in TALOS detections.
+    The score ranges from 0 to 20.
     """
     if not lvis_labels or not talos_labels:
         return None, []
@@ -122,7 +123,7 @@ def calculate_lvis_label_coincidence_score(
             if matched:
                 break
 
-    score = (talos_coincidence_count / lvis_label_count) * 25
+    score = (talos_coincidence_count / lvis_label_count) * 20
     return score, coincidences
 
 def calculate_talos_label_coincidence_score(
@@ -131,6 +132,7 @@ def calculate_talos_label_coincidence_score(
 ) -> Tuple[float | None, List[Tuple[str, str]]]:
     """
     Calculate the label coincidence score based on the number of detected TALOS labels that are present in the LVIS dataset.
+    The score ranges from 0 to 20.
     """
     if not lvis_labels or not talos_labels:
         return None, []
@@ -152,10 +154,10 @@ def calculate_talos_label_coincidence_score(
             if matched:
                 break
 
-    score = (lvis_coincidence_count / talos_label_count) * 25
+    score = (lvis_coincidence_count / talos_label_count) * 20
     return score, coincidences
 
-def calculate_iou(bbox1: List[float], bbox2: List[float]) -> float:
+def calculate_bbox_iou(bbox1: List[float], bbox2: List[float]) -> float:
     """
     Compute the Intersection over Union (IoU) between two bounding boxes.
     """
@@ -184,9 +186,10 @@ def calculate_bbox_similarity_score(
         lvis_detections: List[Dict],
         talos_detections: List[Dict]
 ) -> Tuple[float | None, List[Tuple[int, int]]]:
-    # TODO: Los parámetros son las detecciones (completas) filtradas por similitud de labels.
-    # La función devuelve el score de similitud de bboxes (definir un threshold dinámico según el ancho)
-    # y tuplas (lvis_id, talos_id) de las detecciones cuyos bboxes son similares (y comparten label).
+    """
+    Calculate the bbox similarity score based on the bbox IoU between LVIS and TALOS detections.
+    The score ranges from 0 to 20.
+    """
 
     if not lvis_detections or not talos_detections:
         return None, []
@@ -217,7 +220,7 @@ def calculate_bbox_similarity_score(
                 continue
 
             # Compute IoU
-            iou = calculate_iou(lvis_bbox, talos_bbox)
+            iou = calculate_bbox_iou(lvis_bbox, talos_bbox)
             if iou > best_iou:
                 best_iou = iou
                 best_talos_id = talos_id
@@ -326,3 +329,7 @@ for i, lvis_image in enumerate(lvis_images):
 
     print(f"{STR_PREFIX} Bbox coincidences for image {i+1}: {bbox_coincidence_ids}")
     print(f"{STR_PREFIX} Bbox similarity score for image {i+1}: {bbox_similarity_score}")
+
+    # Evaluate mask similarity for the detections with label coincidence
+
+    

@@ -65,12 +65,23 @@ for annotation in raw_data.get('annotations', []):
         width, height = image_dimensions.get(image_id, (None, None))
         image_metadata[image_name] = {"width": width, "height": height}
 
+    # Convert bbox from [x, y, width, height] to [xmin, ymin, xmax, ymax]
+    bbox_lvis = annotation.pop("bbox", [])
+    if len(bbox_lvis) == 4:
+        xmin, ymin, width, height = bbox_lvis
+        xmax = xmin + width
+        ymax = ymin + height
+        bbox_converted = [xmin, ymin, xmax, ymax]
+    else:
+        bbox_converted = []
+
     detection = {
         "id": len(image_detections[image_name]) + 1,
         "labels": category_map.get(annotation.pop('category_id'), []),
-        "bbox": annotation.pop("bbox", []),
+        "bbox": bbox_converted,
         "segmentation": annotation.pop("segmentation", [])
     }
+
     image_detections[image_name].append(detection)
 
 formatted_data = [
