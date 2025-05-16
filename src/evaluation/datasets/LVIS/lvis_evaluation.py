@@ -1,5 +1,6 @@
 import os
 import json
+import numpy as np
 from typing import List, Dict, Union, Tuple
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -235,11 +236,73 @@ def calculate_bbox_similarity_score(
     avg_score = sum(iou_scores) / len(iou_scores)
     return avg_score, bbox_coincidence_ids
 
-def calculate_mask_similarity_score(coincidence_ids: List[Tuple[int, int]]) -> float | None:
-    # TODO: los parámetros son las tuplas (lvis_id, talos_id) de las detecciones cuyos bboxes son similares (y comparten label).
-    # La función devuelve el score de similitud de masks (IoU).
+def calculate_mask_iou(mask1: List[List[int]], mask2: List[List[int]]) -> float:
+    """
+    Compute the Intersection over Union (IoU) between two binary masks.
+    """
+    intersection = sum(1 for i in range(len(mask1)) for j in range(len(mask1[0])) if mask1[i][j] and mask2[i][j])
+    area1 = sum(1 for row in mask1 for pixel in row if pixel)
+    area2 = sum(1 for row in mask2 for pixel in row if pixel)
+    union = area1 + area2 - intersection
 
-    pass
+    print(f"Intersection: {intersection}, Area1: {area1}, Area2: {area2}, Union: {union}")
+
+    if union == 0:
+        return 0.0
+
+    return intersection / union
+
+def calculate_mask_similarity_score(
+        lvis_detections: List[Dict],
+        talos_detections: List[Dict],
+        bbox_coincidence_ids: List[Tuple[int, int]],
+        image_name: str,
+        talos_subdir: str,
+        talos_segmentation_alias: str = "sam2"
+) -> Tuple[float | None]:
+    """
+    Calculate the mask similarity score based on the mask IoU between LVIS and TALOS detections.
+    The score ranges from 0 to 20.
+    """
+
+    if not lvis_detections or not talos_detections or not bbox_coincidence_ids:
+        return None
+
+    mask_scores = []
+    mask_coincidence_ids = []
+
+    for lvis_id, talos_id in bbox_coincidence_ids:
+        lvis_det = next((d for d in lvis_detections if d["id"] == lvis_id), None)
+        talos_det = next((d for d in talos_detections if d["id"] == talos_id), None)
+
+        if lvis_det is None or talos_det is None:
+            continue
+
+        lvis_mask_file = os.path.join(
+            lvis_masks_dir,
+            f"{image_name}_mask_{lvis_id}.npz"
+        )
+
+        talos_mask_file = os.path.join(
+            talos_detections_dir,
+            talos_subdir,
+            f"segmentation_{talos_segmentation_alias}_mask_{talos_id}.npz"
+        )
+
+        # Load masks (assuming they are binary masks)
+        lvis_mask = np.load(lvis_mask_file)["mask"]
+        talos_mask = np.load(talos_mask_file)["mask"]
+
+        # Compute IoU
+        iou = calculate_mask_iou(lvis_mask, talos_mask)
+        mask_scores.append(iou * 20)
+        mask_coincidence_ids.append((lvis_id, talos_id))
+
+    if not mask_scores:
+        return 0.0, []
+
+    avg_score = sum(mask_scores) / len(mask_scores)
+    return avg_score
 
 
 # Iterate through LVIS detections and evaluate TALOS detections
@@ -247,7 +310,8 @@ def calculate_mask_similarity_score(coincidence_ids: List[Tuple[int, int]]) -> f
 metrics = []
 
 for i, lvis_image in enumerate(lvis_images):
-    print(f"\n{STR_PREFIX} Evaluating image {i+1}...")
+    print("\n----------------------------------------------")
+    print(f"{STR_PREFIX} Evaluating image {i+1}...")
 
     # Metrics initialization
 
@@ -332,4 +396,30 @@ for i, lvis_image in enumerate(lvis_images):
 
     # Evaluate mask similarity for the detections with label coincidence
 
-    
+    mask_similarity_score = calculate_mask_similarity_score(
+        lvis_detections_label_coincidence,
+        talos_detections_label_coincidence,
+        bbox_coincidence_ids,
+        lvis_image["image_name"],
+        talos_detections_subdirs[i]
+    )
+
+    print(f"{STR_PREFIX} Mask similarity score for image {i+1}: {mask_similarity_score}")
+
+    # Add metrics to the list
+    metrics = add_image_metrics(
+        metrics,
+        detection_count_score,
+        lvis_label_coincidence_score,
+        bbox_similarity_score,
+        mask_similarity_score,
+        execution_time
+    )
+
+    # print(f"{STR_PREFIX} Metrics for image {i+1}: {metrics[-1]}")
+    # print(f"{STR_PREFIX} Finished evaluating image {i+1}.\n")
+
+
+# Calculate average scores
+
+# TODO

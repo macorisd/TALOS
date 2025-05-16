@@ -1,6 +1,6 @@
 {
     "pipeline": {
-        "tagging": ["llava", "deepseek"],
+        "tagging": "qwen",
         "location": "grounding_dino",
         "segmentation": "sam2"
     },
