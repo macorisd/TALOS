@@ -3,14 +3,16 @@ from pipeline.strategy.strategy import *
 from pipeline.config.config import (
     RAM_PLUS,
     QWEN,
+    GEMMA,
     MINICPM,
     LLAVA,
     DEEPSEEK,
     GROUNDING_DINO,
     SAM2
 )
-from pipeline.talos.tagging.direct_tagging.ram_plus.ram_plus_tagging import RamPlusTagger
 from pipeline.talos.tagging.direct_lvlm_tagging.qwen.qwen_tagging import QwenTagger
+from talos.tagging.direct_lvlm_tagging.gemma.gemma_tagging import GemmaTagger
+from pipeline.talos.tagging.direct_tagging.ram_plus.ram_plus_tagging import RamPlusTagger
 # from pipeline.talos.tagging.direct_lvlm_tagging.minicpm.minicpm_tagging import MiniCpmTagger
 from pipeline.talos.tagging.lvlm_llm_tagging.lvlm_llm_tagging import LvlmLlmTagger
 from pipeline.talos.tagging.lvlm_llm_tagging.lvlm_image_description.llava.llava_image_description import LlavaImageDescriptor
@@ -24,12 +26,14 @@ class StrategyFactory:
     @staticmethod
     def create_tagging_strategy(method: Union[str, List[str]]) -> ITaggingStrategy:
         if isinstance(method, str):
-            if method == RAM_PLUS:
-                return RamPlusTagger()
-            elif method == QWEN:
+            if method == QWEN:
                 return QwenTagger()
+            elif method == GEMMA:
+                return GemmaTagger()
             # elif method == MINICPM:
             #     return MiniCpmTagger()
+            elif method == RAM_PLUS:
+                return RamPlusTagger()
             else:
                 raise ValueError(f"Unknown direct Tagging method: {method}")
         elif isinstance(method, list) and len(method) == 2:

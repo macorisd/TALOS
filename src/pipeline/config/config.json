@@ -1,6 +1,6 @@
 {
     "pipeline": {
-        "tagging": "qwen",
+        "tagging": "gemma",
         "location": "grounding_dino",
         "segmentation": "sam2"
     },

@@ -9,6 +9,7 @@ from pipeline.config.paths import CONFIG_DIR
 # Tagging models
 RAM_PLUS = "ram_plus"
 QWEN = "qwen"
+GEMMA = "gemma"
 MINICPM = "minicpm"
 LLAVA = "llava"
 DEEPSEEK = "deepseek"
