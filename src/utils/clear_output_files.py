@@ -7,7 +7,8 @@ base_path = Path(__file__).resolve().parent.parent
 directories = [
     base_path / "pipeline" / "output" / "tagging_output",
     base_path / "pipeline" / "output" / "location_output",
-    base_path / "pipeline" / "output" / "segmentation_output"
+    base_path / "pipeline" / "output" / "segmentation_output",
+    base_path / "evaluation" / "datasets" / "LVIS" / "talos" / "talos_masks"
 ]
 
 for directory in directories:

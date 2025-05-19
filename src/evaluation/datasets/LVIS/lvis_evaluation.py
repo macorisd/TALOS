@@ -41,6 +41,14 @@ talos_detections_subdirs = sorted([
     if os.path.isdir(os.path.join(talos_detections_dir, name))
 ])
 
+output_results_dir = os.path.join(
+    script_dir,
+    "..",
+    "output"
+)
+
+os.makedirs(output_results_dir, exist_ok=True)
+
 
 # Check if the number of LVIS detections is equal to the number of TALOS detections
 
@@ -448,4 +456,24 @@ print(f"{STR_PREFIX} Average LVIS label coincidence score: {avg_lvis_label_coinc
 print(f"{STR_PREFIX} Average TALOS label coincidence score: {avg_talos_label_coincidence_score}")
 print(f"{STR_PREFIX} Average bbox similarity score: {avg_bbox_similarity_score}")
 print(f"{STR_PREFIX} Average mask similarity score: {avg_mask_similarity_score}")
-print(f"Final score: {avg_detection_count_score + avg_lvis_label_coincidence_score + avg_talos_label_coincidence_score + avg_bbox_similarity_score + avg_mask_similarity_score}")
+print(f"{STR_PREFIX} Average final score: {avg_detection_count_score + avg_lvis_label_coincidence_score + avg_talos_label_coincidence_score + avg_bbox_similarity_score + avg_mask_similarity_score}")
+
+# Save metrics summary to file
+
+output_file = os.path.join(
+    output_results_dir,
+    "talos_lvis_evaluation.json"
+)
+
+metrics_summary = {
+    "average_detection_count_score": avg_detection_count_score,
+    "average_lvis_label_coincidence_score": avg_lvis_label_coincidence_score,
+    "average_talos_label_coincidence_score": avg_talos_label_coincidence_score,
+    "average_bbox_similarity_score": avg_bbox_similarity_score,
+    "average_mask_similarity_score": avg_mask_similarity_score
+}
+
+with open(output_file, 'w') as file:
+    json.dump(metrics_summary, file, indent=4)
+
+print(f"{STR_PREFIX} Metrics saved to {output_file}")

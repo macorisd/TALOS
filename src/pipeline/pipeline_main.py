@@ -44,9 +44,9 @@ class PipelineTALOS:
         for i in range(iters):
             if iters > 1:
                 print_purple(f"\n[PIPELINE] Iteration {i + 1}/{iters}")
-            for image_name in input_image_names:
+            for j, image_name in enumerate(input_image_names):
                 start_time = time.time()
-                print_purple(f"\n[PIPELINE] Running pipeline for image: {image_name}...")
+                print_purple(f"\n[PIPELINE] Running pipeline for image {j}/{len(input_image_names)}: {image_name}...")
 
                 # Tagging
                 self.tagging_strategy.load_inputs(image_name)
@@ -70,6 +70,7 @@ class PipelineTALOS:
 
         if total_runs > 1:
             average_time = total_time / total_runs
+            print_purple(f"\n[PIPELINE] Total execution time for {total_runs} executions: {total_time:.2f} seconds.")
             print_purple(f"\n[PIPELINE] Average execution time: {average_time:.2f} seconds.")
 
         print_purple("\n[PIPELINE] All images processed successfully.")

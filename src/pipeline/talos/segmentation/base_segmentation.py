@@ -165,10 +165,10 @@ class BaseSegmenter(ISegmentationStrategy):
             self.save_masks_npz(all_masks)
 
             # Save segmentation masks as images
-            self.save_mask_images(all_masks)
+            # self.save_mask_images(all_masks)
 
             # Save highlighted images with masks and labels
-            self.save_mask_highlighted_images(all_masks)
+            # self.save_mask_highlighted_images(all_masks)
         else:
             print(f"{self.STR_PREFIX} Saving file is disabled. Segmentation output was not saved.")
     

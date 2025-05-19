@@ -20,7 +20,7 @@ from PIL import Image, ImageDraw
 # Configuration
 MASK_SIZE = (256, 256)
 SAVE_IMAGES = True
-MAX_IMAGES = 25  # Number of images to process from the dataset
+MAX_IMAGES = 19809  # Maximum number of images to process from the dataset.
 SAVE_INTERMEDIATE_JSON = False
 
 # Setup paths
