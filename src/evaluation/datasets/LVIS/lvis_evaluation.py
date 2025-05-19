@@ -2,6 +2,7 @@ import os
 import json
 import numpy as np
 from typing import List, Dict, Union, Tuple
+from skimage.transform import resize
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -293,8 +294,17 @@ def calculate_mask_similarity_score(
         lvis_mask = np.load(lvis_mask_file)["mask"]
         talos_mask = np.load(talos_mask_file)["mask"]
 
+        # Resize talos_mask to 256x256
+        talos_mask_resized = resize(
+            talos_mask,
+            lvis_mask.shape,  # (256, 256)
+            order=0,
+            preserve_range=True,
+            anti_aliasing=False
+        ).astype(bool)
+
         # Compute IoU
-        iou = calculate_mask_iou(lvis_mask, talos_mask)
+        iou = calculate_mask_iou(lvis_mask, talos_mask_resized)
         mask_scores.append(iou * 20)
         mask_coincidence_ids.append((lvis_id, talos_id))
 
@@ -311,7 +321,7 @@ metrics = []
 
 for i, lvis_image in enumerate(lvis_images):
     print("\n----------------------------------------------")
-    print(f"{STR_PREFIX} Evaluating image {i+1}...")
+    print(f"{STR_PREFIX} Evaluating image {i+1} ({lvis_image['image_name']})...")
 
     # Metrics initialization
 
@@ -416,10 +426,26 @@ for i, lvis_image in enumerate(lvis_images):
         execution_time
     )
 
-    # print(f"{STR_PREFIX} Metrics for image {i+1}: {metrics[-1]}")
-    # print(f"{STR_PREFIX} Finished evaluating image {i+1}.\n")
+    print(f"{STR_PREFIX} Metrics for image {i+1}: {metrics[-1]}")
+    print(f"{STR_PREFIX} Finished evaluating image {i+1}.\n")
 
 
 # Calculate average scores
 
-# TODO
+avg_detection_count_score = np.mean([m["detection_count_score"] for m in metrics if m["detection_count_score"] is not None])
+avg_lvis_label_coincidence_score = np.mean([m["label_coincidence_score"] for m in metrics if m["label_coincidence_score"] is not None])
+avg_talos_label_coincidence_score = np.mean([m["label_coincidence_score"] for m in metrics if m["label_coincidence_score"] is not None])
+avg_bbox_similarity_score = np.mean([m["bbox_similarity_score"] for m in metrics if m["bbox_similarity_score"] is not None])
+avg_mask_similarity_score = np.mean([m["mask_similarity_score"] for m in metrics if m["mask_similarity_score"] is not None])
+
+# Print final metrics
+
+print("\n----------------------------------------------")
+
+print(f"{STR_PREFIX} Final metrics:")
+print(f"{STR_PREFIX} Average detection count score: {avg_detection_count_score}")
+print(f"{STR_PREFIX} Average LVIS label coincidence score: {avg_lvis_label_coincidence_score}")
+print(f"{STR_PREFIX} Average TALOS label coincidence score: {avg_talos_label_coincidence_score}")
+print(f"{STR_PREFIX} Average bbox similarity score: {avg_bbox_similarity_score}")
+print(f"{STR_PREFIX} Average mask similarity score: {avg_mask_similarity_score}")
+print(f"Final score: {avg_detection_count_score + avg_lvis_label_coincidence_score + avg_talos_label_coincidence_score + avg_bbox_similarity_score + avg_mask_similarity_score}")
