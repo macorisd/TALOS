@@ -11,7 +11,7 @@ from pipeline.config.config import (
     SAM2
 )
 from pipeline.talos.tagging.direct_lvlm_tagging.qwen.qwen_tagging import QwenTagger
-from talos.tagging.direct_lvlm_tagging.gemma.gemma_tagging import GemmaTagger
+from pipeline.talos.tagging.direct_lvlm_tagging.gemma.gemma_tagging import GemmaTagger
 from pipeline.talos.tagging.direct_tagging.ram_plus.ram_plus_tagging import RamPlusTagger
 # from pipeline.talos.tagging.direct_lvlm_tagging.minicpm.minicpm_tagging import MiniCpmTagger
 from pipeline.talos.tagging.lvlm_llm_tagging.lvlm_llm_tagging import LvlmLlmTagger

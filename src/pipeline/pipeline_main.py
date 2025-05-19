@@ -43,10 +43,10 @@ class PipelineTALOS:
 
         for i in range(iters):
             if iters > 1:
-                print_purple(f"\n[PIPELINE] Iteration {i + 1}/{iters}")
+                print_purple(f"\n[PIPELINE] Iteration {i+1}/{iters}")
             for j, image_name in enumerate(input_image_names):
                 start_time = time.time()
-                print_purple(f"\n[PIPELINE] Running pipeline for image {j}/{len(input_image_names)}: {image_name}...")
+                print_purple(f"\n[PIPELINE] Running pipeline for image {j+1}/{len(input_image_names)}: {image_name}...")
 
                 # Tagging
                 self.tagging_strategy.load_inputs(image_name)

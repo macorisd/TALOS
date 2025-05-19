@@ -63,6 +63,8 @@ class BaseSegmenter(ISegmentationStrategy):
                 "height": self.input_image.height,
                 "detections": []
             }
+        else:
+            self.segmentation_info = {}
         
         print("Done.")
 

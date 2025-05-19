@@ -20,7 +20,7 @@ from PIL import Image, ImageDraw
 # Configuration
 MASK_SIZE = (256, 256)
 SAVE_IMAGES = True
-MAX_IMAGES = 19809  # Maximum number of images to process from the dataset.
+MAX_IMAGES = 1000  # Maximum number of images to process from the dataset.
 SAVE_INTERMEDIATE_JSON = False
 
 # Setup paths
@@ -103,7 +103,7 @@ if SAVE_INTERMEDIATE_JSON:
     print("Done.")
 
 # Step 2: Generate binary masks
-print("Generating binary masks...", flush=True)
+print("Generating binary masks...", end=" ", flush=True)
 
 def polygons_to_binary_mask(segmentation, image_size, mask_size=MASK_SIZE):
     orig_width, orig_height = image_size
@@ -147,6 +147,8 @@ for image_info in formatted_data:
 
             # Remove segmentation after processing
             detection.pop('segmentation', None)
+
+print("Done.")
 
 # Save final JSON without segmentations
 final_json_path = os.path.join(script_directory, 'lvis_detections.json')
