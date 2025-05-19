@@ -19,3 +19,4 @@ git+https://github.com/openai/CLIP.git
 qwen-vl-utils[decord]==0.0.8
 accelerate
 scikit-image
+python-dotenv

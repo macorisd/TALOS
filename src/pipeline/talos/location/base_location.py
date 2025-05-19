@@ -59,6 +59,9 @@ class BaseLocator(ILocationStrategy):
         # Load input image
         if os.path.isfile(input_image_path):
             self.input_image = Image.open(input_image_path)
+            
+            if self.input_image.mode != "RGB":
+                self.input_image = self.input_image.convert("RGB")
         else:
             raise FileNotFoundError(f"{self.STR_PREFIX} The image {input_image_name} was not found at {input_image_path}.")
         

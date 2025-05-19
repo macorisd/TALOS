@@ -5,9 +5,10 @@ __pycache__/
 *.pyd
 tempCodeRunnerFile.py
 
-# Virtual Environments
+# Virtual Environments and Environment variables
 venvs/
 .env/
+.env
 
 # Visual Studio Code
 .vscode/
