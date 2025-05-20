@@ -75,7 +75,7 @@ The pipeline is designed to be **modular**, allowing for easy integration of new
 
 ```bash
 # Clone the repository
-git clone https://github.com/macorisd/TALOS.git
+git clone --recurse-submodules https://github.com/macorisd/TALOS.git
 cd TALOS
 # Set up virtual environment
 python3 -m venv venv
