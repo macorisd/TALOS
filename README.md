@@ -2,7 +2,7 @@
 
 **TALOS** is a modular and extensible Computer Vision pipeline for performing **semantic instance segmentation** using an **open vocabulary** for semantic categories. Unlike conventional approaches (e.g., Detectron2) that are limited to a fixed set of object categories seen during training (such as those in the COCO dataset), TALOS identifies and segments object instances belonging to uncommon and diverse categories.
 
-Many open-vocabulary detection and segmentation models require user inputs for semantic categories, which is impractical for automated applications like mobile robotics. TALOS addresses this limitation by automatically extracting semantic labels from images using large-scale models and then locating and segmenting the objects in the image.
+Many open-vocabulary detection and segmentation models require **user inputs** for semantic categories, which is impractical for automated applications like mobile robotics. TALOS addresses this limitation by automatically extracting semantic labels from images using **large-scale models** and then locating and segmenting the objects in the image.
 
 The system is composed of three sequential stages: **Tagging**, **Location**, and **Segmentation**, each of which can be independently configured with state-of-the-art models.
 
@@ -16,7 +16,7 @@ The system is composed of three sequential stages: **Tagging**, **Location**, an
 
 TALOS takes an arbitrary number of **RGB images** as input and produces **instance-level segmentations** for each image, that include binary masks for each object instance, along with their corresponding bounding boxes and semantic labels.
 
-The pipeline is designed to be modular, allowing for easy integration of new models and components. The three main stages of the pipeline are as follows:
+The pipeline is designed to be **modular**, allowing for easy integration of new models and components. The three main stages of the pipeline are as follows:
 
 ### 1. Tagging
 - **Description**: Extracts object category labels using large-scale models (LVLMs and/or LLMs).
@@ -44,52 +44,69 @@ The pipeline is designed to be modular, allowing for easy integration of new mod
 
 ---
 
-## Integrated technologies and models
+## 🧠 Integrated technologies and models
 
 ### Tagging
 - **Direct Tagging**: 
-  - Qwen
-  - Gemma 3
-  - MiniCPM
-  - Recognize Anything Plus Model (RAM++)
+  - [Qwen](https://huggingface.co/Qwen/Qwen2.5-VL-32B-Instruct)
+  - [Gemma 3](https://huggingface.co/google/gemma-3-27b-it)
+  - [MiniCPM](https://huggingface.co/openbmb/MiniCPM-o-2_6)
+  - [Recognize Anything Plus Model (RAM++)](https://github.com/xinyu1205/recognize-anything)
 
 - **Tagging via LVLM Image Description and LLM Keyword Extraction**:
   - **LVLM Image Description**:
-    - Qwen
-    - LLaVA
+    - [Qwen](https://huggingface.co/Qwen/Qwen2.5-VL-32B-Instruct)
+    - [LLaVA](https://ollama.com/library/llava)
   - **LLM Keyword Extraction**:
-    - DeepSeek
+    - [DeepSeek](https://ollama.com/library/deepseek-r1)
 
 ### Location
-- Grounding DINO
+- [Grounding DINO](https://huggingface.co/docs/transformers/model_doc/grounding-dino)
 
 ### Segmentation
-- Segment Anything Model 2 (SAM2)
+- [Segment Anything Model 2 (SAM2)](https://github.com/facebookresearch/sam2)
 
 
 ---
 
-## Installation and Usage
+## ⚙️ Installation and Usage
 
-TODO
+### Installation
 
-Consideraciones especiales:
-- Añadir src del proyecto a PYTHONPATH.
-- Si el modelo es de Ollama, hacer pull primero.
-- Si el modelo es de HuggingFace y requiere token, hay que añadirlo a la variable de entorno `HUGGINGFACE_TOKEN`.
-- Particularidades de cada modelo:
-  - Ollama: hacer pull primero (LLaVA, DeepSeek)
-  - HuggingFace: si requiere token, hay que añadirlo a la variable de entorno `HUGGINGFACE_TOKEN` (Gemma 3)
-  - MiniCPM: requiere una versión muy concreta de transformers.
+```bash
+# Clone the repository
+git clone https://github.com/macorisd/TALOS.git
+cd TALOS
+# Set up virtual environment
+python3 -m venv venv
+source venv/bin/activate
+# Install dependencies
+pip install -r requirements.txt
+```
 
-- Recomendaciones de qué incluir en el config.json de .vscode
+**_TODO_**: add instructions for installing the models
+
+### Usage
+
+**_TODO_**: more detailed usage instructions
+
+For now, you can run the pipeline by running the pipeline_main.py script:
+- You need to specify the input image name in the main function.
+- You can change the selected models in the pipeline. Take a look at the following files:
+  - pipeline/config/config.py
+  - pipeline/config/config.json
 
 
 ---
 
-## Pipeline evaluation and results
+## 📊 Pipeline evaluation and results
 
-TODO (tabla)
+**_TODO_**: add more detailed evaluation explanation
+
+| TAGGING | LOCATION       | SEGMENTATION | Detection count | Tags Recall | Tags Accuracy | Bbox similarity | Mask similarity | FINAL SCORE |
+|-|-|-|-|-|-|-|-|-|
+| Qwen | Grounding DINO | SAM2 | 57.58 | 60.43 | 60.43 | 76.15 | 72.66 | 65.45
+
 
 
 ---
@@ -109,7 +126,7 @@ All pull requests will be reviewed and require approval before being merged into
 
 --- 
 
-## Citation
+## 📚 Citation
 
 If you use TALOS in your research, please cite this repository as follows:
 
@@ -125,14 +142,14 @@ If you use TALOS in your research, please cite this repository as follows:
 ---
 
 
-## License
+## 📄 License
 
 This project is licensed under the GPL-3.0 License. See the [LICENSE](./LICENSE) file for details.
 
 
 ---
 
-## Author's note
+## ✍️ Author's note
 
 Hi! I'm Maco 👋​
 
@@ -141,7 +158,7 @@ This project is being developed as part of my Bachelor's Thesis in Software Engi
 
 ---
 
-## Contact
+## 📬 Contact
 
 If you have any questions, suggestions, or feedback, please reach out to me!
 
