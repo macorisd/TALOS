@@ -1,5 +1,7 @@
 # TALOS: A Modular and Automatic System for Open-Vocabulary Semantic Instance Segmentation
 
+![TALOS](docs/images/talos_banner.png)
+
 **TALOS** is a modular and extensible Computer Vision pipeline for performing **semantic instance segmentation** using an **open vocabulary** for semantic categories. Unlike conventional approaches (e.g., Detectron2) that are limited to a fixed set of object categories seen during training (such as those in the COCO dataset), TALOS identifies and segments object instances belonging to uncommon and diverse categories.
 
 Many open-vocabulary detection and segmentation models require **user inputs** for semantic categories, which is impractical for automated applications like mobile robotics. TALOS addresses this limitation by automatically extracting semantic labels from images using **large-scale models** and then locating and segmenting the objects in the image.
