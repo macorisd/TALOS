@@ -1,0 +1,7 @@
+{
+    "average_detection_count_score": 13.0622,
+    "average_lvis_label_coincidence_score": 10.020705498415571,
+    "average_talos_label_coincidence_score": 10.020705498415571,
+    "average_bbox_similarity_score": 14.56778719926085,
+    "average_mask_similarity_score": 14.012073077713168
+}
