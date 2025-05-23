@@ -24,14 +24,24 @@ class BaseSegmenter(ISegmentationStrategy):
 
     Base class for segmentation strategies.
     """
-    
+
     # Override from ISegmentationStrategy
-    def load_inputs(self, input_image_name: str, input_location: List[Dict] = None) -> None:
+    def load_inputs(
+        self,
+        input_image_name: str = None,
+        input_image: np.ndarray = None,
+        input_location: List[Dict] = None
+    ) -> None:
         """
         Load the Segmentation inputs.
         """
-        # Load the input image
-        self.load_image(input_image_name)
+        if input_image_name is None and input_image is None:
+            raise ValueError(f"{self.STR_PREFIX} Either input_image_name or input_image must be provided.")
+        
+        if input_image is not None:
+            self.set_image(input_image)
+        else:
+            self.load_image(input_image_name)
 
         # Load the input location information
         self.load_location(input_location)
@@ -67,6 +77,24 @@ class BaseSegmenter(ISegmentationStrategy):
             self.segmentation_info = {}
         
         print("Done.")
+
+    # Override from ISegmentationStrategy
+    def set_image(self, input_image: np.ndarray) -> None:
+        """
+        Set the input image.
+        """
+        rgb_image = cv2.cvtColor(input_image, cv2.COLOR_BGR2RGB)
+        self.input_image = Image.fromarray(rgb_image)
+
+        if config.get(SAVE_FILES):
+            # Save image information in segmentation_info
+            self.segmentation_info = {
+                "width": self.input_image.width,
+                "height": self.input_image.height,
+                "detections": []
+            }
+        else:
+            self.segmentation_info = {}
 
     # Override from ISegmentationStrategy
     def load_location(self, input_location: List[Dict] = None) -> None:

@@ -4,6 +4,8 @@ import os
 import time
 from typing import Dict, List
 from PIL import Image, ImageDraw, ImageFont
+import numpy as np
+import cv2
 
 from pipeline.strategy.strategy import ILocationStrategy
 from pipeline.config.config import (
@@ -36,12 +38,22 @@ class BaseLocator(ILocationStrategy):
             os.makedirs(OUTPUT_LOCATION_DIR, exist_ok=True)
 
     # Override from ILocationStrategy
-    def load_inputs(self, input_image_name: str, input_tags: List[str] = None) -> None:
+    def load_inputs(
+        self,
+        input_image_name: str = None,
+        input_image: np.ndarray = None,
+        input_tags: List[str] = None
+    ) -> None:
         """
         Load the Location inputs.
         """
-        # Load the input image
-        self.load_image(input_image_name)
+        if input_image_name is None and input_image is None:
+            raise ValueError(f"{self.STR_PREFIX} Either input_image_name or input_image must be provided.")
+        
+        if input_image is not None:
+            self.set_image(input_image)
+        else:
+            self.load_image(input_image_name)
 
         # Load the input tags
         self.load_tags(input_tags)
@@ -66,6 +78,14 @@ class BaseLocator(ILocationStrategy):
             raise FileNotFoundError(f"{self.STR_PREFIX} The image {input_image_name} was not found at {input_image_path}.")
         
         print("Done.")
+
+    # Override from ILocationStrategy
+    def set_image(self, input_image: np.ndarray) -> None:
+        """
+        Set the input image.
+        """
+        rgb_image = cv2.cvtColor(input_image, cv2.COLOR_BGR2RGB)
+        self.input_image = Image.fromarray(rgb_image)
 
     # Override from ILocationStrategy
     def load_tags(self, input_tags: List[str] = None) -> None:

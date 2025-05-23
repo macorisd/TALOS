@@ -5,10 +5,13 @@ import numpy as np
 
 class ITaggingStrategy(ABC):
     @abstractmethod
-    def load_inputs(self, input_image_name: str) -> None:
+    def load_inputs(self, input_image_name: str = None, input_image: np.ndarray = None) -> None:
         pass
     @abstractmethod
     def load_image(self, input_image_name: str) -> None:
+        pass
+    @abstractmethod
+    def set_image(self, input_image: np.ndarray) -> None:
         pass
     @abstractmethod
     def execute(self, image_path: str) -> List[str]:
@@ -59,10 +62,13 @@ class ITaggingLlmStrategy(ABC):
 
 class ILocationStrategy(ABC):
     @abstractmethod
-    def load_inputs(self, input_image_name: str, input_tags: List[str]) -> None:
+    def load_inputs(self, input_image_name: str = None, input_image: np.ndarray = None, input_tags: List[str] = None) -> None:
         pass
     @abstractmethod
     def load_image(self, input_image_name: str) -> None:
+        pass
+    @abstractmethod
+    def set_image(self, input_image: np.ndarray) -> None:
         pass
     @abstractmethod
     def load_tags(self, input_tags: List[str]) -> None:
@@ -83,10 +89,13 @@ class ILocationStrategy(ABC):
 
 class ISegmentationStrategy(ABC):
     @abstractmethod
-    def load_inputs(self, input_image_name: str, input_location: List[Dict] = None) -> None:
+    def load_inputs(self, input_image_name: str = None, input_image: np.ndarray = None, input_location: List[Dict] = None) -> None:
         pass
     @abstractmethod
     def load_image(self, input_image_name: str) -> None:
+        pass
+    @abstractmethod
+    def set_image(self, input_image: np.ndarray) -> None:
         pass
     @abstractmethod
     def load_location(self, input_location: List[Dict]) -> None:

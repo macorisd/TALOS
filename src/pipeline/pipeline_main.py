@@ -49,17 +49,17 @@ class PipelineTALOS:
                 print_purple(f"\n[PIPELINE] Running pipeline for image {j+1}/{len(input_image_names)}: {image_name}...")
 
                 # Tagging
-                self.tagging_strategy.load_inputs(image_name)
+                self.tagging_strategy.load_inputs(input_image_name=image_name)
                 tags = self.tagging_strategy.execute()
                 self.tagging_strategy.save_outputs(tags)
 
                 # Location
-                self.location_strategy.load_inputs(image_name, tags)
+                self.location_strategy.load_inputs(input_image_name=image_name, input_tags=tags)
                 locations = self.location_strategy.execute()
                 self.location_strategy.save_outputs(locations)
 
                 # Segmentation
-                self.segmentation_strategy.load_inputs(image_name, locations)
+                self.segmentation_strategy.load_inputs(input_image_name=image_name, input_location=locations)
                 segmentation_info, all_masks = self.segmentation_strategy.execute()
                 self.segmentation_strategy.save_outputs(segmentation_info, all_masks)
 
