@@ -19,6 +19,7 @@ from pipeline.talos.tagging.lvlm_llm_tagging.lvlm_image_description.llava.llava_
 from pipeline.talos.tagging.lvlm_llm_tagging.lvlm_image_description.qwen.qwen_image_description import QwenImageDescriptor
 from pipeline.talos.tagging.lvlm_llm_tagging.lvlm_image_description.minicpm.minicpm_image_description import MiniCpmImageDescriptor
 from pipeline.talos.tagging.lvlm_llm_tagging.llm_keyword_extraction.deepseek.deepseek_keyword_extraction import DeepseekKeywordExtractor
+from pipeline.talos.tagging.lvlm_llm_tagging.llm_keyword_extraction.minicpm.minicpm_keyword_extraction import MiniCpmKeywordExtractor
 from pipeline.talos.location.grounding_dino.grounding_dino_location import GroundingDinoLocator
 from pipeline.talos.segmentation.sam2.sam2_segmentation import Sam2Segmenter
 
@@ -60,6 +61,8 @@ class StrategyFactory:
     def create_tagging_llm_strategy(llm_keyword_extractor: str) -> ITaggingLlmStrategy:
         if llm_keyword_extractor == DEEPSEEK:
             return DeepseekKeywordExtractor()
+        elif llm_keyword_extractor == MINICPM:
+            return MiniCpmKeywordExtractor()
         else:
             raise ValueError(f"Unknown LLM keyword extractor for LVLM + LLM Tagging: {llm_keyword_extractor}")
         
