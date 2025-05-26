@@ -1,8 +1,12 @@
-import torch
 from typing import List
-import numpy as np
+import os
+import subprocess
 
-from transformers import AutoModel, AutoTokenizer
+import ollama
+
+from pipeline.config.paths import (
+    INPUT_IMAGES_DIR
+)
 
 from pipeline.talos.tagging.direct_lvlm_tagging.base_direct_lvlm_tagging import BaseDirectLvlmTagger
 
@@ -18,8 +22,7 @@ class MiniCpmTagger(BaseDirectLvlmTagger):
 
     def __init__(
         self,
-        minicpm_model_name: str = "openbmb/MiniCPM-o-2_6",
-        temperature: float = 0.5
+        minicpm_model_name: str = "minicpm-v:8b"
     ):
         """
         Initialize the MiniCPM tagger.
@@ -30,24 +33,20 @@ class MiniCpmTagger(BaseDirectLvlmTagger):
         super().__init__()
 
         # Variables
-        self.temperature = temperature
+        self.minicpm_model_name = minicpm_model_name
 
-        self.model = AutoModel.from_pretrained(
-            minicpm_model_name,
-            trust_remote_code=True,
-            attn_implementation='sdpa',
-            torch_dtype=torch.bfloat16,
-            init_vision=True,
-            init_audio=False,
-            init_tts=False
-        )
+        print("Done.")
+    
+    # Override from ITaggingStrategy -> BaseTagger
+    def load_image(self, input_image_name: str) -> None:
+        """
+        Load the input image's path.
+        """
+        print(f"{self.STR_PREFIX} Loading input image: {input_image_name}...", end=" ")
+        self.input_image_path = os.path.join(INPUT_IMAGES_DIR, input_image_name)
 
-        # Establecer el modelo en modo de evaluación y moverlo a la GPU
-        self.model = self.model.eval().cuda()
-
-        # Cargar el tokenizer
-        self.tokenizer = AutoTokenizer.from_pretrained(minicpm_model_name, trust_remote_code=True)
-
+        if not os.path.isfile(self.input_image_path):
+            raise FileNotFoundError(f"{self.STR_PREFIX} The image {self.input_image_name} was not found.")
         print("Done.")
     
     # Override from ITaggingStrategy -> BaseTagger -> BaseDirectLvlmTagger
@@ -58,45 +57,35 @@ class MiniCpmTagger(BaseDirectLvlmTagger):
         print(f"{self.STR_PREFIX} Running Tagging with MiniCPM...", flush=True)
 
         tags = self.execute_direct_lvlm_tagging()
-
-        # Clear the GPU cache
-        torch.cuda.empty_cache()
-
         return tags
-
-    def get_image_content(image, flatten=True):
-        image_np = np.array(image)
-        
-        contents = []
-        # Si `flatten` es True, agrega una lista plana
-        if flatten:
-            contents.extend(["<unit>", image_np])
-        else:
-            contents.append(["<unit>", image_np])
-        
-        return contents
 
     # Override from BaseDirectLvlmTagger
     def chat_lvlm(self) -> str:
         """
-        Prompt the MiniCPM model with the input image and text prompt.
-        """
-        messages = [
-            {
-                "role": "user",
-                "content": [
-                    self.input_image,
-                    self.prompt
-                ],
-            }
-        ]
+        Generate output tags for the input image using MiniCPM.
 
-        response = self.model.chat(
-            msgs=messages,
-            tokenizer=self.tokenizer
+        This method will be called by the superclass.
+        """
+        response = ollama.chat(
+            model=self.minicpm_model_name,
+            messages=[
+                {
+                    "role": "user",
+                    "content": self.prompt,
+                    "images": [self.input_image_path]
+                }
+            ]
         )
 
-        return response
+        return response["message"]["content"]
+    
+    def clear_model(self):
+        """
+        Clear the Ollama MiniCPM model from the memory.
+        """
+        print(f"{self.STR_PREFIX} Stopping MiniCPM model...")
+        subprocess.run(["ollama", "stop", self.minicpm_model_name])
+        print("Done.")
 
 def main():
     """

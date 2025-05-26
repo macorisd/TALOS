@@ -13,7 +13,7 @@ from pipeline.config.config import (
 from pipeline.talos.tagging.direct_lvlm_tagging.qwen.qwen_tagging import QwenTagger
 from pipeline.talos.tagging.direct_lvlm_tagging.gemma.gemma_tagging import GemmaTagger
 from pipeline.talos.tagging.direct_tagging.ram_plus.ram_plus_tagging import RamPlusTagger
-# from pipeline.talos.tagging.direct_lvlm_tagging.minicpm.minicpm_tagging import MiniCpmTagger
+from pipeline.talos.tagging.direct_lvlm_tagging.minicpm.minicpm_tagging import MiniCpmTagger
 from pipeline.talos.tagging.lvlm_llm_tagging.lvlm_llm_tagging import LvlmLlmTagger
 from pipeline.talos.tagging.lvlm_llm_tagging.lvlm_image_description.llava.llava_image_description import LlavaImageDescriptor
 from pipeline.talos.tagging.lvlm_llm_tagging.lvlm_image_description.qwen.qwen_image_description import QwenImageDescriptor
@@ -30,8 +30,8 @@ class StrategyFactory:
                 return QwenTagger()
             elif method == GEMMA:
                 return GemmaTagger()
-            # elif method == MINICPM:
-            #     return MiniCpmTagger()
+            elif method == MINICPM:
+                return MiniCpmTagger()
             elif method == RAM_PLUS:
                 return RamPlusTagger()
             else:
