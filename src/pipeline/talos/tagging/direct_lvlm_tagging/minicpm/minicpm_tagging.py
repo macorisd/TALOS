@@ -1,5 +1,6 @@
 from typing import List
 import os
+import atexit
 import subprocess
 
 import ollama
@@ -34,6 +35,9 @@ class MiniCpmTagger(BaseDirectLvlmTagger):
 
         # Variables
         self.minicpm_model_name = minicpm_model_name
+
+        # Register the cleanup function to clear the model when the object is deleted
+        atexit.register(self.clear_model)
 
         print("Done.")
     
