@@ -17,6 +17,7 @@ from pipeline.talos.tagging.direct_lvlm_tagging.minicpm.minicpm_tagging import M
 from pipeline.talos.tagging.lvlm_llm_tagging.lvlm_llm_tagging import LvlmLlmTagger
 from pipeline.talos.tagging.lvlm_llm_tagging.lvlm_image_description.llava.llava_image_description import LlavaImageDescriptor
 from pipeline.talos.tagging.lvlm_llm_tagging.lvlm_image_description.qwen.qwen_image_description import QwenImageDescriptor
+from pipeline.talos.tagging.lvlm_llm_tagging.lvlm_image_description.minicpm.minicpm_image_description import MiniCpmImageDescriptor
 from pipeline.talos.tagging.lvlm_llm_tagging.llm_keyword_extraction.deepseek.deepseek_keyword_extraction import DeepseekKeywordExtractor
 from pipeline.talos.location.grounding_dino.grounding_dino_location import GroundingDinoLocator
 from pipeline.talos.segmentation.sam2.sam2_segmentation import Sam2Segmenter
@@ -50,6 +51,8 @@ class StrategyFactory:
             return LlavaImageDescriptor()
         elif lvlm_descriptor == QWEN:
             return QwenImageDescriptor()
+        elif lvlm_descriptor == MINICPM:
+            return MiniCpmImageDescriptor()
         else:
             raise ValueError(f"Unknown LVLM descriptor for LVLM + LLM Tagging: {lvlm_descriptor}")
 
