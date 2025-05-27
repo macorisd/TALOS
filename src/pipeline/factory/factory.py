@@ -7,6 +7,7 @@ from pipeline.config.config import (
     MINICPM,
     LLAVA,
     DEEPSEEK,
+    LLAMA,
     GROUNDING_DINO,
     SAM2
 )
@@ -21,6 +22,7 @@ from pipeline.talos.tagging.lvlm_llm_tagging.lvlm_image_description.minicpm.mini
 from pipeline.talos.tagging.lvlm_llm_tagging.llm_keyword_extraction.deepseek.deepseek_keyword_extraction import DeepseekKeywordExtractor
 from pipeline.talos.tagging.lvlm_llm_tagging.llm_keyword_extraction.minicpm.minicpm_keyword_extraction import MiniCpmKeywordExtractor
 from pipeline.talos.tagging.lvlm_llm_tagging.llm_keyword_extraction.qwen.qwen_keyword_extraction import QwenKeywordExtractor
+from pipeline.talos.tagging.lvlm_llm_tagging.llm_keyword_extraction.llama.llama_keyword_extraction import LlamaKeywordExtractor
 from pipeline.talos.location.grounding_dino.grounding_dino_location import GroundingDinoLocator
 from pipeline.talos.segmentation.sam2.sam2_segmentation import Sam2Segmenter
 
@@ -66,6 +68,8 @@ class StrategyFactory:
             return MiniCpmKeywordExtractor()
         elif llm_keyword_extractor == QWEN:
             return QwenKeywordExtractor()
+        elif llm_keyword_extractor == LLAMA:
+            return LlamaKeywordExtractor()
         else:
             raise ValueError(f"Unknown LLM keyword extractor for LVLM + LLM Tagging: {llm_keyword_extractor}")
         
