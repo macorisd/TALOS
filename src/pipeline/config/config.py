@@ -13,6 +13,7 @@ GEMMA = "gemma"
 MINICPM = "minicpm"
 LLAVA = "llava"
 DEEPSEEK = "deepseek"
+LLAMA = "llama"
 
 # Location models
 GROUNDING_DINO = "grounding_dino"
