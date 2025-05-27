@@ -39,10 +39,12 @@ class PipelineTALOS:
         print_purple(f"\n[PIPELINE] Tagging strategy set to: {tagging_method}")
 
     def set_location_strategy(self, location_method: str):
+        print_purple(f"\n[PIPELINE] Setting location strategy to: {location_method}")
         self.location_strategy = StrategyFactory.create_location_strategy(location_method)
         print_purple(f"\n[PIPELINE] Location strategy set to: {location_method}")
     
     def set_segmentation_strategy(self, segmentation_method: str):
+        print_purple(f"\n[PIPELINE] Setting segmentation strategy to: {segmentation_method}")
         self.segmentation_strategy = StrategyFactory.create_segmentation_strategy(segmentation_method)
         print_purple(f"\n[PIPELINE] Segmentation strategy set to: {segmentation_method}")
 
