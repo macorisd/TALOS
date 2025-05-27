@@ -227,11 +227,26 @@ class BaseLocator(ILocationStrategy):
             current_label = result["label"]
             substrings = []
 
-            # Check if the label contains any of the input tags
+            # Check if the label is a substring of any of the input tags
+            for tag in input_tags:
+                if current_label in tag and current_label != tag:
+                    substrings.append(tag)
+            
+            # If the label is substring of exactly one tag, it will be replaced with that tag
+            if len(substrings) == 1:
+                best_substring = substrings[0]
+                print(f"{self.STR_PREFIX} Replaced label: {current_label} with {best_substring}")
+                result["label"] = best_substring
+                continue
+            
+            substrings = []    
+
+            # Check if any of the input tags is a substring of the label
             for tag in input_tags:
                 if tag in current_label and tag != current_label:
                     substrings.append(tag)
 
+            # If the label contains any of the input tags as a substring, replace it with the shortest one
             if substrings:
                 # Replace the label with the shortest substring (based on the number of words and characters)
                 best_substring = min(substrings, key=lambda s: (len(s.split()), len(s)))
@@ -317,11 +332,11 @@ class BaseLocator(ILocationStrategy):
         # Filter the results based on the confidence threshold
         results_json = self.__filter_confidence(results_json)
 
-        # Filter the results based on bounding box properties
-        results_json = self.__filter_bbox(results_json, self.input_image.width, self.input_image.height)
-
         # Filter the results based on label coincidence with the tagging stage
         results_json = self.__filter_labels(results_json, self.input_tags)
+        
+        # Filter the results based on bounding box properties
+        results_json = self.__filter_bbox(results_json, self.input_image.width, self.input_image.height)
 
         print(f"{self.STR_PREFIX} JSON results:\n\n{json.dumps(results_json, indent=4)}")
         
