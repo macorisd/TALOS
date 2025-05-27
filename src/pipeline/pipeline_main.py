@@ -34,13 +34,6 @@ class PipelineTALOS:
         )
     
     def set_tagging_strategy(self, tagging_method: Union[str, List[str]]):
-        if hasattr(self, 'tagging_strategy') and self.tagging_strategy is not None:
-            print_purple("\n[PIPELINE] Clearing previous tagging strategy...")
-            self.tagging_strategy.clear_model()
-            del self.tagging_strategy
-            print_purple("\n[PIPELINE] Previous tagging strategy cleared. Waiting for 10 seconds to ensure resources are freed...")
-            time.sleep(10)
-        
         print_purple(f"\n[PIPELINE] Setting tagging strategy to: {tagging_method}")
         self.tagging_strategy = StrategyFactory.create_tagging_strategy(tagging_method)
         print_purple(f"\n[PIPELINE] Tagging strategy set to: {tagging_method}")
@@ -105,4 +98,4 @@ def main(input_image_names: Union[str, List[str]], iters: int = 1):
 
 
 if __name__ == "__main__":
-    main(input_image_names=["stop_sign.jpg"], iters=1)
+    main(input_image_names=["avocado.jpeg"], iters=1)
