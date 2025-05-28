@@ -1,11 +1,12 @@
 {
     "pipeline": {
-        "tagging": "qwen",
+        "tagging": "ram_plus",
         "location": "grounding_dino",
         "segmentation": "sam2"
     },
     "general_config": {
-        "save_files": true
+        "save_intermediate_files": false,
+        "save_segmentation_files": true
     },
     "tagging": {
         "direct_tagging": {},

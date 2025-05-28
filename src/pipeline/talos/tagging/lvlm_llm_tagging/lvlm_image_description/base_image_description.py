@@ -6,7 +6,7 @@ from typing import List
 from pipeline.strategy.strategy import ITaggingLvlmStrategy
 from pipeline.config.config import (
     config,
-    SAVE_FILES,
+    SAVE_INTERMEDIATE_FILES,
     TAGGING_LVLM_ITERS,
     TAGGING_LVLM_TIMEOUT
 )
@@ -88,7 +88,7 @@ class BaseLvlmImageDescriptor(ITaggingLvlmStrategy):
 
     # Override from ITaggingLvlmStrategy
     def save_outputs(self, descriptions: List[str]) -> None:
-        if config.get(SAVE_FILES):
+        if config.get(SAVE_INTERMEDIATE_FILES):
             self.output_timestamped_dir = FileSaving.create_output_directory(
                 parent_dir=OUTPUT_DESCRIPTIONS_DIR,
                 output_name="description",
@@ -104,7 +104,7 @@ class BaseLvlmImageDescriptor(ITaggingLvlmStrategy):
         """
         Save the generated descriptions to text files.
         """
-        if config.get(SAVE_FILES):
+        if config.get(SAVE_INTERMEDIATE_FILES):
             for i in range(len(descriptions)):
                 output_filename = f"description_{i+1}.txt" if config.get(TAGGING_LVLM_ITERS) > 1 else "description.txt"
                 output_file = os.path.join(self.output_timestamped_dir, output_filename)

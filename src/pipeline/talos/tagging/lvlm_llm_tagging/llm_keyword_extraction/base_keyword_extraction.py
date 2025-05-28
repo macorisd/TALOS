@@ -14,7 +14,7 @@ from pipeline.config.paths import (
 )
 from pipeline.config.config import (
     config,
-    SAVE_FILES,
+    SAVE_INTERMEDIATE_FILES,
     TAGGING_LLM_ENHANCE_OUTPUT,
     TAGGING_LLM_EXCLUDE_BANNED_WORDS,
     TAGGING_LLM_BANNED_WORDS,
@@ -40,7 +40,7 @@ class BaseLlmKeywordExtractor(ITaggingLlmStrategy, LargeModelForTagging):
             with open(TAGGING_LLM_PROMPT2, "r", encoding="utf-8") as f:
                 self.prompt2 = f.read()
         
-        if SAVE_FILES:
+        if SAVE_INTERMEDIATE_FILES:
             # Create output directory if it does not exist
             os.makedirs(OUTPUT_TAGS_DIR, exist_ok=True)
 
@@ -179,7 +179,7 @@ class BaseLlmKeywordExtractor(ITaggingLlmStrategy, LargeModelForTagging):
         """
         Save the generated keywords to text files.
         """
-        if SAVE_FILES:
+        if config.get(SAVE_INTERMEDIATE_FILES):
             timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
             self.save_tags(tags, timestamp)
         else:
@@ -190,7 +190,7 @@ class BaseLlmKeywordExtractor(ITaggingLlmStrategy, LargeModelForTagging):
         """
         Save the generated keywords to text files.
         """
-        if SAVE_FILES:
+        if SAVE_INTERMEDIATE_FILES:
             output_filename = f"tags_{self.ALIAS}_{timestamp}.json"
             output_file = os.path.join(OUTPUT_TAGS_DIR, output_filename)
 

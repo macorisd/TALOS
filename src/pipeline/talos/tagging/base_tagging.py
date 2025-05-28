@@ -10,7 +10,7 @@ import cv2
 from pipeline.strategy.strategy import ITaggingStrategy
 from pipeline.config.config import (
     config,
-    SAVE_FILES
+    SAVE_INTERMEDIATE_FILES
 )
 from pipeline.config.paths import OUTPUT_TAGS_DIR
 
@@ -26,7 +26,7 @@ class BaseTagger(ITaggingStrategy):
         """
         Initialize the base tagger.
         """
-        if config.get(SAVE_FILES):
+        if config.get(SAVE_INTERMEDIATE_FILES):
             # Create output directory if it does not exist
             os.makedirs(OUTPUT_TAGS_DIR, exist_ok=True)
 
@@ -64,7 +64,7 @@ class BaseTagger(ITaggingStrategy):
         """
         Save the Tagging outputs.
         """
-        if config.get(SAVE_FILES):
+        if config.get(SAVE_INTERMEDIATE_FILES):
             # Prepare timestamped output file
             timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
             self.save_tags(tags, timestamp)
@@ -76,7 +76,7 @@ class BaseTagger(ITaggingStrategy):
         """
         Save the Tagging output tags to a JSON file.
         """
-        if config.get(SAVE_FILES):
+        if config.get(SAVE_INTERMEDIATE_FILES):
             # Prepare timestamped output file
             output_filename = f"tags_{timestamp}_{self.ALIAS}.json"
             output_file = os.path.join(OUTPUT_TAGS_DIR, output_filename)

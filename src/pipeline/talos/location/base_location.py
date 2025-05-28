@@ -10,7 +10,7 @@ import cv2
 from pipeline.strategy.strategy import ILocationStrategy
 from pipeline.config.config import (
     config,
-    SAVE_FILES,
+    SAVE_INTERMEDIATE_FILES,
     LOCATION_SCORE_THRESHOLD,
     LOCATION_PADDING_RATIO,
     LOCATION_LARGE_BBOX_RATIO
@@ -33,7 +33,7 @@ class BaseLocator(ILocationStrategy):
         """
         Initialize the base locator.
         """
-        if config.get(SAVE_FILES):
+        if config.get(SAVE_INTERMEDIATE_FILES):
             # Create output directory if it does not exist
             os.makedirs(OUTPUT_LOCATION_DIR, exist_ok=True)
 
@@ -356,7 +356,7 @@ class BaseLocator(ILocationStrategy):
 
     # Override from ILocationStrategy
     def save_outputs(self, location: Dict) -> None:
-        if config.get(SAVE_FILES):
+        if config.get(SAVE_INTERMEDIATE_FILES):
             timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
             self.save_location_json(location, timestamp)
             self.save_location_image(location, timestamp)
@@ -365,7 +365,7 @@ class BaseLocator(ILocationStrategy):
 
     # Override from ILocationStrategy
     def save_location_json(self, location: Dict, timestamp: str) -> None:
-        if config.get(SAVE_FILES):
+        if config.get(SAVE_INTERMEDIATE_FILES):
             # Prepare JSON output file
             output_filename = f"location_{timestamp}_{self.ALIAS}.json"
             output_file = os.path.join(OUTPUT_LOCATION_DIR, output_filename)
@@ -378,7 +378,7 @@ class BaseLocator(ILocationStrategy):
 
     # Override from ILocationStrategy
     def save_location_image(self, location: Dict, timestamp: str) -> None:
-        if config.get(SAVE_FILES):
+        if config.get(SAVE_INTERMEDIATE_FILES):
             # Prepare JPG output file
             output_filename = f"location_{timestamp}_{self.ALIAS}.jpg"
             output_file = os.path.join(OUTPUT_LOCATION_DIR, output_filename)
