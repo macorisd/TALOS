@@ -35,7 +35,15 @@ lvis_detections_file = os.path.join(
 with open(lvis_detections_file, 'r') as file:
     lvis_detections = json.load(file)
 
-lvis_image_names = [image["image_name"] for image in lvis_detections]
+lvis_image_names = [image["image_name"] for image in lvis_detections[:3]]
 
 # Run the pipeline
-pipeline.run(lvis_image_names)
+total_time, average_time = pipeline.run(lvis_image_names)
+
+# Write the results to a txt file
+output_file = os.path.join(script_dir, "masks_" + "_".join(tagging_model) + ".txt")
+with open(output_file, 'w') as file:
+    file.write(f"PIPELINE: {tagging_model}\n")
+    file.write(f"Total execution time: {total_time:.2f} seconds\n")
+    if average_time is not None:
+        file.write(f"Average execution time: {average_time:.2f} seconds\n")

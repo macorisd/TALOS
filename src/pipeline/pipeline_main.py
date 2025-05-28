@@ -1,5 +1,5 @@
 import time
-from typing import List, Tuple, Union
+from typing import List, Tuple, Union, Optional
 
 from pipeline.config.config import (
     ConfigSingleton,
@@ -48,7 +48,7 @@ class PipelineTALOS:
         self.segmentation_strategy = StrategyFactory.create_segmentation_strategy(segmentation_method)
         print_purple(f"\n[PIPELINE] Segmentation strategy set to: {segmentation_method}")
 
-    def run(self, input_image_names: Union[str, List[str]], iters: int = 1) -> float:
+    def run(self, input_image_names: Union[str, List[str]], iters: int = 1) -> Tuple[float, Optional[float]]:
         if isinstance(input_image_names, str):
             input_image_names = [input_image_names]
 
@@ -86,9 +86,11 @@ class PipelineTALOS:
             average_time = total_time / total_runs
             print_purple(f"\n[PIPELINE] Total execution time for {total_runs} executions: {total_time:.2f} seconds.")
             print_purple(f"\n[PIPELINE] Average execution time: {average_time:.2f} seconds.")
+        else:
+            average_time = None
 
         print_purple("\n[PIPELINE] All images processed successfully.")
-        return total_time
+        return total_time, average_time
 
 
 def main(input_image_names: Union[str, List[str]], iters: int = 1):
