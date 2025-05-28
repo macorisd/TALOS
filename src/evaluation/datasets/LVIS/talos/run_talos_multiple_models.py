@@ -18,42 +18,53 @@ with open(lvis_detections_file, 'r') as file:
 
 lvis_image_names = [image["image_name"] for image in lvis_detections[:3]]
 
+# tagging_models = [
+#     "ram_plus",
+#     "qwen",
+#     "gemma",
+#     "minicpm",
+#     ["qwen", "deepseek"],
+#     ["qwen", "qwen"],
+#     ["qwen", "minicpm"],
+#     ["qwen", "llama"],
+#     ["minicpm", "deepseek"],
+#     ["minicpm", "qwen"],
+#     ["minicpm", "minicpm"],
+#     ["minicpm", "llama"],
+#     ["llava", "deepseek"],
+#     ["llava", "qwen"],
+#     ["llava", "minicpm"],
+#     ["llava", "llama"]
+# ]
+
 tagging_models = [
-    "ram_plus",
-    "qwen",
-    "gemma",
-    "minicpm",
-    ["qwen", "deepseek"],
-    ["qwen", "qwen"],
-    ["qwen", "minicpm"],
-    ["qwen", "llama"],
-    ["minicpm", "deepseek"],
-    ["minicpm", "qwen"],
-    ["minicpm", "minicpm"],
-    ["minicpm", "llama"],
-    ["llava", "deepseek"],
-    ["llava", "qwen"],
-    ["llava", "minicpm"],
-    ["llava", "llama"]
+    "ram_plus"
 ]
 
 for model in tagging_models:
     subprocess.run(
-        ["python", "src/evaluation/datasets/LVIS/talos/talos_pipeline_single_model.py"] + (model if isinstance(model, list) else [model]),
+        ["python", "src/evaluation/datasets/LVIS/talos/run_talos_single_model.py"]
+        + (model if isinstance(model, list) else [model]),
         check=True
     )
 
-    # Rename the output segmentation directory
+    # Determine new base name
     if isinstance(model, list):
-        new_name = f"masks_{model[0]}_{model[1]}"
+        base_name = f"masks_{model[0]}_{model[1]}"
     else:
-        new_name = f"masks_{model}"
+        base_name = f"masks_{model}"
 
-    new_output_dir = os.path.join(os.path.dirname(OUTPUT_SEGMENTATION_DIR), new_name)
+    new_output_dir = os.path.join(os.path.dirname(OUTPUT_SEGMENTATION_DIR), base_name)
+
+    # Check if directory already exists and add suffix if needed
+    final_output_dir = new_output_dir
+    suffix = 1
+    while os.path.exists(final_output_dir):
+        final_output_dir = f"{new_output_dir}_{suffix}"
+        suffix += 1
 
     if os.path.exists(OUTPUT_SEGMENTATION_DIR):
-        os.rename(OUTPUT_SEGMENTATION_DIR, new_output_dir)
-        print(f"Renamed {OUTPUT_SEGMENTATION_DIR} -> {new_output_dir}")
+        os.rename(OUTPUT_SEGMENTATION_DIR, final_output_dir)
+        print(f"\nRenamed {OUTPUT_SEGMENTATION_DIR} -> {final_output_dir}")
     else:
         raise FileNotFoundError(f"Output directory does not exist: {OUTPUT_SEGMENTATION_DIR}")
-
