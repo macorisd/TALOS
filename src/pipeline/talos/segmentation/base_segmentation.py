@@ -165,6 +165,7 @@ class BaseSegmenter(ISegmentationStrategy):
                 self.segmentation_info["detections"].append({
                     "id": i + 1,
                     "label": instance.get("label", "unknown"),
+                    "score": instance.get("score", 0),
                     "bbox": bbox_coords
                 })
 
