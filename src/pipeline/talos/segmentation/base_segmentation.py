@@ -66,7 +66,7 @@ class BaseSegmenter(ISegmentationStrategy):
         else:
             raise FileNotFoundError(f"{self.STR_PREFIX} The image {input_image_name} was not found at {input_image_path}.")
         
-        if config.get(SAVE_INTERMEDIATE_FILES):
+        if config.get(SAVE_SEGMENTATION_FILES):
             # Save image information in segmentation_info
             self.segmentation_info = {
                 "image_name": input_image_name,
@@ -87,7 +87,7 @@ class BaseSegmenter(ISegmentationStrategy):
         rgb_image = cv2.cvtColor(input_image, cv2.COLOR_BGR2RGB)
         self.input_image = Image.fromarray(rgb_image)
 
-        if config.get(SAVE_INTERMEDIATE_FILES):
+        if config.get(SAVE_SEGMENTATION_FILES):
             # Save image information in segmentation_info
             self.segmentation_info = {
                 "width": self.input_image.width,
@@ -160,7 +160,7 @@ class BaseSegmenter(ISegmentationStrategy):
             # Define the bounding box in the format [x_min, y_min, x_max, y_max]
             bbox_coords = [x_min, y_min, x_max, y_max]
 
-            if config.get(SAVE_INTERMEDIATE_FILES):
+            if config.get(SAVE_SEGMENTATION_FILES):
                 # Append the location information to segmentation_info
                 self.segmentation_info["detections"].append({
                     "id": i + 1,
