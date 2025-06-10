@@ -35,7 +35,7 @@ lvis_detections_file = os.path.join(
 with open(lvis_detections_file, 'r') as file:
     lvis_detections = json.load(file)
 
-lvis_image_names = [image["image_name"] for image in lvis_detections[:3]]
+lvis_image_names = [image["image_name"] for image in lvis_detections]
 
 # Run the pipeline
 total_time, average_time = pipeline.run(lvis_image_names)

@@ -16,29 +16,25 @@ lvis_detections_file = os.path.join(
 with open(lvis_detections_file, 'r') as file:
     lvis_detections = json.load(file)
 
-lvis_image_names = [image["image_name"] for image in lvis_detections[:3]]
-
-# tagging_models = [
-#     "ram_plus",
-#     "qwen",
-#     "gemma",
-#     "minicpm",
-#     ["qwen", "deepseek"],
-#     ["qwen", "qwen"],
-#     ["qwen", "minicpm"],
-#     ["qwen", "llama"],
-#     ["minicpm", "deepseek"],
-#     ["minicpm", "qwen"],
-#     ["minicpm", "minicpm"],
-#     ["minicpm", "llama"],
-#     ["llava", "deepseek"],
-#     ["llava", "qwen"],
-#     ["llava", "minicpm"],
-#     ["llava", "llama"]
-# ]
+lvis_image_names = [image["image_name"] for image in lvis_detections]
 
 tagging_models = [
-    "ram_plus"
+    # "ram_plus",                       # DONE
+    # "qwen",                           # DONE
+    # "gemma",                          # DONE
+    # "minicpm",                        # DONE
+    # ["qwen", "deepseek"],             # 800/1000
+    # ["qwen", "qwen"],                 #
+    ["qwen", "minicpm"],              #
+    # ["qwen", "llama"],                #
+    ["minicpm", "deepseek"],          #
+    # ["minicpm", "qwen"],              #
+    # ["minicpm", "minicpm"],           # DONE
+    # ["minicpm", "llama"],             #
+    ["llava", "deepseek"],            #
+    # ["llava", "qwen"],                #
+    # ["llava", "minicpm"],             # DONE
+    # ["llava", "llama"]                #
 ]
 
 for model in tagging_models:
