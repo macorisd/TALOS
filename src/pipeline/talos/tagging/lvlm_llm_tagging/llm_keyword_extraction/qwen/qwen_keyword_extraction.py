@@ -50,7 +50,7 @@ class QwenKeywordExtractor(BaseLlmKeywordExtractor):
         tags = self.execute_keyword_extraction()
         return tags
 
-    def __parse_response(self, output_ids) -> str:
+    def __remove_thoughts(self, output_ids) -> str:
         """
         Parse the output to extract the content after </think>.
         """
@@ -85,7 +85,7 @@ class QwenKeywordExtractor(BaseLlmKeywordExtractor):
                 max_new_tokens=32768
             )
         output_ids = generated_ids[0][len(model_inputs.input_ids[0]):].tolist()
-        response_content = self.__parse_response(output_ids)
+        response_content = self.__remove_thoughts(output_ids)
         return response_content.strip()
 
 

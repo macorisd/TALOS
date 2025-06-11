@@ -33,7 +33,7 @@ class MiniCpmImageDescriptor(BaseLvlmImageDescriptor):
         self.minicpm_model_name = minicpm_model_name
 
         # Register the cleanup function to clear the model when the object is deleted
-        atexit.register(self.clear_model)
+        atexit.register(self.__clear_model)
 
         print("Done.")
     
@@ -67,7 +67,7 @@ class MiniCpmImageDescriptor(BaseLvlmImageDescriptor):
 
         return response["message"]["content"]
 
-    def clear_model(self):
+    def __clear_model(self):
         """
         Clear the Ollama MiniCPM model from the memory.
         """

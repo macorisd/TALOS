@@ -64,7 +64,7 @@ class LlamaKeywordExtractor(BaseLlmKeywordExtractor):
         tags = self.execute_keyword_extraction()
         return tags
 
-    def __parse_response(self, response_text: str) -> str:
+    def __remove_thoughts(self, response_text: str) -> str:
         """
         Parse the response to extract the main content after thinking.
         For Llama Nemotron, the thinking content is typically enclosed in special tokens.
@@ -126,7 +126,7 @@ class LlamaKeywordExtractor(BaseLlmKeywordExtractor):
             assistant_response = ""
 
         # Parse the response to extract meaningful content
-        parsed_response = self.__parse_response(assistant_response)
+        parsed_response = self.__remove_thoughts(assistant_response)
         return parsed_response.strip()
 
 

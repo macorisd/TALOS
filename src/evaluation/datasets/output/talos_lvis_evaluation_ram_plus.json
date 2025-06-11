@@ -1,8 +1,0 @@
-{
-    "average_detection_count_score": 65.311,
-    "average_label_coincidence_precision_score": 26.469890526140524,
-    "average_label_coincidence_recall_score": 50.10352749207785,
-    "average_bbox_similarity_score": 71.5561267078497,
-    "average_mask_similarity_score": 69.20609766435207,
-    "average_final_score": 56.529328478084025
-}

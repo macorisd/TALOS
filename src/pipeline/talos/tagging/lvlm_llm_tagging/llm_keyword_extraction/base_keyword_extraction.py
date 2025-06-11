@@ -170,10 +170,6 @@ class BaseLlmKeywordExtractor(ITaggingLlmStrategy, LargeModelForTagging):
         print(f"{self.STR_PREFIX} Final response substring:\n\n", json.dumps(final_json, indent=4))
         return final_json
     
-    @abstractmethod
-    def chat_llm(self, prompt: str) -> str:
-        raise NotImplementedError("chat_llm method must be implemented in subclasses.")
-    
     # Override from ITaggingLlmStrategy
     def save_outputs(self, tags: List[str]) -> None:
         """
@@ -191,7 +187,7 @@ class BaseLlmKeywordExtractor(ITaggingLlmStrategy, LargeModelForTagging):
         Save the generated keywords to text files.
         """
         if SAVE_INTERMEDIATE_FILES:
-            output_filename = f"tags_{self.ALIAS}_{timestamp}.json"
+            output_filename = f"tags_{timestamp}_{self.ALIAS}.json"
             output_file = os.path.join(OUTPUT_TAGS_DIR, output_filename)
 
             with open(output_file, 'w', encoding='utf-8') as f:
@@ -199,3 +195,7 @@ class BaseLlmKeywordExtractor(ITaggingLlmStrategy, LargeModelForTagging):
             print(f"{self.STR_PREFIX} Tags saved to: {output_file}")
         else:
             print(f"{self.STR_PREFIX} Saving file is disabled. Keyword extraction output was not saved.")
+    
+    @abstractmethod
+    def chat_llm(self, prompt: str) -> str:
+        raise NotImplementedError("chat_llm method must be implemented in subclasses.")
