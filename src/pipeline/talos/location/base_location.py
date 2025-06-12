@@ -320,7 +320,7 @@ class BaseLocator(ILocationStrategy):
 
         This method will be called by the execute method in the subclasses.
         """
-        # Convert the tags JSON text to a model prompt
+        # Subclass method to convert the tags JSON text to a model prompt
         text = self.json_to_model_prompt(self.input_tags)
 
         # Subclass method to locate bounding boxes
