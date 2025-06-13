@@ -199,7 +199,7 @@ def calculate_bbox_similarity_score(
         talos_detections: List[Dict]
 ) -> Tuple[float | None, List[Tuple[int, int]]]:
     """
-    Calculate the bbox similarity score based on the bbox IoU between LVIS and TALOS detections.
+    Calculate the bbox similarity score based on the bbox IoU between LVIS and TALOS detections with label coincidence.
     The score ranges from 0 to 100.
     """
 
@@ -272,7 +272,7 @@ def calculate_mask_similarity_score(
         talos_segmentation_alias: str = "sam2"
 ) -> Tuple[float | None]:
     """
-    Calculate the mask similarity score based on the mask IoU between LVIS and TALOS detections.
+    Calculate the mask similarity score based on the mask IoU between LVIS and TALOS detections with similar bounding boxes.
     The score ranges from 0 to 100.
     """
 
