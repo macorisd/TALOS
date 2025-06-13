@@ -24,31 +24,10 @@ These are the 8 rules you must always follow to refine the object labeling in JS
 
 Imagine I send you the following JSON:
 
-{
-    "door",
-    "tile",
-    "bathroom",
-    "brick wall",
-    "wooden desk",
-    "green notebook",
-    "mirror",
-    "sport bag",
-    "pair of shoes",
-    "mobile phone"
-}
+["door", "tile", "bathroom", "brick wall", "wooden desk", "green notebook", "mirror", "sport bag", "pair of shoes", "mobile phone"]
 
 Your response should take into account all the previous rules and produce the following JSON:
 
-{
-    "door",
-    "floor",
-    "wall",
-    "desk",
-    "notebook",
-    "mirror",
-    "bag",
-    "shoe",
-    "mobile phone"
-}
+["door", "floor", "wall", "desk", "notebook", "mirror", "bag", "shoe", "mobile phone"]
 
 The explanation of your task is complete. Now, following all the previous instructions, you must produce the response for this input text:
