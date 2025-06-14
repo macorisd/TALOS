@@ -19,7 +19,6 @@ from pipeline.config.config import (
     SAM2
 )
 
-# Import concrete strategy classes to check instance types
 from pipeline.talos.tagging.direct_lvlm_tagging.qwen.qwen_tagging import QwenTagger
 from pipeline.talos.tagging.direct_lvlm_tagging.gemma.gemma_tagging import GemmaTagger
 from pipeline.talos.tagging.direct_tagging.ram_plus.ram_plus_tagging import RamPlusTagger
