@@ -4,6 +4,7 @@ import os
 import time
 from typing import List
 from PIL import Image
+import numpy as np
 
 from pipeline.config.paths import (
     INPUT_IMAGES_DIR,
@@ -12,7 +13,7 @@ from pipeline.config.paths import (
 from pipeline.talos.tagging.base_tagging import BaseTagger
 from pipeline.common.large_model_tagging import LargeModelForTagging
 from pipeline.config.config import (
-    config,
+    ConfigSingleton,
     TAGGING_DIRECT_LVLM_TIMEOUT,
     TAGGING_DIRECT_LVLM_ITERS,
     TAGGING_DIRECT_LVLM_EXCLUDE_BANNED_WORDS,
@@ -31,15 +32,18 @@ class BaseDirectLvlmTagger(BaseTagger, LargeModelForTagging):
         """
         Initialize the base direct LVLM tagger.
         """
+        global config
+        config = ConfigSingleton()
+        
         # Initialize base class
         super().__init__()
 
     # Override from ITaggingStrategy -> BaseTagger
-    def load_inputs(self, input_image_name: str) -> None:
+    def load_inputs(self, input_image_name: str = None, input_image: np.ndarray = None) -> None:
         """
         Load the Direct LVLM Tagging inputs.
         """
-        super().load_inputs(input_image_name)
+        super().load_inputs(input_image_name, input_image)
         self.load_prompt()
     
     # Override from ITaggingStrategy -> BaseTagger

@@ -4,11 +4,13 @@ import os
 import time
 from typing import Dict, List
 from PIL import Image, ImageDraw, ImageFont
+import numpy as np
+import cv2
 
 from pipeline.strategy.strategy import ILocationStrategy
 from pipeline.config.config import (
-    config,
-    SAVE_FILES,
+    ConfigSingleton,
+    SAVE_INTERMEDIATE_FILES,
     LOCATION_SCORE_THRESHOLD,
     LOCATION_PADDING_RATIO,
     LOCATION_LARGE_BBOX_RATIO
@@ -31,17 +33,30 @@ class BaseLocator(ILocationStrategy):
         """
         Initialize the base locator.
         """
-        if config.get(SAVE_FILES):
+        global config
+        config = ConfigSingleton()
+        
+        if config.get(SAVE_INTERMEDIATE_FILES):
             # Create output directory if it does not exist
             os.makedirs(OUTPUT_LOCATION_DIR, exist_ok=True)
 
     # Override from ILocationStrategy
-    def load_inputs(self, input_image_name: str, input_tags: List[str] = None) -> None:
+    def load_inputs(
+        self,
+        input_image_name: str = None,
+        input_image: np.ndarray = None,
+        input_tags: List[str] = None
+    ) -> None:
         """
         Load the Location inputs.
         """
-        # Load the input image
-        self.load_image(input_image_name)
+        if input_image_name is None and input_image is None:
+            raise ValueError(f"{self.STR_PREFIX} Either input_image_name or input_image must be provided.")
+        
+        if input_image is not None:
+            self.set_image(input_image)
+        else:
+            self.load_image(input_image_name)
 
         # Load the input tags
         self.load_tags(input_tags)
@@ -66,6 +81,14 @@ class BaseLocator(ILocationStrategy):
             raise FileNotFoundError(f"{self.STR_PREFIX} The image {input_image_name} was not found at {input_image_path}.")
         
         print("Done.")
+
+    # Override from ILocationStrategy
+    def set_image(self, input_image: np.ndarray) -> None:
+        """
+        Set the input image.
+        """
+        rgb_image = cv2.cvtColor(input_image, cv2.COLOR_BGR2RGB)
+        self.input_image = Image.fromarray(rgb_image)
 
     # Override from ILocationStrategy
     def load_tags(self, input_tags: List[str] = None) -> None:
@@ -207,11 +230,26 @@ class BaseLocator(ILocationStrategy):
             current_label = result["label"]
             substrings = []
 
-            # Check if the label contains any of the input tags
+            # Check if the label is a substring of any of the input tags
+            for tag in input_tags:
+                if current_label in tag and current_label != tag:
+                    substrings.append(tag)
+            
+            # If the label is substring of exactly one tag, it will be replaced with that tag
+            if len(substrings) == 1:
+                best_substring = substrings[0]
+                print(f"{self.STR_PREFIX} Replaced label: {current_label} with {best_substring}")
+                result["label"] = best_substring
+                continue
+            
+            substrings = []    
+
+            # Check if any of the input tags is a substring of the label
             for tag in input_tags:
                 if tag in current_label and tag != current_label:
                     substrings.append(tag)
 
+            # If the label contains any of the input tags as a substring, replace it with the shortest one
             if substrings:
                 # Replace the label with the shortest substring (based on the number of words and characters)
                 best_substring = min(substrings, key=lambda s: (len(s.split()), len(s)))
@@ -285,7 +323,7 @@ class BaseLocator(ILocationStrategy):
 
         This method will be called by the execute method in the subclasses.
         """
-        # Convert the tags JSON text to a model prompt
+        # Subclass method to convert the tags JSON text to a model prompt
         text = self.json_to_model_prompt(self.input_tags)
 
         # Subclass method to locate bounding boxes
@@ -297,11 +335,11 @@ class BaseLocator(ILocationStrategy):
         # Filter the results based on the confidence threshold
         results_json = self.__filter_confidence(results_json)
 
-        # Filter the results based on bounding box properties
-        results_json = self.__filter_bbox(results_json, self.input_image.width, self.input_image.height)
-
         # Filter the results based on label coincidence with the tagging stage
         results_json = self.__filter_labels(results_json, self.input_tags)
+        
+        # Filter the results based on bounding box properties
+        results_json = self.__filter_bbox(results_json, self.input_image.width, self.input_image.height)
 
         print(f"{self.STR_PREFIX} JSON results:\n\n{json.dumps(results_json, indent=4)}")
         
@@ -321,7 +359,7 @@ class BaseLocator(ILocationStrategy):
 
     # Override from ILocationStrategy
     def save_outputs(self, location: Dict) -> None:
-        if config.get(SAVE_FILES):
+        if config.get(SAVE_INTERMEDIATE_FILES):
             timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
             self.save_location_json(location, timestamp)
             self.save_location_image(location, timestamp)
@@ -330,7 +368,7 @@ class BaseLocator(ILocationStrategy):
 
     # Override from ILocationStrategy
     def save_location_json(self, location: Dict, timestamp: str) -> None:
-        if config.get(SAVE_FILES):
+        if config.get(SAVE_INTERMEDIATE_FILES):
             # Prepare JSON output file
             output_filename = f"location_{timestamp}_{self.ALIAS}.json"
             output_file = os.path.join(OUTPUT_LOCATION_DIR, output_filename)
@@ -343,7 +381,7 @@ class BaseLocator(ILocationStrategy):
 
     # Override from ILocationStrategy
     def save_location_image(self, location: Dict, timestamp: str) -> None:
-        if config.get(SAVE_FILES):
+        if config.get(SAVE_INTERMEDIATE_FILES):
             # Prepare JPG output file
             output_filename = f"location_{timestamp}_{self.ALIAS}.jpg"
             output_file = os.path.join(OUTPUT_LOCATION_DIR, output_filename)

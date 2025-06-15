@@ -1,12 +1,24 @@
 # TALOS: A Modular and Automatic System for Open-Vocabulary Semantic Instance Segmentation
 
-**TALOS** is a modular and extensible Computer Vision pipeline for performing **semantic instance segmentation** using an **open vocabulary** for semantic categories. Unlike conventional approaches (e.g., Detectron2) that are limited to a fixed set of object categories seen during training (such as those in the COCO dataset), TALOS identifies and segments object instances belonging to uncommon and diverse categories.
+![TALOS](docs/images/talos_banner.png)
 
-Many open-vocabulary detection and segmentation models require **user inputs** for semantic categories, which is impractical for automated applications like mobile robotics. TALOS addresses this limitation by automatically extracting semantic labels from images using **large-scale models** and then locating and segmenting the objects in the image.
+Most existing semantic instance segmentation systems—like Detectron2, YOLO, and similar—work with a **closed set of object categories**, typically those found in datasets such as MS-COCO or Pascal VOC. While their accuracy is high within those limits, they struggle in real-world environments where the variety of objects goes far beyond the training data. This is especially problematic in fields like mobile robotics, where systems often encounter unfamiliar objects.
 
-The system is composed of three sequential stages: **Tagging**, **Location**, and **Segmentation**, each of which can be independently configured with state-of-the-art models.
+**TALOS** (TAgging–LOcation–Segmentation) is an open-vocabulary instance segmentation pipeline designed to overcome these limitations. It works in three main stages: *Tagging* extracts object labels from the image, *Location* locates those objects, and *Segmentation* generates binary masks for each detected instance. Each stage is modular and independent, making it easy to extend or replace components with newer models as needed.
 
-[📄 Read the paper (Spanish PDF)](./docs/paper/talos_paper.pdf)
+Compared to traditional closed-vocabulary detectors, TALOS brings several key advantages. It correctly segments individual object instances, works automatically from just an RGB image, supports easy model integration thanks to its modular architecture, and allows for natural-language customization using large language models.
+
+<div align="center">
+
+![Qualitative comparison between Detectron2 and TALOS](docs/images/talos_vs_detectron2.png)
+
+*Detectron2 (left, pink) is limited to COCO categories and often mislabels or misses unknown objects. TALOS (right, green) correctly identifies and segments previously unseen categories like "curtain", "piano" or "avocado".*
+
+</div>
+
+TALOS has been integrated as a ROS 2 node and connected to [**Voxeland**](https://github.com/MAPIRlab/Voxeland), a 3D semantic mapping platform that previously relied on closed-vocabulary systems. Results on a variety of input images show improved semantic detail, which translates into richer and more informative maps—an essential step toward more capable and aware robotic systems.
+
+[📄 Read the TALOS paper (Spanish PDF)](./docs/paper/talos_paper.pdf)
 
 *This project is currently under development. Please check the **develop** branch for the latest updates.*
 
@@ -15,6 +27,14 @@ The system is composed of three sequential stages: **Tagging**, **Location**, an
 ## Pipeline overview
 
 TALOS takes an arbitrary number of **RGB images** as input and produces **instance-level segmentations** for each image, that include binary masks for each object instance, along with their corresponding bounding boxes and semantic labels.
+
+<div align="center">
+
+![TALOS pipeline](docs/images/talos_pipeline.png)
+
+*The TALOS pipeline consists of three main stages: Tagging, Location, and Segmentation. Each stage is modular and can be extended or replaced with new models as needed.*
+
+</div>
 
 The pipeline is designed to be **modular**, allowing for easy integration of new models and components. The three main stages of the pipeline are as follows:
 
@@ -46,25 +66,13 @@ The pipeline is designed to be **modular**, allowing for easy integration of new
 
 ## 🧠 Integrated technologies and models
 
-### Tagging
-- **Direct Tagging**: 
-  - [Qwen](https://huggingface.co/Qwen/Qwen2.5-VL-32B-Instruct)
-  - [Gemma 3](https://huggingface.co/google/gemma-3-27b-it)
-  - [MiniCPM](https://huggingface.co/openbmb/MiniCPM-o-2_6)
-  - [Recognize Anything Plus Model (RAM++)](https://github.com/xinyu1205/recognize-anything)
+TALOS integrates a variety of advanced models and technologies to achieve its open-vocabulary instance segmentation capabilities:
 
-- **Tagging via LVLM Image Description and LLM Keyword Extraction**:
-  - **LVLM Image Description**:
-    - [Qwen](https://huggingface.co/Qwen/Qwen2.5-VL-32B-Instruct)
-    - [LLaVA](https://ollama.com/library/llava)
-  - **LLM Keyword Extraction**:
-    - [DeepSeek](https://ollama.com/library/deepseek-r1)
+<div align="center">
 
-### Location
-- [Grounding DINO](https://huggingface.co/docs/transformers/model_doc/grounding-dino)
+![State-of-the-art models integrated in TALOS](docs/images/talos_models.png)
 
-### Segmentation
-- [Segment Anything Model 2 (SAM2)](https://github.com/facebookresearch/sam2)
+</div>
 
 
 ---
@@ -73,40 +81,151 @@ The pipeline is designed to be **modular**, allowing for easy integration of new
 
 ### Installation
 
-```bash
-# Clone the repository
-git clone --recurse-submodules https://github.com/macorisd/TALOS.git
-cd TALOS
-# Set up virtual environment
-python3 -m venv venv
-source venv/bin/activate
-# Install dependencies
-pip install -r requirements.txt
-```
+- Recomended Python version: **Python 3.10.12** or higher.
+- Recomended operating system: **Ubuntu 22.04** or higher.
 
-**_TODO_**: add instructions for installing the models
+To install TALOS, follow these steps:
+
+1. **Clone the repository and its submodules**
+
+   ```bash
+   git clone --recurse-submodules https://github.com/macorisd/TALOS.git
+   ```
+
+   If you plan to use TALOS for robotics tasks with ROS 2, clone it into the `src/` directory of your ROS 2 workspace.
+
+2. **Create virtual environment and install dependencies**
+   You can manage dependencies however you like, but a helper script is provided to automate virtual-environment creation and dependency installation:
+
+   ```bash
+   chmod +x venvs/update_venv.bash
+   ./venvs/update_venv.bash
+   ```
+
+   This will create (or update) a Python 3 virtual environment named `talos_env` in `venvs/` and install all required packages.
+
+   Alternatively, install manually:
+
+   ```bash
+   python3 -m venv venvs/talos_env
+   source venvs/talos_env/bin/activate
+   pip install -r requirements.txt
+   ```
+
+3. **Install models and technologies**
+
+* **Supported Ollama models:** To use the LLaVA, DeepSeek, and MiniCPM models in the TALOS Tagging stage, install Ollama and pull the models:
+
+  ```bash
+  curl -fsSL https://ollama.com/install.sh | sh
+  ollama pull llava:34b
+  ollama pull deepseek-r1:14b
+  ollama pull minicpm-v:8b
+  ```
+
+* **Recognize Anything Plus Model (RAM++):** To use RAM++ in the TALOS Tagging stage, download the `.pth` file (The recommended checkpoint file is `ram_plus_swin_large_14m.pth`) into `src/pipeline/talos/tagging/direct_tagging/ram_plus/models/`. This file available at:
+  [https://huggingface.co/xinyu1205/recognize-anything-plus-model/blob/main/ram\_plus\_swin\_large\_14m.pth](https://huggingface.co/xinyu1205/recognize-anything-plus-model/blob/main/ram_plus_swin_large_14m.pth)
+
+* **Gemma 3 (Hugging Face):** To use Gemma in the TALOS Tagging stage, set your Hugging Face token as an environment variable. For example, add the following to `pipeline/.env`:
+
+  ```bash
+  HUGGINGFACE_TOKEN=<your_token_here>
+  ```
+
+* **Other supported Hugging Face models:** Other Hugging Face models used by TALOS do not require additional installation steps. They are automatically downloaded when the pipeline is run with each model for the first time.
+
 
 ### Usage
 
-**_TODO_**: more detailed usage instructions
+These usage instructions demonstrate running TALOS in “user” mode. To launch the ROS 2 node for robotic applications (e.g., building 3D semantic maps), please refer to the [TALOS ROS 2 README](./src/talos_ros2/README.md).
 
-For now, you can run the pipeline by running the pipeline_main.py script:
-- You need to specify the input image name in the main function.
-- You can change the selected models in the pipeline. Take a look at the following files:
-  - pipeline/config/config.py
-  - pipeline/config/config.json
+1. **Add input images**
 
+Place your input images (recommended formats: png, jpg, jpeg) into src/pipeline/input_images/ before running TALOS.
+
+2. **Activate the virtual environment**  
+
+   Before running the pipeline, ensure your Python virtual environment is active:
+   ```bash
+   source venvs/talos_env/bin/activate
+    ```
+
+3. **Run the pipeline**
+
+   Navigate to the pipeline directory and launch the main script:
+
+   ```bash
+   cd src/pipeline
+   python pipeline_main.py [OPTIONS]
+   ```
+
+   The **outputs** for each stage will be saved in the `src/pipeline/output/` directory.
+
+   Available command-line arguments:
+
+   * `-img`, `--input_images`
+
+     * Zero or more image filenames (e.g., `image1.png image2.jpg`).
+     * Defaults to `['desk.jpg']` (provided example image) if not specified.
+     * Images must be located in the `src/pipeline/input_images/` folder.
+
+   * `-iters`, `--iterations`
+
+     * Integer number of times to run the pipeline per image.
+     * Defaults to `1`.
+
+   * `-cfg`, `--config_file`
+
+     * Configuration filename (e.g., `config.json`, `config2.json`).
+     * Defaults to `config.json`.
+     * File must be located in the `src/pipeline/config/` directory.
+
+    An execution example:
+  
+    ```bash
+    cd src/pipeline
+    python pipeline_main.py -img input_image1.jpg input_image2.jpg -iters 2 -cfg config2.json
+    ```
+
+    Running without any options will process the example image `desk.jpg` once using `config.json`.
+
+    You can also consult the help message for more information:
+
+    ```bash
+    cd src/pipeline
+    python pipeline_main.py --help
+    ```
+
+### Configuration and customization
+
+* **Configuration file**: The pipeline configuration is defined in a JSON file located in `src/pipeline/config/`. The default configuration file is `config.json`, but you can create and use your own configuration files. This file specifies the models and parameters for each stage of the pipeline.
+
+* **Large Vision-Language Models (LVLMs) and Large Language Models (LLMs) prompt customization**: TALOS allows you to customize the prompts used by the LVLMs and LLMs in the Tagging stage. You can modify the prompt `txt` files, located in:
+  - **Direct LVLM Tagging**: `src/pipeline/talos/tagging/direct_lvlm_tagging/prompts/prompt.txt`
+  - **Tagging with LVLM Image Description and LLM Keyword Extraction**:
+    - LVLM Image Description: `src/pipeline/talos/tagging/lvlm_llm_tagging/lvlm_image_description/base_image_description.py` (this prompt is defined in the code because it is much shorter than the other prompts)
+    - LLM Keyword Extraction: `src/pipeline/talos/tagging/lvlm_llm_tagging/llm_keyword_extraction/prompts/prompt1.txt` (main prompt) and `.../prompt2.txt` (output enhancement prompt)
+  
+### Unit tests
+
+TALOS includes unit tests to ensure the functionality of its components. Please refer to the [tests README](./tests/README.md) for more information on how to run the tests.
 
 ---
 
-## 📊 Pipeline evaluation and results
+## 📊 TALOS pipeline evaluation and results
 
-**_TODO_**: add more detailed evaluation explanation
+Please check the [evaluation README](./src/evaluation/README.md) for detailed information about the evaluation metrics and results of the TALOS pipeline.
 
-| TAGGING | LOCATION       | SEGMENTATION | Detection count | Tags Recall | Tags Accuracy | Bbox similarity | Mask similarity | FINAL SCORE |
-|-|-|-|-|-|-|-|-|-|
-| Qwen | Grounding DINO | SAM2 | 57.58 | 60.43 | 60.43 | 76.15 | 72.66 | 65.45
+Please note that only the Tagging models are shown in the evaluation results, as the Location stage for every case was performed using Grounding DINO, and the Segmentation stage was performed using SAM2 (Segment Anything Model 2). The evaluation results are based on a random subset of 1,000 images from the LVIS dataset.
 
+| TAGGING MODEL(S)             | Detection count | Label precision | Label recall | BBox sim. | Mask sim. | Avg final score | Avg exec. time (s) |
+|------------------------------|----------------|----------------|--------------|-----------|-----------|-----------------|--------------------|
+| MiniCPM                      | 68.88          | 40.88          | 41.92        | 75.26     | 71.09     | 59.61           | 1.63               |
+| Gemma                        | 58.80          | 30.79          | 58.73        | 75.43     | 71.99     | 59.15           | 8.11               |
+| Qwen                         | 58.01          | 29.78          | 59.73        | 74.90     | 72.02     | 58.89           | 4.18               |
+| MiniCPM + MiniCPM            | 65.34          | 27.65          | 47.08        | 74.68     | 72.28     | 57.41           | 2.68               |
+| LLaVA + MiniCPM              | 64.92          | 28.60          | 43.58        | 74.78     | 70.88     | 56.55           | 5.63               |
+| RAM Plus                     | 66.22          | 26.32          | 49.50        | 71.15     | 68.86     | 56.41           | 0.63               |
 
 
 ---
@@ -128,19 +247,21 @@ All pull requests will be reviewed and require approval before being merged into
 
 ## 📚 Citation
 
-If you use TALOS in your research, please cite this repository as follows:
+If you use TALOS in your research, please cite the TALOS paper as follows:
 
 ```bibtex
-@misc{decena2025talos,
-  author       = {Decena-Gimenez, Macoris},
-  title        = {TALOS: A Modular and Automatic System for Open-Vocabulary Semantic Instance Segmentation},
-  year         = {2025},
-  howpublished = {\url{https://github.com/macorisd/TALOS}}
+@article{decena2025talos,
+  author  = {Decena-Gimenez, M. and Moncada-Ramirez, J. and Ruiz-Sarmiento, J.R. and Gonzalez-Jimenez, J.},
+  title   = {Instance semantic segmentation using an open vocabulary},
+  journal = {Simposio CEA de Robótica, Bioingeniería, Visión Artificial y Automática Marina 2025},
+  volume  = {1},
+  number  = {1},
+  year    = {2025},
+  url     = {https://ingmec.ual.es/ojs/index.php/RBVM25/article/view/38}
 }
 ```
 
 ---
-
 
 ## 📄 License
 

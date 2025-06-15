@@ -72,14 +72,16 @@ print(f"{STR_PREFIX} Number of images: {lvis_image_count}")
 def add_image_metrics(
         metrics: List[Dict[str, Union[int, float]]],
         detection_count_score: int,
-        label_coincidence_score: float,
+        label_coincidence_precision: float,
+        label_coincidence_recall: float,
         bbox_similarity_score: float,
         mask_similarity_score: float,
-        execution_time: float
+        execution_time: float = None
 ) -> List[Dict[str, Union[int, float]]]:
     metrics.append({
         "detection_count_score": detection_count_score,
-        "label_coincidence_score": label_coincidence_score,
+        "label_coincidence_precision": label_coincidence_precision,
+        "label_coincidence_recall": label_coincidence_recall,
         "bbox_similarity_score": bbox_similarity_score,
         "mask_similarity_score": mask_similarity_score,
         "execution_time": execution_time
@@ -93,24 +95,55 @@ def add_image_metrics(
 def calculate_detection_count_score(lvis_detection_count, talos_detection_count) -> int | None:
     """
     Calculate the detection count score based on the difference between LVIS and TALOS detection counts.
-    The score ranges from 0 to 20.
-    - f(0) = 20
-    - f(15) = 1
+    The score ranges from 0 to 100.
+    - f(0) = 100
+    - f(15) = 5
     - f(x) | x > 15 = 0.
     """
     if lvis_detection_count == 0 or talos_detection_count == 0:
         return None
     
     difference = abs(lvis_detection_count - talos_detection_count)
-    return max(0, (-19 / 15 * difference) + 20)
+    return max(0, (-95 / 15 * difference) + 100)
 
-def calculate_lvis_label_coincidence_score(
+def calculate_label_coincidence_precision(
     lvis_labels: List[List[str]],
     talos_labels: List[str]
 ) -> Tuple[float | None, List[Tuple[str, str]]]:
     """
-    Calculate the label coincidence score based on the number of LVIS labels that are present in TALOS detections.
-    The score ranges from 0 to 20.
+    Calculate the label coincidence precision based on the number of detected TALOS labels that are present in the LVIS dataset.
+    The score ranges from 0 to 100.
+    """
+    if not lvis_labels or not talos_labels:
+        return None, []
+
+    talos_labels_set = set(talos_labels)
+    talos_label_count = len(talos_labels_set)
+    lvis_coincidence_count = 0
+    coincidences = []
+
+    for talos_label in talos_labels_set:
+        matched = False
+        for lvis_label_synonyms in lvis_labels:
+            for synonym in lvis_label_synonyms:
+                if synonym in talos_label or talos_label in synonym:
+                    lvis_coincidence_count += 1
+                    coincidences.append((synonym, talos_label))
+                    matched = True
+                    break
+            if matched:
+                break
+
+    score = (lvis_coincidence_count / talos_label_count) * 100
+    return score, coincidences
+
+def calculate_label_coincidence_recall(
+    lvis_labels: List[List[str]],
+    talos_labels: List[str]
+) -> Tuple[float | None, List[Tuple[str, str]]]:
+    """
+    Calculate the label coincidence recall based on the number of LVIS labels that are present in TALOS detections.
+    The score ranges from 0 to 100.
     """
     if not lvis_labels or not talos_labels:
         return None, []
@@ -133,38 +166,7 @@ def calculate_lvis_label_coincidence_score(
             if matched:
                 break
 
-    score = (talos_coincidence_count / lvis_label_count) * 20
-    return score, coincidences
-
-def calculate_talos_label_coincidence_score(
-    lvis_labels: List[List[str]],
-    talos_labels: List[str]
-) -> Tuple[float | None, List[Tuple[str, str]]]:
-    """
-    Calculate the label coincidence score based on the number of detected TALOS labels that are present in the LVIS dataset.
-    The score ranges from 0 to 20.
-    """
-    if not lvis_labels or not talos_labels:
-        return None, []
-
-    talos_labels_set = set(talos_labels)
-    talos_label_count = len(talos_labels_set)
-    lvis_coincidence_count = 0
-    coincidences = []
-
-    for talos_label in talos_labels_set:
-        matched = False
-        for lvis_label_synonyms in lvis_labels:
-            for synonym in lvis_label_synonyms:
-                if synonym in talos_label or talos_label in synonym:
-                    lvis_coincidence_count += 1
-                    coincidences.append((synonym, talos_label))
-                    matched = True
-                    break
-            if matched:
-                break
-
-    score = (lvis_coincidence_count / talos_label_count) * 20
+    score = (talos_coincidence_count / lvis_label_count) * 100
     return score, coincidences
 
 def calculate_bbox_iou(bbox1: List[float], bbox2: List[float]) -> float:
@@ -197,8 +199,8 @@ def calculate_bbox_similarity_score(
         talos_detections: List[Dict]
 ) -> Tuple[float | None, List[Tuple[int, int]]]:
     """
-    Calculate the bbox similarity score based on the bbox IoU between LVIS and TALOS detections.
-    The score ranges from 0 to 20.
+    Calculate the bbox similarity score based on the bbox IoU between LVIS and TALOS detections with label coincidence.
+    The score ranges from 0 to 100.
     """
 
     if not lvis_detections or not talos_detections:
@@ -236,7 +238,7 @@ def calculate_bbox_similarity_score(
                 best_talos_id = talos_id
 
         if best_talos_id is not None and best_iou > 0:
-            iou_scores.append(best_iou * 20)
+            iou_scores.append(best_iou * 100)
             bbox_coincidence_ids.append((lvis_id, best_talos_id))
 
     if not iou_scores:
@@ -270,8 +272,8 @@ def calculate_mask_similarity_score(
         talos_segmentation_alias: str = "sam2"
 ) -> Tuple[float | None]:
     """
-    Calculate the mask similarity score based on the mask IoU between LVIS and TALOS detections.
-    The score ranges from 0 to 20.
+    Calculate the mask similarity score based on the mask IoU between LVIS and TALOS detections with similar bounding boxes.
+    The score ranges from 0 to 100.
     """
 
     if not lvis_detections or not talos_detections or not bbox_coincidence_ids:
@@ -313,7 +315,7 @@ def calculate_mask_similarity_score(
 
         # Compute IoU
         iou = calculate_mask_iou(lvis_mask, talos_mask_resized)
-        mask_scores.append(iou * 20)
+        mask_scores.append(iou * 100)
         mask_coincidence_ids.append((lvis_id, talos_id))
 
     if not mask_scores:
@@ -334,7 +336,8 @@ for i, lvis_image in enumerate(lvis_images):
     # Metrics initialization
 
     detection_count_score = None
-    label_coincidence_score = None
+    label_coincidence_precision = None
+    label_coincidence_recall = None
     bbox_similarity_score = None
     mask_similarity_score = None
     execution_time = None
@@ -361,7 +364,7 @@ for i, lvis_image in enumerate(lvis_images):
     print(f"{STR_PREFIX} TALOS detection count for image {i+1}: {talos_detection_count}")
     print(f"{STR_PREFIX} Detection count score for image {i+1}: {detection_count_score}")
 
-    # Evaluate label coincidence (LVIS labels that are present in TALOS detections)
+    # Evaluate label coincidence precision (LVIS labels that are present in TALOS detections)
 
     lvis_labels = [detection["labels"] for detection in lvis_image["detections"]]
     talos_labels = [detection["label"] for detection in talos_image["detections"]]
@@ -369,29 +372,29 @@ for i, lvis_image in enumerate(lvis_images):
     print(f"{STR_PREFIX} LVIS labels for image {i+1}: {lvis_labels}")
     print(f"{STR_PREFIX} TALOS labels for image {i+1}: {talos_labels}")
 
-    lvis_label_coincidence_score, lvis_label_coincidences = calculate_lvis_label_coincidence_score(lvis_labels, talos_labels)
+    label_coincidence_precision, precision_label_coincidences = calculate_label_coincidence_precision(lvis_labels, talos_labels)
 
-    print(f"{STR_PREFIX} LVIS label coincidences in TALOS for image {i+1}: {lvis_label_coincidences}")
-    print(f"{STR_PREFIX} LVIS label coincidence score for image {i+1}: {lvis_label_coincidence_score}")
+    print(f"{STR_PREFIX} LVIS label coincidences in TALOS (precision) for image {i+1}: {precision_label_coincidences}")
+    print(f"{STR_PREFIX} LVIS label coincidence score (precision) for image {i+1}: {label_coincidence_precision}")
 
-    # Evaluate label coincidence (TALOS labels that are present in LVIS detections)
+    # Evaluate label coincidence recall (TALOS labels that are present in LVIS ground truth)
 
-    talos_label_coincidence_score, talos_label_coincidences = calculate_talos_label_coincidence_score(lvis_labels, talos_labels)
+    label_coincidence_recall, recall_label_coincidences = calculate_label_coincidence_recall(lvis_labels, talos_labels)
 
-    print(f"{STR_PREFIX} TALOS label coincidences in LVIS for image {i+1}: {talos_label_coincidences}")
-    print(f"{STR_PREFIX} TALOS label coincidence score for image {i+1}: {talos_label_coincidence_score}")
+    print(f"{STR_PREFIX} TALOS label coincidences in LVIS (recall) for image {i+1}: {recall_label_coincidences}")
+    print(f"{STR_PREFIX} TALOS label coincidence score (recall) for image {i+1}: {label_coincidence_recall}")
 
     # Evaluate bbox similarity for the detections with label coincidence
 
-    lvis_detections_label_coincidence = []
-    talos_detections_label_coincidence = []
+    precision_label_coincidence_detections = []
+    recall_label_coincidence_detections = []
 
     for j, detection in enumerate(lvis_image["detections"]):
         matched = False
         for synonym in detection["labels"]:
-            for lvis_label_coincidence in lvis_label_coincidences:
+            for lvis_label_coincidence in precision_label_coincidences:
                 if synonym in lvis_label_coincidence[0] or lvis_label_coincidence[0] in synonym:
-                    lvis_detections_label_coincidence.append(detection)
+                    precision_label_coincidence_detections.append(detection)
                     matched = True
                     break
             
@@ -399,14 +402,14 @@ for i, lvis_image in enumerate(lvis_images):
                 break
     
     for j, detection in enumerate(talos_image["detections"]):
-        for talos_label_coincidence in talos_label_coincidences:
+        for talos_label_coincidence in recall_label_coincidences:
             if detection["label"] in talos_label_coincidence[1] or talos_label_coincidence[1] in detection["label"]:
-                talos_detections_label_coincidence.append(detection)
+                recall_label_coincidence_detections.append(detection)
                 break
     
     bbox_similarity_score, bbox_coincidence_ids = calculate_bbox_similarity_score(
-        lvis_detections_label_coincidence,
-        talos_detections_label_coincidence
+        precision_label_coincidence_detections,
+        recall_label_coincidence_detections
     )
 
     print(f"{STR_PREFIX} Bbox coincidences for image {i+1}: {bbox_coincidence_ids}")
@@ -415,8 +418,8 @@ for i, lvis_image in enumerate(lvis_images):
     # Evaluate mask similarity for the detections with label coincidence
 
     mask_similarity_score = calculate_mask_similarity_score(
-        lvis_detections_label_coincidence,
-        talos_detections_label_coincidence,
+        precision_label_coincidence_detections,
+        recall_label_coincidence_detections,
         bbox_coincidence_ids,
         lvis_image["image_name"],
         talos_detections_subdirs[i]
@@ -428,10 +431,10 @@ for i, lvis_image in enumerate(lvis_images):
     metrics = add_image_metrics(
         metrics,
         detection_count_score,
-        lvis_label_coincidence_score,
+        label_coincidence_precision,
+        label_coincidence_recall,
         bbox_similarity_score,
-        mask_similarity_score,
-        execution_time
+        mask_similarity_score
     )
 
     print(f"{STR_PREFIX} Metrics for image {i+1}: {metrics[-1]}")
@@ -441,8 +444,8 @@ for i, lvis_image in enumerate(lvis_images):
 # Calculate average scores
 
 avg_detection_count_score = np.mean([m["detection_count_score"] for m in metrics if m["detection_count_score"] is not None])
-avg_lvis_label_coincidence_score = np.mean([m["label_coincidence_score"] for m in metrics if m["label_coincidence_score"] is not None])
-avg_talos_label_coincidence_score = np.mean([m["label_coincidence_score"] for m in metrics if m["label_coincidence_score"] is not None])
+avg_label_coincidence_precision = np.mean([m["label_coincidence_precision"] for m in metrics if m["label_coincidence_precision"] is not None])
+avg_label_coincidence_recall = np.mean([m["label_coincidence_recall"] for m in metrics if m["label_coincidence_recall"] is not None])
 avg_bbox_similarity_score = np.mean([m["bbox_similarity_score"] for m in metrics if m["bbox_similarity_score"] is not None])
 avg_mask_similarity_score = np.mean([m["mask_similarity_score"] for m in metrics if m["mask_similarity_score"] is not None])
 
@@ -452,11 +455,20 @@ print("\n----------------------------------------------")
 
 print(f"{STR_PREFIX} Final metrics:")
 print(f"{STR_PREFIX} Average detection count score: {avg_detection_count_score}")
-print(f"{STR_PREFIX} Average LVIS label coincidence score: {avg_lvis_label_coincidence_score}")
-print(f"{STR_PREFIX} Average TALOS label coincidence score: {avg_talos_label_coincidence_score}")
+print(f"{STR_PREFIX} Average label coincidence precision score: {avg_label_coincidence_precision}")
+print(f"{STR_PREFIX} Average label coincidence recall score: {avg_label_coincidence_recall}")
 print(f"{STR_PREFIX} Average bbox similarity score: {avg_bbox_similarity_score}")
 print(f"{STR_PREFIX} Average mask similarity score: {avg_mask_similarity_score}")
-print(f"{STR_PREFIX} Average final score: {avg_detection_count_score + avg_lvis_label_coincidence_score + avg_talos_label_coincidence_score + avg_bbox_similarity_score + avg_mask_similarity_score}")
+
+average_final_score = (
+    avg_detection_count_score +
+    avg_label_coincidence_precision +
+    avg_label_coincidence_recall +
+    avg_bbox_similarity_score +
+    avg_mask_similarity_score
+) / 5
+
+print(f"{STR_PREFIX} Average final score: {average_final_score}")
 
 # Save metrics summary to file
 
@@ -467,10 +479,11 @@ output_file = os.path.join(
 
 metrics_summary = {
     "average_detection_count_score": avg_detection_count_score,
-    "average_lvis_label_coincidence_score": avg_lvis_label_coincidence_score,
-    "average_talos_label_coincidence_score": avg_talos_label_coincidence_score,
+    "average_label_coincidence_precision_score": avg_label_coincidence_precision,
+    "average_label_coincidence_recall_score": avg_label_coincidence_recall,
     "average_bbox_similarity_score": avg_bbox_similarity_score,
-    "average_mask_similarity_score": avg_mask_similarity_score
+    "average_mask_similarity_score": avg_mask_similarity_score,
+    "average_final_score": average_final_score
 }
 
 with open(output_file, 'w') as file:

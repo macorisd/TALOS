@@ -30,8 +30,8 @@ class DeepseekKeywordExtractor(BaseLlmKeywordExtractor):
         # Variables
         self.deepseek_model_name = deepseek_model_name
 
-        # Register the cleanup function to stop the model when the object is deleted
-        atexit.register(self.stop_model)
+        # Register the cleanup function to clear the model when the object is deleted
+        atexit.register(self.__clear_model)
 
         print("Done.")
 
@@ -75,9 +75,9 @@ class DeepseekKeywordExtractor(BaseLlmKeywordExtractor):
 
         return response_content.strip()
     
-    def stop_model(self):
+    def __clear_model(self):
         """
-        Stop the Ollama DeepSeek model to clear it from the memory.
+        Clear the Ollama DeepSeek model from the memory.
         """
         print(f"{self.STR_PREFIX} Stopping DeepSeek model...")
         subprocess.run(["ollama", "stop", self.deepseek_model_name])

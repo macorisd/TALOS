@@ -13,8 +13,8 @@ from pipeline.config.paths import (
     TAGGING_LLM_PROMPT2
 )
 from pipeline.config.config import (
-    config,
-    SAVE_FILES,
+    ConfigSingleton,
+    SAVE_INTERMEDIATE_FILES,
     TAGGING_LLM_ENHANCE_OUTPUT,
     TAGGING_LLM_EXCLUDE_BANNED_WORDS,
     TAGGING_LLM_BANNED_WORDS,
@@ -31,6 +31,9 @@ class BaseLlmKeywordExtractor(ITaggingLlmStrategy, LargeModelForTagging):
         """
         Initialize the base LLM keyword extractor.
         """
+        global config
+        config = ConfigSingleton()
+        
         # Variables
         with open(TAGGING_LLM_PROMPT1, "r", encoding="utf-8") as f:
             self.prompt1 = f.read()
@@ -40,7 +43,7 @@ class BaseLlmKeywordExtractor(ITaggingLlmStrategy, LargeModelForTagging):
             with open(TAGGING_LLM_PROMPT2, "r", encoding="utf-8") as f:
                 self.prompt2 = f.read()
         
-        if SAVE_FILES:
+        if SAVE_INTERMEDIATE_FILES:
             # Create output directory if it does not exist
             os.makedirs(OUTPUT_TAGS_DIR, exist_ok=True)
 
@@ -170,16 +173,12 @@ class BaseLlmKeywordExtractor(ITaggingLlmStrategy, LargeModelForTagging):
         print(f"{self.STR_PREFIX} Final response substring:\n\n", json.dumps(final_json, indent=4))
         return final_json
     
-    @abstractmethod
-    def chat_llm(self, prompt: str) -> str:
-        raise NotImplementedError("chat_llm method must be implemented in subclasses.")
-    
     # Override from ITaggingLlmStrategy
     def save_outputs(self, tags: List[str]) -> None:
         """
         Save the generated keywords to text files.
         """
-        if SAVE_FILES:
+        if config.get(SAVE_INTERMEDIATE_FILES):
             timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
             self.save_tags(tags, timestamp)
         else:
@@ -190,8 +189,8 @@ class BaseLlmKeywordExtractor(ITaggingLlmStrategy, LargeModelForTagging):
         """
         Save the generated keywords to text files.
         """
-        if SAVE_FILES:
-            output_filename = f"tags_{self.ALIAS}_{timestamp}.json"
+        if SAVE_INTERMEDIATE_FILES:
+            output_filename = f"tags_{timestamp}_{self.ALIAS}.json"
             output_file = os.path.join(OUTPUT_TAGS_DIR, output_filename)
 
             with open(output_file, 'w', encoding='utf-8') as f:
@@ -199,3 +198,7 @@ class BaseLlmKeywordExtractor(ITaggingLlmStrategy, LargeModelForTagging):
             print(f"{self.STR_PREFIX} Tags saved to: {output_file}")
         else:
             print(f"{self.STR_PREFIX} Saving file is disabled. Keyword extraction output was not saved.")
+    
+    @abstractmethod
+    def chat_llm(self, prompt: str) -> str:
+        raise NotImplementedError("chat_llm method must be implemented in subclasses.")

@@ -31,8 +31,8 @@ class LlavaImageDescriptor(BaseLvlmImageDescriptor):
         # Variables
         self.llava_model_name = llava_model_name
 
-        # Register the cleanup function to stop the model when the object is deleted
-        atexit.register(self.stop_model)
+        # Register the cleanup function to clear the model when the object is deleted
+        atexit.register(self.__clear_model)
 
         print("Done.")
     
@@ -66,9 +66,9 @@ class LlavaImageDescriptor(BaseLvlmImageDescriptor):
 
         return response["message"]["content"]
     
-    def stop_model(self):
+    def __clear_model(self):
         """
-        Stop the Ollama LLaVA model to clear it from the memory.
+        Clear the Ollama LLaVA model from the memory.
         """
         print(f"{self.STR_PREFIX} Stopping LLaVA model...")
         subprocess.run(["ollama", "stop", self.llava_model_name])

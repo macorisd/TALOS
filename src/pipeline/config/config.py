@@ -13,6 +13,7 @@ GEMMA = "gemma"
 MINICPM = "minicpm"
 LLAVA = "llava"
 DEEPSEEK = "deepseek"
+LLAMA = "llama"
 
 # Location models
 GROUNDING_DINO = "grounding_dino"
@@ -29,7 +30,8 @@ PIPELINE_LOCATION = "PIPELINE_LOCATION"
 PIPELINE_SEGMENTATION = "PIPELINE_SEGMENTATION"
 
 # General configuration keys
-SAVE_FILES = "SAVE_FILES"
+SAVE_INTERMEDIATE_FILES = "SAVE_INTERMEDIATE_FILES"
+SAVE_SEGMENTATION_FILES = "SAVE_SEGMENTATION_FILES"
 
 # Tagging configuration keys
 TAGGING_DIRECT_LVLM_TIMEOUT = "TAGGING_DIRECT_LVLM_TIMEOUT"
@@ -62,7 +64,8 @@ CONFIG_PATHS = {
     PIPELINE_LOCATION: ["pipeline", "location"],
     PIPELINE_SEGMENTATION: ["pipeline", "segmentation"],
     # General configuration
-    SAVE_FILES: ["general_config", "save_files"],
+    SAVE_INTERMEDIATE_FILES: ["general_config", "save_intermediate_files"],
+    SAVE_SEGMENTATION_FILES: ["general_config", "save_segmentation_files"],
     # Tagging configuration
     TAGGING_DIRECT_LVLM_TIMEOUT: ["tagging", "direct_lvlm_tagging", "timeout"],
     TAGGING_DIRECT_LVLM_ITERS: ["tagging", "direct_lvlm_tagging", "iters"],
@@ -123,6 +126,3 @@ class ConfigSingleton:
         for p in path[:-1]:
             ref = ref[p]
         ref[path[-1]] = value
-
-
-config = ConfigSingleton()
