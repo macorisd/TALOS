@@ -28,8 +28,6 @@ TALOS has been integrated as a ROS 2 node and connected to **Voxeland**, a 3D se
 
 TALOS takes an arbitrary number of **RGB images** as input and produces **instance-level segmentations** for each image, that include binary masks for each object instance, along with their corresponding bounding boxes and semantic labels.
 
-The pipeline is designed to be **modular**, allowing for easy integration of new models and components. The three main stages of the pipeline are as follows:
-
 <div align="center">
 
 ![TALOS pipeline](docs/images/talos_pipeline.png)
@@ -37,6 +35,8 @@ The pipeline is designed to be **modular**, allowing for easy integration of new
 *The TALOS pipeline consists of three main stages: Tagging, Location, and Segmentation. Each stage is modular and can be extended or replaced with new models as needed.*
 
 </div>
+
+The pipeline is designed to be **modular**, allowing for easy integration of new models and components. The three main stages of the pipeline are as follows:
 
 ### 1. Tagging
 - **Description**: Extracts object category labels using large-scale models (LVLMs and/or LLMs).
@@ -208,14 +208,20 @@ Place your input images (recommended formats: png, jpg, jpeg) into src/pipeline/
 
 ---
 
-## 📊 Pipeline evaluation and results
+## 📊 TALOS pipeline evaluation and results
 
-**_TODO_**: add more detailed evaluation explanation
+Please check the [evaluation README](./src/evaluation/README.md) for detailed information about the evaluation metrics and results of the TALOS pipeline.
 
-| TAGGING | LOCATION       | SEGMENTATION | Detection count | Tags Recall | Tags Accuracy | Bbox similarity | Mask similarity | FINAL SCORE |
-|-|-|-|-|-|-|-|-|-|
-| Qwen | Grounding DINO | SAM2 | 57.58 | 60.43 | 60.43 | 76.15 | 72.66 | 65.45
+Please note that only the Tagging models are shown in the evaluation results, as the Location stage for every case was performed using Grounding DINO, and the Segmentation stage was performed using SAM2 (Segment Anything Model 2). The evaluation results are based on a random subset of 1,000 images from the LVIS dataset.
 
+| TAGGING MODEL(S)             | Detection count | Label precision | Label recall | BBox sim. | Mask sim. | Avg final score | Avg exec. time (s) |
+|------------------------------|----------------|----------------|--------------|-----------|-----------|-----------------|--------------------|
+| MiniCPM                      | 68.88          | 40.88          | 41.92        | 75.26     | 71.09     | 59.61           | 1.63               |
+| Gemma                        | 58.80          | 30.79          | 58.73        | 75.43     | 71.99     | 59.15           | 8.11               |
+| Qwen                         | 58.01          | 29.78          | 59.73        | 74.90     | 72.02     | 58.89           | 4.18               |
+| MiniCPM + MiniCPM            | 65.34          | 27.65          | 47.08        | 74.68     | 72.28     | 57.41           | 2.68               |
+| LLaVA + MiniCPM              | 64.92          | 28.60          | 43.58        | 74.78     | 70.88     | 56.55           | 5.63               |
+| RAM Plus                     | 66.22          | 26.32          | 49.50        | 71.15     | 68.86     | 56.41           | 0.63               |
 
 
 ---
