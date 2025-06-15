@@ -137,7 +137,7 @@ To install TALOS, follow these steps:
 
 ### Usage
 
-These usage instructions demonstrate running TALOS in “user” mode. To launch the ROS 2 node for robotic applications (e.g., building 3D semantic maps), please refer to the README.md in src/talos_ros2.
+These usage instructions demonstrate running TALOS in “user” mode. To launch the ROS 2 node for robotic applications (e.g., building 3D semantic maps), please refer to the [TALOS ROS 2 README](./src/talos_ros2/README.md).
 
 1. **Add input images**
 
