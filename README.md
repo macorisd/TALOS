@@ -30,6 +30,14 @@ TALOS takes an arbitrary number of **RGB images** as input and produces **instan
 
 The pipeline is designed to be **modular**, allowing for easy integration of new models and components. The three main stages of the pipeline are as follows:
 
+<div align="center">
+
+![TALOS pipeline](docs/images/talos_pipeline.png)
+
+*The TALOS pipeline consists of three main stages: Tagging, Location, and Segmentation. Each stage is modular and can be extended or replaced with new models as needed.*
+
+</div>
+
 ### 1. Tagging
 - **Description**: Extracts object category labels using large-scale models (LVLMs and/or LLMs).
 - **Input**: RGB image.
