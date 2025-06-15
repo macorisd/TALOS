@@ -196,6 +196,30 @@ Place your input images (recommended formats: png, jpg, jpeg) into src/pipeline/
     python pipeline_main.py --help
     ```
 
+    Each stage of the pipeline **can be executed independently** by executing the corresponding script of the final implementations of each stage's Strategy. It is recommended to open these scripts in an IDE to customize the main function (selecting the input image, etc.). These scripts are located in `src/pipeline/talos/` subdirectories and are named as follows:
+
+    - `qwen_tagging.py`: Runs the Tagging stage using the Qwen model.
+    - `minicpm_tagging.py`: Runs the Tagging stage using the MiniCPM model.
+    - `gemma_tagging.py`: Runs the Tagging stage using the Gemma model.
+    - `ram_plus_tagging.py`: Runs the Tagging stage using the RAM++ model.
+    - `lvlm_llm_tagging.py`: Runs the Tagging stage using the LVLM Image Description and LLM Keyword Extraction method (the models are defined in the main function).
+    - `llava_image_description.py`: Runs the LVLM Image Description method of the Tagging stage using the LLaVA model.
+    - `qwen_image_description.py`: Runs the LVLM Image Description method of the Tagging stage using the Qwen model.
+    - `minicpm_image_description.py`: Runs the LVLM Image Description method of the Tagging stage using the MiniCPM model.
+    - `deepseek_keyword_extraction.py`: Runs the LLM Keyword Extraction method of the Tagging stage using the DeepSeek model.
+    - `qwen_keyword_extraction.py`: Runs the LLM Keyword Extraction method of the Tagging stage using the Qwen model.
+    - `minicpm_keyword_extraction.py`: Runs the LLM Keyword Extraction method of the Tagging stage using the MiniCPM model.
+    - `llama_keyword_extraction.py`: Runs the LLM Keyword Extraction method of the Tagging stage using the Llama model.
+    - `grounding_dino_location.py`: Runs the Location stage using the Grounding DINO model.
+    - `sam2_segmentation.py`: Runs the Segmentation stage using the SAM2 model.
+
+    These scripts can be run directly from the command line and from the IDE:
+
+    ```bash
+    python qwen_tagging.py
+    ```
+
+
 ### Configuration and customization
 
 * **Configuration file**: The pipeline configuration is defined in a JSON file located in `src/pipeline/config/`. The default configuration file is `config.json`, but you can create and use your own configuration files. This file specifies the models and parameters for each stage of the pipeline.
