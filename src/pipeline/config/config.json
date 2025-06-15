@@ -1,11 +1,11 @@
 {
     "pipeline": {
-        "tagging": "ram_plus",
+        "tagging": "minicpm",
         "location": "grounding_dino",
         "segmentation": "sam2"
     },
     "general_config": {
-        "save_intermediate_files": false,
+        "save_intermediate_files": true,
         "save_segmentation_files": true
     },
     "tagging": {
