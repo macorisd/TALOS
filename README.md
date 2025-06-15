@@ -205,6 +205,10 @@ Place your input images (recommended formats: png, jpg, jpeg) into src/pipeline/
   - **Tagging with LVLM Image Description and LLM Keyword Extraction**:
     - LVLM Image Description: `src/pipeline/talos/tagging/lvlm_llm_tagging/lvlm_image_description/base_image_description.py` (this prompt is defined in the code because it is much shorter than the other prompts)
     - LLM Keyword Extraction: `src/pipeline/talos/tagging/lvlm_llm_tagging/llm_keyword_extraction/prompts/prompt1.txt` (main prompt) and `.../prompt2.txt` (output enhancement prompt)
+  
+### Unit tests
+
+TALOS includes unit tests to ensure the functionality of its components. Please refer to the [tests README](./tests/README.md) for more information on how to run the tests.
 
 ---
 
