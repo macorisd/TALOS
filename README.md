@@ -16,7 +16,7 @@ Compared to traditional closed-vocabulary detectors, TALOS brings several key ad
 
 </div>
 
-TALOS has been integrated as a ROS 2 node and connected to **Voxeland**, a 3D semantic mapping platform that previously relied on closed-vocabulary systems. Results on a variety of input images show improved semantic detail, which translates into richer and more informative maps—an essential step toward more capable and aware robotic systems.
+TALOS has been integrated as a ROS 2 node and connected to [**Voxeland**](https://github.com/MAPIRlab/Voxeland), a 3D semantic mapping platform that previously relied on closed-vocabulary systems. Results on a variety of input images show improved semantic detail, which translates into richer and more informative maps—an essential step toward more capable and aware robotic systems.
 
 [📄 Read the TALOS paper (Spanish PDF)](./docs/paper/talos_paper.pdf)
 
