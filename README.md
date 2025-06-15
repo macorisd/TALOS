@@ -2,13 +2,23 @@
 
 ![TALOS](docs/images/talos_banner.png)
 
-**TALOS** is a modular and extensible Computer Vision pipeline for performing **semantic instance segmentation** using an **open vocabulary** for semantic categories. Unlike conventional approaches (e.g., Detectron2) that are limited to a fixed set of object categories seen during training (such as those in the COCO dataset), TALOS identifies and segments object instances belonging to uncommon and diverse categories.
+Most existing semantic instance segmentation systems—like Detectron2, YOLO, and similar—work with a **closed set of object categories**, typically those found in datasets such as MS-COCO or Pascal VOC. While their accuracy is high within those limits, they struggle in real-world environments where the variety of objects goes far beyond the training data. This is especially problematic in fields like mobile robotics, where systems often encounter unfamiliar objects.
 
-Many open-vocabulary detection and segmentation models require **user inputs** for semantic categories, which is impractical for automated applications like mobile robotics. TALOS addresses this limitation by automatically extracting semantic labels from images using **large-scale models** and then locating and segmenting the objects in the image.
+**TALOS** (TAgging–LOcation–Segmentation) is an open-vocabulary instance segmentation pipeline designed to overcome these limitations. It works in three main stages: *Tagging* extracts object labels from the image, *Location* locates those objects, and *Segmentation* generates binary masks for each detected instance. Each stage is modular and independent, making it easy to extend or replace components with newer models as needed.
 
-The system is composed of three sequential stages: **Tagging**, **Location**, and **Segmentation**, each of which can be independently configured with state-of-the-art models.
+Compared to traditional closed-vocabulary detectors, TALOS brings several key advantages. It correctly segments individual object instances, works automatically from just an RGB image, supports easy model integration thanks to its modular architecture, and allows for natural-language customization using large language models.
 
-[📄 Read the paper (Spanish PDF)](./docs/paper/talos_paper.pdf)
+<div align="center">
+
+![Qualitative comparison between Detectron2 and TALOS](docs/images/talos_vs_detectron2.png)
+
+*Detectron2 (left, pink) is limited to COCO categories and often mislabels or misses unknown objects. TALOS (right, green) correctly identifies and segments previously unseen categories like "curtain", "piano" or "avocado".*
+
+</div>
+
+TALOS has been integrated as a ROS 2 node and connected to **Voxeland**, a 3D semantic mapping platform that previously relied on closed-vocabulary systems. Results on a variety of input images show improved semantic detail, which translates into richer and more informative maps—an essential step toward more capable and aware robotic systems.
+
+[📄 Read the TALOS paper (Spanish PDF)](./docs/paper/talos_paper.pdf)
 
 *This project is currently under development. Please check the **develop** branch for the latest updates.*
 
@@ -48,25 +58,13 @@ The pipeline is designed to be **modular**, allowing for easy integration of new
 
 ## 🧠 Integrated technologies and models
 
-### Tagging
-- **Direct Tagging**: 
-  - [Qwen](https://huggingface.co/Qwen/Qwen2.5-VL-32B-Instruct)
-  - [Gemma 3](https://huggingface.co/google/gemma-3-27b-it)
-  - [MiniCPM](https://huggingface.co/openbmb/MiniCPM-o-2_6)
-  - [Recognize Anything Plus Model (RAM++)](https://github.com/xinyu1205/recognize-anything)
+TALOS integrates a variety of advanced models and technologies to achieve its open-vocabulary instance segmentation capabilities:
 
-- **Tagging via LVLM Image Description and LLM Keyword Extraction**:
-  - **LVLM Image Description**:
-    - [Qwen](https://huggingface.co/Qwen/Qwen2.5-VL-32B-Instruct)
-    - [LLaVA](https://ollama.com/library/llava)
-  - **LLM Keyword Extraction**:
-    - [DeepSeek](https://ollama.com/library/deepseek-r1)
+<div align="center">
 
-### Location
-- [Grounding DINO](https://huggingface.co/docs/transformers/model_doc/grounding-dino)
+![State-of-the-art models integrated in TALOS](docs/images/talos_models.png)
 
-### Segmentation
-- [Segment Anything Model 2 (SAM2)](https://github.com/facebookresearch/sam2)
+</div>
 
 
 ---
@@ -134,21 +132,26 @@ To install TALOS, follow these steps:
 These usage instructions demonstrate running TALOS in “user” mode. To launch the ROS 2 node for robotic applications (e.g., building 3D semantic maps), please refer to the README.md in src/talos_ros2.
 
 1. **Add input images**
+
 Place your input images (recommended formats: png, jpg, jpeg) into src/pipeline/input_images/ before running TALOS.
 
 2. **Activate the virtual environment**  
+
    Before running the pipeline, ensure your Python virtual environment is active:
    ```bash
    source venvs/talos_env/bin/activate
     ```
 
 3. **Run the pipeline**
+
    Navigate to the pipeline directory and launch the main script:
 
    ```bash
    cd src/pipeline
    python pipeline_main.py [OPTIONS]
    ```
+
+   The **outputs** for each stage will be saved in the `src/pipeline/output/` directory.
 
    Available command-line arguments:
 
@@ -241,7 +244,6 @@ If you use TALOS in your research, please cite the TALOS paper as follows:
 ```
 
 ---
-
 
 ## 📄 License
 
