@@ -70,7 +70,7 @@ class TALOSRos2Node(rclpy.node.Node):
         # Visualization
         if self.publish_visualization:
             img_vis = numpy_image.copy()
-            rng = np.random.default_rng(seed=42)  # You can remove the seed if you want different colors each run
+            rng = np.random.default_rng(seed=42)
             for i, det in enumerate(detections):
                 bbox = det.get("bbox", [0, 0, 0, 0])
                 label = det.get("label", "unknown")
