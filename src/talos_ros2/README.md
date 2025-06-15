@@ -21,7 +21,11 @@ bag/ScanNet                      # https://github.com/josematez/ScanNet
 
 * Ensure all repositories are initialized with their submodules and dependencies.
 
-## 3. Build the Workspace
+## 3. Modify the ROS 2 service name that Voxeland uses to communicate with the instance segmentation node.
+
+- Find the `robot_perception_node.py` file in Voxeland's `voxeland_robot_perception` package, and search for occurences of `/detectron/segment`. Change it to `talos/segment` to match the TALOS node's service name. This allows Voxeland to correctly call the TALOS instance segmentation service.
+
+## 4. Build the Workspace
 
 Clean previous build artifacts and execute `colcon build` to compile the workspace:
 
@@ -31,7 +35,7 @@ rm -rf build/ install/ log/
 colcon build --symlink-install --cmake-clean-cache
 ```
 
-## 4. Launch the TALOS ROS 2 Node
+## 5. Launch the TALOS ROS 2 Node
 
 Activate the TALOS Python environment, set the `PYTHONPATH`, source the ROS 2 setup and run the TALOS node:
 
@@ -43,7 +47,7 @@ source install/setup.bash
 ros2 run talos_ros2 talos_node
 ```
 
-## 5. Run Voxeland and Play a ScanNet ROS Bag
+## 6. Run Voxeland and Play a ScanNet ROS Bag
 
 Create and execute a bash script that contains the following commands:
 
