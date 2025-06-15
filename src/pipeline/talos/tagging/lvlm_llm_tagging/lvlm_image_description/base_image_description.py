@@ -5,7 +5,7 @@ from typing import List
 
 from pipeline.strategy.strategy import ITaggingLvlmStrategy
 from pipeline.config.config import (
-    config,
+    ConfigSingleton,
     SAVE_INTERMEDIATE_FILES,
     TAGGING_LVLM_ITERS,
     TAGGING_LVLM_TIMEOUT
@@ -30,6 +30,9 @@ class BaseLvlmImageDescriptor(ITaggingLvlmStrategy):
         """
         Initialize the base LVLM image descriptor.
         """
+        global config
+        config = ConfigSingleton()
+
         # Variables
         self.prompt = prompt
 

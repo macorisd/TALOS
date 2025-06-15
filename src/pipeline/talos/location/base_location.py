@@ -9,7 +9,7 @@ import cv2
 
 from pipeline.strategy.strategy import ILocationStrategy
 from pipeline.config.config import (
-    config,
+    ConfigSingleton,
     SAVE_INTERMEDIATE_FILES,
     LOCATION_SCORE_THRESHOLD,
     LOCATION_PADDING_RATIO,
@@ -33,6 +33,9 @@ class BaseLocator(ILocationStrategy):
         """
         Initialize the base locator.
         """
+        global config
+        config = ConfigSingleton()
+        
         if config.get(SAVE_INTERMEDIATE_FILES):
             # Create output directory if it does not exist
             os.makedirs(OUTPUT_LOCATION_DIR, exist_ok=True)

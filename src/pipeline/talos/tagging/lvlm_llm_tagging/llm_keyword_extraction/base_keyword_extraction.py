@@ -13,7 +13,7 @@ from pipeline.config.paths import (
     TAGGING_LLM_PROMPT2
 )
 from pipeline.config.config import (
-    config,
+    ConfigSingleton,
     SAVE_INTERMEDIATE_FILES,
     TAGGING_LLM_ENHANCE_OUTPUT,
     TAGGING_LLM_EXCLUDE_BANNED_WORDS,
@@ -31,6 +31,9 @@ class BaseLlmKeywordExtractor(ITaggingLlmStrategy, LargeModelForTagging):
         """
         Initialize the base LLM keyword extractor.
         """
+        global config
+        config = ConfigSingleton()
+        
         # Variables
         with open(TAGGING_LLM_PROMPT1, "r", encoding="utf-8") as f:
             self.prompt1 = f.read()

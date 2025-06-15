@@ -1,4 +1,5 @@
 import time
+import argparse
 from typing import List, Tuple, Union, Optional
 
 from pipeline.config.config import (
@@ -12,9 +13,10 @@ from pipeline.factory.factory import StrategyFactory
 
 
 class PipelineTALOS:
-    def __init__(self):
+    def __init__(self, config_file_name: str = 'config.json'):
         print_purple("\n[PIPELINE] Loading configuration parameters...")
-        tagging_method, location_method, segmentation_method = self.load_config()
+        
+        tagging_method, location_method, segmentation_method = self.load_config(config_file_name)
 
         print_purple("\n[PIPELINE] Loading models...")
         
@@ -24,8 +26,8 @@ class PipelineTALOS:
         
         print_purple("\n[PIPELINE] All models loaded successfully.")
     
-    def load_config(self) -> Tuple[Union[str, List[str]], str, str]:
-        self.config = ConfigSingleton()
+    def load_config(self, config_file_name: str) -> Tuple[Union[str, List[str]], str, str]:
+        self.config = ConfigSingleton(config_file=config_file_name) 
 
         return (
             self.config.get(PIPELINE_TAGGING),
@@ -93,13 +95,50 @@ class PipelineTALOS:
         return total_time, average_time
 
 
-def main(input_image_names: Union[str, List[str]], iters: int = 1):
+def main(input_image_names: Union[str, List[str]], iters: int = 1, config_file_name: str = 'config.json'):
     if not input_image_names:
         raise ValueError("\n[PIPELINE] No input image names provided. Please provide a list of image names.")
 
-    pipeline = PipelineTALOS()
+    pipeline = PipelineTALOS(config_file_name=config_file_name)
     pipeline.run(input_image_names, iters=iters)
 
 
 if __name__ == "__main__":
-    main(input_image_names=["avocado.jpeg"], iters=1)
+    # ArgumentParser to handle command line arguments
+    parser = argparse.ArgumentParser(description="Run the TALOS pipeline on specified images.")
+    
+    # Add an argument for input images
+    parser.add_argument(
+        "-img",
+        "--input_images",
+        nargs='*', # Zero or more arguments
+        default=['desk.jpg'], # Default image if none are provided
+        help="One or more input image names (e.g., image1.png image2.jpg). Defaults to ['desk.jpg'] if not specified. Images must be located in the 'input_images' directory.",
+        metavar="IMAGE_NAME"
+    )
+    
+    # Add an argument for iterations
+    parser.add_argument(
+        "-iters",
+        "--iterations",
+        type=int,
+        default=1,
+        help="Number of times to run the pipeline for each image (default: 1).",
+        metavar="NUM_ITERATIONS"
+    )
+
+    # Add an argument for the configuration file
+    parser.add_argument(
+        "-cfg",
+        "--config_file",
+        type=str,
+        default='config.json', # Default configuration file
+        help="Name of the configuration file to use (e.g., config.json, config2.json). Defaults to 'config.json'. Must be located in the config directory.",
+        metavar="CONFIG_FILENAME"
+    )
+
+    # Parse the arguments
+    args = parser.parse_args()
+
+    # Call the main function with the parsed arguments
+    main(input_image_names=args.input_images, iters=args.iterations, config_file_name=args.config_file)

@@ -13,7 +13,7 @@ from pipeline.config.paths import (
 from pipeline.talos.tagging.base_tagging import BaseTagger
 from pipeline.common.large_model_tagging import LargeModelForTagging
 from pipeline.config.config import (
-    config,
+    ConfigSingleton,
     TAGGING_DIRECT_LVLM_TIMEOUT,
     TAGGING_DIRECT_LVLM_ITERS,
     TAGGING_DIRECT_LVLM_EXCLUDE_BANNED_WORDS,
@@ -32,6 +32,9 @@ class BaseDirectLvlmTagger(BaseTagger, LargeModelForTagging):
         """
         Initialize the base direct LVLM tagger.
         """
+        global config
+        config = ConfigSingleton()
+        
         # Initialize base class
         super().__init__()
 

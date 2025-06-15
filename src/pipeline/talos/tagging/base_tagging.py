@@ -9,7 +9,7 @@ import cv2
 
 from pipeline.strategy.strategy import ITaggingStrategy
 from pipeline.config.config import (
-    config,
+    ConfigSingleton,
     SAVE_INTERMEDIATE_FILES
 )
 from pipeline.config.paths import OUTPUT_TAGS_DIR
@@ -26,6 +26,9 @@ class BaseTagger(ITaggingStrategy):
         """
         Initialize the base tagger.
         """
+        global config
+        config = ConfigSingleton()
+        
         if config.get(SAVE_INTERMEDIATE_FILES):
             # Create output directory if it does not exist
             os.makedirs(OUTPUT_TAGS_DIR, exist_ok=True)

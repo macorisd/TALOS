@@ -8,7 +8,7 @@ import numpy as np
 
 from pipeline.strategy.strategy import ISegmentationStrategy
 from pipeline.config.config import (
-    config,
+    ConfigSingleton,
     SAVE_INTERMEDIATE_FILES,
     SAVE_SEGMENTATION_FILES
 )
@@ -25,6 +25,13 @@ class BaseSegmenter(ISegmentationStrategy):
 
     Base class for segmentation strategies.
     """
+
+    def __init__(self):
+        """
+        Initialize the base segmenter.
+        """
+        global config
+        config = ConfigSingleton()
 
     # Override from ISegmentationStrategy
     def load_inputs(

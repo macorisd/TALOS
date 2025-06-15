@@ -126,6 +126,3 @@ class ConfigSingleton:
         for p in path[:-1]:
             ref = ref[p]
         ref[path[-1]] = value
-
-
-config = ConfigSingleton()
