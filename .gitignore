@@ -6,7 +6,7 @@ __pycache__/
 tempCodeRunnerFile.py
 
 # Virtual Environments and Environment variables
-venvs/
+venvs/talos_env/
 .env/
 .env
 
@@ -29,18 +29,21 @@ venvs/
 *.jpeg
 *.npz
 
+# Example input image
+!desk.jpg
+
 # Evaluation
 raw_data.json
 formatted_data.json
 lvis_detections.json
-**/evaluation/**/talos_masks/*
+**/evaluation/datasets/*/talos/*masks*
 
 # Model Checkpoints
 *.pth
 *.pt
 
 # External repositories
-external-repos/*
+external-repos/sam2/
 
 # Docs
 *.vpp.lck
