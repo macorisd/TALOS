@@ -196,7 +196,7 @@ Place your input images (recommended formats: png, jpg, jpeg) into src/pipeline/
     python pipeline_main.py --help
     ```
 
-    Each stage of the pipeline can be run independently by executing the corresponding script of the final implementations of each stage's Strategy. It is recommended to open these scripts in an IDE to customize the main function (selecting the input image, etc.). These scripts are located in `src/pipeline/talos/` subdirectories and are named as follows:
+    Each stage of the pipeline **can be executed independently** by executing the corresponding script of the final implementations of each stage's Strategy. It is recommended to open these scripts in an IDE to customize the main function (selecting the input image, etc.). These scripts are located in `src/pipeline/talos/` subdirectories and are named as follows:
 
     - `qwen_tagging.py`: Runs the Tagging stage using the Qwen model.
     - `minicpm_tagging.py`: Runs the Tagging stage using the MiniCPM model.
