@@ -17,12 +17,12 @@ class TALOSRos2Node(rclpy.node.Node):
         super().__init__('talos_ros2_node')
         
         self.publish_visualization = self.declare_parameter("publish_visualization", True).value 
-        visualization_topic = self.declare_parameter("visualization_topic", "/detectron/segmentedImage").value
+        visualization_topic = self.declare_parameter("visualization_topic", "/talos/segmentedImage").value
         self.visualization_pub = self.create_publisher(sensor_msgs.msg.Image, visualization_topic, 1)
 
         self.cv_bridge = CvBridge()
 
-        self.segment_image_srv =  self.create_service(SegmentImage, "/detectron/segment", self.segment_image)
+        self.segment_image_srv =  self.create_service(SegmentImage, "/talos/segment", self.segment_image)
         self.talos_pipeline = PipelineTALOSRos2()
         
         self._logger.info("Done setting up!")
