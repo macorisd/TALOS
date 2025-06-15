@@ -75,29 +75,125 @@ The pipeline is designed to be **modular**, allowing for easy integration of new
 
 ### Installation
 
-```bash
-# Clone the repository
-git clone https://github.com/macorisd/TALOS.git
-cd TALOS
-# Set up virtual environment
-python3 -m venv venv
-source venv/bin/activate
-# Install dependencies
-pip install -r requirements.txt
-```
+- Recomended Python version: **Python 3.10.12** or higher.
+- Recomended operating system: **Ubuntu 22.04** or higher.
 
-**_TODO_**: add instructions for installing the models
+To install TALOS, follow these steps:
+
+1. **Clone the repository and its submodules**
+
+   ```bash
+   git clone --recurse-submodules https://github.com/macorisd/TALOS.git
+   ```
+
+   If you plan to use TALOS for robotics tasks with ROS 2, clone it into the `src/` directory of your ROS 2 workspace.
+
+2. **Create virtual environment and install dependencies**
+   You can manage dependencies however you like, but a helper script is provided to automate virtual-environment creation and dependency installation:
+
+   ```bash
+   chmod +x venvs/update_venv.bash
+   ./venvs/update_venv.bash
+   ```
+
+   This will create (or update) a Python 3 virtual environment named `talos_env` in `venvs/` and install all required packages.
+
+   Alternatively, install manually:
+
+   ```bash
+   python3 -m venv venvs/talos_env
+   source venvs/talos_env/bin/activate
+   pip install -r requirements.txt
+   ```
+
+3. **Install models and technologies**
+
+* **Supported Ollama models:** To use the LLaVA, DeepSeek, and MiniCPM models in the TALOS Tagging stage, install Ollama and pull the models:
+
+  ```bash
+  curl -fsSL https://ollama.com/install.sh | sh
+  ollama pull llava:34b
+  ollama pull deepseek-r1:14b
+  ollama pull minicpm-v:8b
+  ```
+
+* **Recognize Anything Plus Model (RAM++):** To use RAM++ in the TALOS Tagging stage, download the `.pth` file (The recommended checkpoint file is `ram_plus_swin_large_14m.pth`) into `src/pipeline/talos/tagging/direct_tagging/ram_plus/models/`. This file available at:
+  [https://huggingface.co/xinyu1205/recognize-anything-plus-model/blob/main/ram\_plus\_swin\_large\_14m.pth](https://huggingface.co/xinyu1205/recognize-anything-plus-model/blob/main/ram_plus_swin_large_14m.pth)
+
+* **Gemma 3 (Hugging Face):** To use Gemma in the TALOS Tagging stage, set your Hugging Face token as an environment variable. For example, add the following to `pipeline/.env`:
+
+  ```bash
+  HUGGINGFACE_TOKEN=<your_token_here>
+  ```
+
+* **Other supported Hugging Face models:** Other Hugging Face models used by TALOS do not require additional installation steps. They are automatically downloaded when the pipeline is run with each model for the first time.
+
 
 ### Usage
 
-**_TODO_**: more detailed usage instructions
+These usage instructions demonstrate running TALOS in “user” mode. To launch the ROS 2 node for robotic applications (e.g., building 3D semantic maps), please refer to the README.md in src/talos_ros2.
 
-For now, you can run the pipeline by running the pipeline_main.py script:
-- You need to specify the input image name in the main function.
-- You can change the selected models in the pipeline. Take a look at the following files:
-  - pipeline/config/config.py
-  - pipeline/config/config.json
+1. **Add input images**
+Place your input images (recommended formats: png, jpg, jpeg) into src/pipeline/input_images/ before running TALOS.
 
+2. **Activate the virtual environment**  
+   Before running the pipeline, ensure your Python virtual environment is active:
+   ```bash
+   source venvs/talos_env/bin/activate
+    ```
+
+3. **Run the pipeline**
+   Navigate to the pipeline directory and launch the main script:
+
+   ```bash
+   cd src/pipeline
+   python pipeline_main.py [OPTIONS]
+   ```
+
+   Available command-line arguments:
+
+   * `-img`, `--input_images`
+
+     * Zero or more image filenames (e.g., `image1.png image2.jpg`).
+     * Defaults to `['desk.jpg']` (provided example image) if not specified.
+     * Images must be located in the `src/pipeline/input_images/` folder.
+
+   * `-iters`, `--iterations`
+
+     * Integer number of times to run the pipeline per image.
+     * Defaults to `1`.
+
+   * `-cfg`, `--config_file`
+
+     * Configuration filename (e.g., `config.json`, `config2.json`).
+     * Defaults to `config.json`.
+     * File must be located in the `src/pipeline/config/` directory.
+
+    An execution example:
+  
+    ```bash
+    cd src/pipeline
+    python pipeline_main.py -img input_image1.jpg input_image2.jpg -iters 2 -cfg config2.json
+    ```
+
+    Running without any options will process the example image `desk.jpg` once using `config.json`.
+
+    You can also consult the help message for more information:
+
+    ```bash
+    cd src/pipeline
+    python pipeline_main.py --help
+    ```
+
+### Configuration and customization
+
+* **Configuration file**: The pipeline configuration is defined in a JSON file located in `src/pipeline/config/`. The default configuration file is `config.json`, but you can create and use your own configuration files. This file specifies the models and parameters for each stage of the pipeline.
+
+* **Large Vision-Language Models (LVLMs) and Large Language Models (LLMs) prompt customization**: TALOS allows you to customize the prompts used by the LVLMs and LLMs in the Tagging stage. You can modify the prompt `txt` files, located in:
+  - **Direct LVLM Tagging**: `src/pipeline/talos/tagging/direct_lvlm_tagging/prompts/prompt.txt`
+  - **Tagging with LVLM Image Description and LLM Keyword Extraction**:
+    - LVLM Image Description: `src/pipeline/talos/tagging/lvlm_llm_tagging/lvlm_image_description/base_image_description.py` (this prompt is defined in the code because it is much shorter than the other prompts)
+    - LLM Keyword Extraction: `src/pipeline/talos/tagging/lvlm_llm_tagging/llm_keyword_extraction/prompts/prompt1.txt` (main prompt) and `.../prompt2.txt` (output enhancement prompt)
 
 ---
 
@@ -130,14 +226,17 @@ All pull requests will be reviewed and require approval before being merged into
 
 ## 📚 Citation
 
-If you use TALOS in your research, please cite this repository as follows:
+If you use TALOS in your research, please cite the TALOS paper as follows:
 
 ```bibtex
-@misc{decena2025talos,
-  author       = {Decena-Gimenez, Macoris},
-  title        = {TALOS: A Modular and Automatic System for Open-Vocabulary Semantic Instance Segmentation},
-  year         = {2025},
-  howpublished = {\url{https://github.com/macorisd/TALOS}}
+@article{decena2025talos,
+  author  = {Decena-Gimenez, M. and Moncada-Ramirez, J. and Ruiz-Sarmiento, J.R. and Gonzalez-Jimenez, J.},
+  title   = {Instance semantic segmentation using an open vocabulary},
+  journal = {Simposio CEA de Robótica, Bioingeniería, Visión Artificial y Automática Marina 2025},
+  volume  = {1},
+  number  = {1},
+  year    = {2025},
+  url     = {https://ingmec.ual.es/ojs/index.php/RBVM25/article/view/38}
 }
 ```
 
