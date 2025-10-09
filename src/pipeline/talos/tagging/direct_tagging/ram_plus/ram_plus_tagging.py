@@ -80,6 +80,9 @@ class RamPlusTagger(BaseTagger):
         print(f"{self.STR_PREFIX} Running Direct Tagging with RAM++...", flush=True)
         tags = None
 
+        if isinstance(self.input_image, Image.Image):
+            self.input_image = self.transform(self.input_image).unsqueeze(0).to(self.device)
+
         with torch.no_grad():
             # Generate tags
             tags = inference(self.input_image, self.model)[0]
