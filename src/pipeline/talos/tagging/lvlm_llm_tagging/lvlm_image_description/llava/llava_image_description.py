@@ -1,4 +1,7 @@
 from typing import List
+import tempfile
+import os
+from pathlib import Path
 import subprocess
 import atexit
 import ollama
@@ -53,6 +56,13 @@ class LlavaImageDescriptor(BaseLvlmImageDescriptor):
 
         This method will be called by the superclass.
         """
+        temp_file = getattr(self, "input_image", None) is not None
+
+        if temp_file:
+            with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
+                self.input_image.save(tmp, format="PNG")
+                self.input_image_path = Path(tmp.name)
+
         response = ollama.chat(
             model=self.llava_model_name,
             messages=[
@@ -63,6 +73,12 @@ class LlavaImageDescriptor(BaseLvlmImageDescriptor):
                 }
             ]
         )
+
+        if temp_file:
+            try:
+                os.remove(self.input_image_path)
+            except Exception:
+                pass
 
         return response["message"]["content"]
     
