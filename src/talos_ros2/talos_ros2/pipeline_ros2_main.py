@@ -1,3 +1,6 @@
+import warnings
+warnings.filterwarnings('ignore', message='The value of the smallest subnormal')
+
 import numpy as np
 import time
 from typing import Tuple, Dict, List

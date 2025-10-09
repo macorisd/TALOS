@@ -2,6 +2,8 @@ from typing import List
 import os
 import atexit
 import subprocess
+import tempfile
+from pathlib import Path
 
 import ollama
 
@@ -70,6 +72,14 @@ class MiniCpmTagger(BaseDirectLvlmTagger):
 
         This method will be called by the superclass.
         """
+
+        temp_file = getattr(self, "input_image", None) is not None
+
+        if temp_file:
+            with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
+                self.input_image.save(tmp, format="PNG")
+                self.input_image_path = Path(tmp.name)
+
         response = ollama.chat(
             model=self.minicpm_model_name,
             messages=[
@@ -80,6 +90,12 @@ class MiniCpmTagger(BaseDirectLvlmTagger):
                 }
             ]
         )
+
+        if temp_file:
+            try:
+                os.remove(self.input_image_path)
+            except Exception:
+                pass
 
         return response["message"]["content"]
     

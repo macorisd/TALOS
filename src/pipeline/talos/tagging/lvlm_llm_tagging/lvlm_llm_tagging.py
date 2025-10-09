@@ -1,4 +1,5 @@
 from typing import List
+import numpy as np
 
 from pipeline.talos.tagging.base_tagging import BaseTagger
 from pipeline.strategy.strategy import (
@@ -40,6 +41,13 @@ class LvlmLlmTagger(BaseTagger):
         Load the input image's path in the LVLM image descriptor.
         """
         self.lvlm_image_descriptor.load_image(input_image_name)
+    
+    # Override from BaseTagger
+    def set_image(self, input_image: np.ndarray) -> None:
+        """
+        Set the input image in the LVLM image descriptor.
+        """
+        self.lvlm_image_descriptor.set_image(input_image)
 
     # Override from ITaggingStrategy -> BaseTagger
     def execute(self) -> List[str]:

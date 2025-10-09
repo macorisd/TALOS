@@ -2,6 +2,9 @@ from abc import abstractmethod
 import os
 import time
 from typing import List
+import numpy as np
+import cv2
+from PIL import Image
 
 from pipeline.strategy.strategy import ITaggingLvlmStrategy
 from pipeline.config.config import (
@@ -54,6 +57,14 @@ class BaseLvlmImageDescriptor(ITaggingLvlmStrategy):
         if not os.path.isfile(self.input_image_path):
             raise FileNotFoundError(f"{self.STR_PREFIX} The image {self.input_image_name} was not found.")
         print("Done.")
+    
+    # Override from ITaggingLvlmStrategy
+    def set_image(self, input_image: np.ndarray) -> None:
+        """
+        Set the input image.
+        """
+        rgb_image = cv2.cvtColor(input_image, cv2.COLOR_BGR2RGB)
+        self.input_image = Image.fromarray(rgb_image)
 
     @abstractmethod # from ITaggingLvlmStrategy
     def execute(self) -> List[str]:

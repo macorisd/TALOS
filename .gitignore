@@ -16,6 +16,7 @@ venvs/talos_env/
 # Logs and Output Files
 *.log
 *.out
+/log
 **/tagging_output/*
 !**/tagging_output/*.md
 **/location_output/*

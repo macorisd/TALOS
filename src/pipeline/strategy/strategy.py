@@ -32,6 +32,9 @@ class ITaggingLvlmStrategy(ABC):
     def load_image(self, input_image_name: str) -> None:
         pass
     @abstractmethod
+    def set_image(self, input_image: np.ndarray) -> None:
+        pass
+    @abstractmethod
     def execute(self) -> List[str]:
         pass
     @abstractmethod
