@@ -57,13 +57,15 @@ class QwenImageDescriptor(BaseLvlmImageDescriptor):
         """
         Prompt the Qwen model with the input image and text prompt.
         """
+        input_image = self.input_image if hasattr(self, "input_image") else self.input_image_path
+
         messages = [
             {
                 "role": "user",
                 "content": [
                     {
                         "type": "image",
-                        "image": self.input_image_path,
+                        "image": input_image
                     },
                     {"type": "text", "text": self.prompt},
                 ],
