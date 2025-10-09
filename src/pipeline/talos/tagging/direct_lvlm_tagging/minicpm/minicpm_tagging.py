@@ -73,7 +73,9 @@ class MiniCpmTagger(BaseDirectLvlmTagger):
         This method will be called by the superclass.
         """
 
-        if getattr(self, "input_image_path", None) is None:
+        temp_file = getattr(self, "input_image", None) is not None
+
+        if temp_file:
             with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
                 self.input_image.save(tmp, format="PNG")
                 self.input_image_path = Path(tmp.name)
@@ -88,6 +90,12 @@ class MiniCpmTagger(BaseDirectLvlmTagger):
                 }
             ]
         )
+
+        if temp_file:
+            try:
+                os.remove(self.input_image_path)
+            except Exception:
+                pass
 
         return response["message"]["content"]
     
