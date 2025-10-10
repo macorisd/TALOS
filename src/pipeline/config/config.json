@@ -6,7 +6,8 @@
     },
     "general_config": {
         "save_intermediate_files": true,
-        "save_segmentation_files": true
+        "save_segmentation_files": true,
+        "send_results_ros2": true
     },
     "tagging": {
         "direct_tagging": {},

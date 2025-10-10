@@ -32,6 +32,7 @@ PIPELINE_SEGMENTATION = "PIPELINE_SEGMENTATION"
 # General configuration keys
 SAVE_INTERMEDIATE_FILES = "SAVE_INTERMEDIATE_FILES"
 SAVE_SEGMENTATION_FILES = "SAVE_SEGMENTATION_FILES"
+SAVE_RESULTS_ROS2 = "SAVE_RESULTS_ROS2"
 
 # Tagging configuration keys
 TAGGING_DIRECT_LVLM_TIMEOUT = "TAGGING_DIRECT_LVLM_TIMEOUT"
@@ -66,6 +67,7 @@ CONFIG_PATHS = {
     # General configuration
     SAVE_INTERMEDIATE_FILES: ["general_config", "save_intermediate_files"],
     SAVE_SEGMENTATION_FILES: ["general_config", "save_segmentation_files"],
+    SAVE_RESULTS_ROS2: ["general_config", "send_results_ros2"],
     # Tagging configuration
     TAGGING_DIRECT_LVLM_TIMEOUT: ["tagging", "direct_lvlm_tagging", "timeout"],
     TAGGING_DIRECT_LVLM_ITERS: ["tagging", "direct_lvlm_tagging", "iters"],
