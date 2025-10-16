@@ -17,7 +17,7 @@ class TALOSRos2Node(rclpy.node.Node):
         super().__init__('talos_ros2_node')
         
         self.publish_visualization = self.declare_parameter("publish_visualization", True).value 
-        visualization_topic = self.declare_parameter("visualization_topic", "/talos/segmentedImage").value
+        visualization_topic = self.declare_parameter("visualization_topic", "/segmentedImage").value
         self.visualization_pub = self.create_publisher(sensor_msgs.msg.Image, visualization_topic, 1)
 
         self.cv_bridge = CvBridge()
