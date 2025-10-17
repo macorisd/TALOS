@@ -21,13 +21,9 @@ bag/ScanNet                      # https://github.com/josematez/ScanNet
 
 * Ensure all repositories are initialized with their submodules and dependencies.
 
-## 3. Modify the ROS 2 service name that Voxeland uses to communicate with the instance segmentation node.
+## 3. Build the Workspace
 
-- Find the `robot_perception_node.py` file in Voxeland's `voxeland_robot_perception` package, and search for occurences of `/detectron/segment`. Change it to `talos/segment` to match the TALOS node's service name. This allows Voxeland to correctly call the TALOS instance segmentation service.
-
-## 4. Build the Workspace
-
-Clean previous build artifacts and execute `colcon build` to compile the workspace:
+Clean previous build artifacts and execute `colcon build` to compile the workspace. Please adapt the paths if necessary:
 
 ```bash
 cd ~/ros2_ws
@@ -35,9 +31,9 @@ rm -rf build/ install/ log/
 colcon build --symlink-install --cmake-clean-cache
 ```
 
-## 5. Launch the TALOS ROS 2 Node
+## 4. Launch the TALOS ROS 2 Node
 
-Activate the TALOS Python environment, set the `PYTHONPATH`, source the ROS 2 setup and run the TALOS node:
+Activate the TALOS Python environment, set the `PYTHONPATH`, source the ROS 2 setup and run the TALOS node. Please adapt the paths if necessary:
 
 ```bash
 cd ~/ros2_ws
@@ -47,13 +43,15 @@ source install/setup.bash
 ros2 run talos_ros2 talos_node
 ```
 
-## 6. Run Voxeland and Play a ScanNet ROS Bag
+## 5. Run Voxeland and Play a ScanNet ROS Bag
 
 Create and execute a bash script that contains the following commands:
 
 ```bash
-# Init voxeland_robot_perception
-gnome-terminal -- bash -c "source ~/.bashrc; source ros2_ws/venvs/voxenv/bin/activate; ros2 launch voxeland_robot_perception semantic_mapping.launch.xml; exec bash"
+cd ~/ros2_ws
+
+# Init voxeland_robot_perception with TALOS detector
+gnome-terminal -- bash -c "source ~/.bashrc; source /home/ubuntu/ros2_ws/venvs/voxenv/bin/activate; ros2 launch voxeland_robot_perception semantic_mapping.launch.py object_detector:=talos; exec bash"
 
 # Init voxeland server
 gnome-terminal -- bash -c "ros2 launch voxeland voxeland_server.launch.xml; exec bash"
