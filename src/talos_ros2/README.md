@@ -45,7 +45,7 @@ ros2 run talos_ros2 talos_node
 
 ## 5. Run Voxeland and Play a ScanNet ROS Bag
 
-Create and execute a bash script that contains the following commands:
+Create and execute a bash script that contains the following commands. Please adapt the paths if necessary:
 
 ```bash
 cd ~/ros2_ws
